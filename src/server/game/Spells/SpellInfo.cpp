@@ -560,6 +560,8 @@ int32 SpellEffectInfo::CalcValue(Unit const* caster /*= nullptr*/, int32 const* 
                 break;
             }
         }
+
+        basePoints = int32(round(value));
     }
 
     float value = float(basePoints);
