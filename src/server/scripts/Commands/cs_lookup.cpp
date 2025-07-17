@@ -660,8 +660,8 @@ public:
                             if (handler->GetSession())
                                 handler->PSendSysMessage(LANG_QUEST_LIST_CHAT, qInfo->GetQuestId(), qInfo->GetQuestId(),
                                     handler->GetSession()->GetPlayer()->GetQuestLevel(qInfo),
-                                    handler->GetSession()->GetPlayer()->GetQuestMinLevel(qInfo),
-                                    qInfo->GetQuestMaxScalingLevel(), qInfo->GetQuestScalingFactionGroup(),
+                                    qInfo->GetMinLevel(),
+                                    qInfo->GetQuestMaxScalingLevel(),
                                     title.c_str(), statusStr);
                             else
                                 handler->PSendSysMessage(LANG_QUEST_LIST_CONSOLE, qInfo->GetQuestId(), title.c_str(), statusStr);
@@ -712,8 +712,8 @@ public:
                 if (handler->GetSession())
                     handler->PSendSysMessage(LANG_QUEST_LIST_CHAT, qInfo->GetQuestId(), qInfo->GetQuestId(),
                         handler->GetSession()->GetPlayer()->GetQuestLevel(qInfo),
-                        handler->GetSession()->GetPlayer()->GetQuestMinLevel(qInfo),
-                        qInfo->GetQuestMaxScalingLevel(), qInfo->GetQuestScalingFactionGroup(),
+                        qInfo->GetMinLevel(),
+                        qInfo->GetQuestMaxScalingLevel(),
                         title.c_str(), statusStr);
                 else
                     handler->PSendSysMessage(LANG_QUEST_LIST_CONSOLE, qInfo->GetQuestId(), title.c_str(), statusStr);
