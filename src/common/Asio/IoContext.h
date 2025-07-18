@@ -49,6 +49,9 @@ namespace Trinity
 
 #if BOOST_VERSION >= 106600
             boost::asio::io_context::executor_type get_executor() noexcept { return _impl.get_executor(); }
+
+            bool stopped() const { return _impl.stopped(); }
+            void restart() { _impl.restart(); }
 #endif
 
         private:
