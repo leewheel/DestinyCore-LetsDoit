@@ -1100,6 +1100,26 @@ class TC_GAME_API Unit : public WorldObject
         void ApplyAttackTimePercentMod(WeaponAttackType att, float val, bool apply);
         void ApplyCastTimePercentMod(float val, bool apply);
 
+        bool HasUnitFlag(UnitFlags flags) const { return HasFlag(UNIT_FIELD_FLAGS, flags); }
+        void SetUnitFlag(UnitFlags flags) { SetFlag(UNIT_FIELD_FLAGS, flags); }
+        void RemoveUnitFlag(UnitFlags flags) { RemoveFlag(UNIT_FIELD_FLAGS, flags); }
+        void ReplaceAllUnitFlags(UnitFlags flags) { SetUInt32Value(UNIT_FIELD_FLAGS, flags); }
+
+        bool HasUnitFlag2(UnitFlags2 flags) const { return HasFlag(UNIT_FIELD_FLAGS_2, flags); }
+        void SetUnitFlag2(UnitFlags2 flags) { SetFlag(UNIT_FIELD_FLAGS_2, flags); }
+        void RemoveUnitFlag2(UnitFlags2 flags) { RemoveFlag(UNIT_FIELD_FLAGS_2, flags); }
+        void ReplaceAllUnitFlags2(UnitFlags2 flags) { SetUInt32Value(UNIT_FIELD_FLAGS_2, flags); }
+
+        bool HasUnitFlag3(UnitFlags3 flags) const { return HasFlag(UNIT_FIELD_FLAGS_3, flags); }
+        void SetUnitFlag3(UnitFlags3 flags) { SetFlag(UNIT_FIELD_FLAGS_3, flags); }
+        void RemoveUnitFlag3(UnitFlags3 flags) { RemoveFlag(UNIT_FIELD_FLAGS_3, flags); }
+        void ReplaceAllUnitFlags3(UnitFlags3 flags) { SetUInt32Value(UNIT_FIELD_FLAGS_3, flags); }
+
+        void SetCreatedBySpell(int32 spellId) { SetUInt32Value(UNIT_CREATED_BY_SPELL, spellId); }
+
+        Emote GetEmoteState() const { return Emote(GetUInt32Value(UNIT_NPC_EMOTESTATE)); }
+        void SetEmoteState(Emote emote) { SetUInt32Value(UNIT_NPC_EMOTESTATE, emote); }
+
         SheathState GetSheath() const { return SheathState(GetByteValue(UNIT_FIELD_BYTES_2, UNIT_BYTES_2_OFFSET_SHEATH_STATE)); }
         void SetSheath(SheathState sheathed) { SetByteValue(UNIT_FIELD_BYTES_2, UNIT_BYTES_2_OFFSET_SHEATH_STATE, sheathed); }
 
@@ -1226,11 +1246,13 @@ class TC_GAME_API Unit : public WorldObject
         bool IsInFlight()  const { return HasUnitState(UNIT_STATE_IN_FLIGHT); }
 
         bool IsInCombat()  const { return HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IN_COMBAT); }
+        bool IsPetInCombat() const { return HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PET_IN_COMBAT); }
         bool IsInCombatWith(Unit const* who) const;
         void CombatStart(Unit* target, bool initialAggro = true);
         void SetInCombatState(bool PvP, Unit* enemy = NULL);
         void SetInCombatWith(Unit* enemy);
         void ClearInCombat();
+        void ClearInPetCombat();
         uint32 GetCombatTimer() const { return m_CombatTimer; }
 
         bool HasAuraTypeWithFamilyFlags(AuraType auraType, uint32 familyName, uint32 familyFlags) const;
