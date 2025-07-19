@@ -135,7 +135,6 @@ namespace WorldPackets
                 {
                     uint32 BillingPlan = 0;
                     uint32 TimeRemain = 0;
-                    uint32 Unknown735 = 0;
                     bool InGameRoom = false;
                 };
 
