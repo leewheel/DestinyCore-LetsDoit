@@ -1,32 +1,30 @@
--- MySQL dump 10.16  Distrib 10.1.6-MariaDB, for Win64 (AMD64)
---
--- Host: localhost    Database: auth
--- ------------------------------------------------------
--- Server version	10.1.6-MariaDB
+/*
+SQLyog Community v13.1.9 (64 bit)
+MySQL - 5.7.40-log : Database - auth
+*********************************************************************
+*/
 
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8 */;
-/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
-/*!40103 SET TIME_ZONE='+00:00' */;
+
+/*!40101 SET SQL_MODE=''*/;
+
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+CREATE DATABASE /*!32312 IF NOT EXISTS*/`auth` /*!40100 DEFAULT CHARACTER SET utf8 */;
 
---
--- Table structure for table `account`
---
+USE `auth`;
+
+/*Table structure for table `account` */
 
 DROP TABLE IF EXISTS `account`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `account` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'Identifier',
   `username` varchar(32) NOT NULL DEFAULT '',
   `sha_pass_hash` varchar(40) NOT NULL DEFAULT '',
-  `sessionkey` varchar(80) NOT NULL DEFAULT '',
+  `sessionkey` varchar(128) NOT NULL DEFAULT '',
   `v` varchar(64) NOT NULL DEFAULT '',
   `s` varchar(64) NOT NULL DEFAULT '',
   `token_key` varchar(100) NOT NULL DEFAULT '',
@@ -54,48 +52,34 @@ CREATE TABLE `account` (
   UNIQUE KEY `uk_bnet_acc` (`battlenet_account`,`battlenet_index`),
   CONSTRAINT `fk_bnet_acc` FOREIGN KEY (`battlenet_account`) REFERENCES `battlenet_accounts` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Account System';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `account`
---
+/*Data for the table `account` */
 
 LOCK TABLES `account` WRITE;
-/*!40000 ALTER TABLE `account` DISABLE KEYS */;
-/*!40000 ALTER TABLE `account` ENABLE KEYS */;
+
 UNLOCK TABLES;
 
---
--- Table structure for table `account_access`
---
+/*Table structure for table `account_access` */
 
 DROP TABLE IF EXISTS `account_access`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `account_access` (
   `id` int(10) unsigned NOT NULL,
   `gmlevel` tinyint(3) unsigned NOT NULL,
   `RealmID` int(11) NOT NULL DEFAULT '-1',
   PRIMARY KEY (`id`,`RealmID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `account_access`
---
+/*Data for the table `account_access` */
 
 LOCK TABLES `account_access` WRITE;
-/*!40000 ALTER TABLE `account_access` DISABLE KEYS */;
-/*!40000 ALTER TABLE `account_access` ENABLE KEYS */;
+
 UNLOCK TABLES;
 
---
--- Table structure for table `account_banned`
---
+/*Table structure for table `account_banned` */
 
 DROP TABLE IF EXISTS `account_banned`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `account_banned` (
   `id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT 'Account id',
   `bandate` int(10) unsigned NOT NULL DEFAULT '0',
@@ -105,24 +89,17 @@ CREATE TABLE `account_banned` (
   `active` tinyint(3) unsigned NOT NULL DEFAULT '1',
   PRIMARY KEY (`id`,`bandate`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Ban List';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `account_banned`
---
+/*Data for the table `account_banned` */
 
 LOCK TABLES `account_banned` WRITE;
-/*!40000 ALTER TABLE `account_banned` DISABLE KEYS */;
-/*!40000 ALTER TABLE `account_banned` ENABLE KEYS */;
+
 UNLOCK TABLES;
 
---
--- Table structure for table `account_last_played_character`
---
+/*Table structure for table `account_last_played_character` */
 
 DROP TABLE IF EXISTS `account_last_played_character`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `account_last_played_character` (
   `accountId` int(10) unsigned NOT NULL,
   `region` tinyint(3) unsigned NOT NULL,
@@ -133,24 +110,17 @@ CREATE TABLE `account_last_played_character` (
   `lastPlayedTime` int(10) unsigned DEFAULT NULL,
   PRIMARY KEY (`accountId`,`region`,`battlegroup`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `account_last_played_character`
---
+/*Data for the table `account_last_played_character` */
 
 LOCK TABLES `account_last_played_character` WRITE;
-/*!40000 ALTER TABLE `account_last_played_character` DISABLE KEYS */;
-/*!40000 ALTER TABLE `account_last_played_character` ENABLE KEYS */;
+
 UNLOCK TABLES;
 
---
--- Table structure for table `account_muted`
---
+/*Table structure for table `account_muted` */
 
 DROP TABLE IF EXISTS `account_muted`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `account_muted` (
   `guid` int(10) unsigned NOT NULL DEFAULT '0' COMMENT 'Global Unique Identifier',
   `mutedate` int(10) unsigned NOT NULL DEFAULT '0',
@@ -159,24 +129,17 @@ CREATE TABLE `account_muted` (
   `mutereason` varchar(255) NOT NULL,
   PRIMARY KEY (`guid`,`mutedate`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='mute List';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `account_muted`
---
+/*Data for the table `account_muted` */
 
 LOCK TABLES `account_muted` WRITE;
-/*!40000 ALTER TABLE `account_muted` DISABLE KEYS */;
-/*!40000 ALTER TABLE `account_muted` ENABLE KEYS */;
+
 UNLOCK TABLES;
 
---
--- Table structure for table `autobroadcast`
---
+/*Table structure for table `autobroadcast` */
 
 DROP TABLE IF EXISTS `autobroadcast`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `autobroadcast` (
   `realmid` int(11) NOT NULL DEFAULT '-1',
   `id` tinyint(3) unsigned NOT NULL AUTO_INCREMENT,
@@ -184,24 +147,17 @@ CREATE TABLE `autobroadcast` (
   `text` longtext NOT NULL,
   PRIMARY KEY (`id`,`realmid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `autobroadcast`
---
+/*Data for the table `autobroadcast` */
 
 LOCK TABLES `autobroadcast` WRITE;
-/*!40000 ALTER TABLE `autobroadcast` DISABLE KEYS */;
-/*!40000 ALTER TABLE `autobroadcast` ENABLE KEYS */;
+
 UNLOCK TABLES;
 
---
--- Table structure for table `battle_pet_slots`
---
+/*Table structure for table `battle_pet_slots` */
 
 DROP TABLE IF EXISTS `battle_pet_slots`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `battle_pet_slots` (
   `id` tinyint(3) NOT NULL,
   `battlenetAccountId` int(10) NOT NULL,
@@ -209,24 +165,17 @@ CREATE TABLE `battle_pet_slots` (
   `locked` tinyint(3) NOT NULL DEFAULT '1',
   PRIMARY KEY (`id`,`battlenetAccountId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `battle_pet_slots`
---
+/*Data for the table `battle_pet_slots` */
 
 LOCK TABLES `battle_pet_slots` WRITE;
-/*!40000 ALTER TABLE `battle_pet_slots` DISABLE KEYS */;
-/*!40000 ALTER TABLE `battle_pet_slots` ENABLE KEYS */;
+
 UNLOCK TABLES;
 
---
--- Table structure for table `battle_pets`
---
+/*Table structure for table `battle_pets` */
 
 DROP TABLE IF EXISTS `battle_pets`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `battle_pets` (
   `guid` bigint(20) NOT NULL,
   `battlenetAccountId` int(10) NOT NULL,
@@ -240,24 +189,17 @@ CREATE TABLE `battle_pets` (
   `name` varchar(12) NOT NULL,
   PRIMARY KEY (`guid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `battle_pets`
---
+/*Data for the table `battle_pets` */
 
 LOCK TABLES `battle_pets` WRITE;
-/*!40000 ALTER TABLE `battle_pets` DISABLE KEYS */;
-/*!40000 ALTER TABLE `battle_pets` ENABLE KEYS */;
+
 UNLOCK TABLES;
 
---
--- Table structure for table `battlenet_account_bans`
---
+/*Table structure for table `battlenet_account_bans` */
 
 DROP TABLE IF EXISTS `battlenet_account_bans`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `battlenet_account_bans` (
   `id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT 'Account id',
   `bandate` int(10) unsigned NOT NULL DEFAULT '0',
@@ -266,96 +208,68 @@ CREATE TABLE `battlenet_account_bans` (
   `banreason` varchar(255) NOT NULL,
   PRIMARY KEY (`id`,`bandate`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Ban List';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `battlenet_account_bans`
---
+/*Data for the table `battlenet_account_bans` */
 
 LOCK TABLES `battlenet_account_bans` WRITE;
-/*!40000 ALTER TABLE `battlenet_account_bans` DISABLE KEYS */;
-/*!40000 ALTER TABLE `battlenet_account_bans` ENABLE KEYS */;
+
 UNLOCK TABLES;
 
---
--- Table structure for table `battlenet_account_heirlooms`
---
+/*Table structure for table `battlenet_account_heirlooms` */
 
 DROP TABLE IF EXISTS `battlenet_account_heirlooms`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `battlenet_account_heirlooms` (
   `accountId` int(10) unsigned NOT NULL,
   `itemId` int(11) unsigned NOT NULL DEFAULT '0',
   `flags` int(10) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`accountId`,`itemId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `battlenet_account_heirlooms`
---
+/*Data for the table `battlenet_account_heirlooms` */
 
 LOCK TABLES `battlenet_account_heirlooms` WRITE;
-/*!40000 ALTER TABLE `battlenet_account_heirlooms` DISABLE KEYS */;
-/*!40000 ALTER TABLE `battlenet_account_heirlooms` ENABLE KEYS */;
+
 UNLOCK TABLES;
 
---
--- Table structure for table `battlenet_account_mounts`
---
+/*Table structure for table `battlenet_account_mounts` */
 
 DROP TABLE IF EXISTS `battlenet_account_mounts`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `battlenet_account_mounts` (
   `battlenetAccountId` int(10) unsigned NOT NULL,
   `mountSpellId` int(10) unsigned NOT NULL,
   `flags` tinyint(3) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`battlenetAccountId`,`mountSpellId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `battlenet_account_mounts`
---
+/*Data for the table `battlenet_account_mounts` */
 
 LOCK TABLES `battlenet_account_mounts` WRITE;
-/*!40000 ALTER TABLE `battlenet_account_mounts` DISABLE KEYS */;
-/*!40000 ALTER TABLE `battlenet_account_mounts` ENABLE KEYS */;
+
 UNLOCK TABLES;
 
---
--- Table structure for table `battlenet_account_toys`
---
+/*Table structure for table `battlenet_account_toys` */
 
 DROP TABLE IF EXISTS `battlenet_account_toys`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `battlenet_account_toys` (
   `accountId` int(10) unsigned NOT NULL,
   `itemId` int(11) NOT NULL DEFAULT '0',
   `isFavourite` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`accountId`,`itemId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `battlenet_account_toys`
---
+/*Data for the table `battlenet_account_toys` */
 
 LOCK TABLES `battlenet_account_toys` WRITE;
-/*!40000 ALTER TABLE `battlenet_account_toys` DISABLE KEYS */;
-/*!40000 ALTER TABLE `battlenet_account_toys` ENABLE KEYS */;
+
 UNLOCK TABLES;
 
---
--- Table structure for table `battlenet_accounts`
---
+/*Table structure for table `battlenet_accounts` */
 
 DROP TABLE IF EXISTS `battlenet_accounts`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `battlenet_accounts` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'Identifier',
   `email` varchar(320) NOT NULL,
@@ -374,24 +288,17 @@ CREATE TABLE `battlenet_accounts` (
   `LoginTicketExpiry` int(10) unsigned DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Account System';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `battlenet_accounts`
---
+/*Data for the table `battlenet_accounts` */
 
 LOCK TABLES `battlenet_accounts` WRITE;
-/*!40000 ALTER TABLE `battlenet_accounts` DISABLE KEYS */;
-/*!40000 ALTER TABLE `battlenet_accounts` ENABLE KEYS */;
+
 UNLOCK TABLES;
 
---
--- Table structure for table `battlenet_item_appearances`
---
+/*Table structure for table `battlenet_item_appearances` */
 
 DROP TABLE IF EXISTS `battlenet_item_appearances`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `battlenet_item_appearances` (
   `battlenetAccountId` int(10) unsigned NOT NULL,
   `blobIndex` smallint(5) unsigned NOT NULL,
@@ -399,48 +306,34 @@ CREATE TABLE `battlenet_item_appearances` (
   PRIMARY KEY (`battlenetAccountId`,`blobIndex`),
   CONSTRAINT `fk_battlenet_item_appearances` FOREIGN KEY (`battlenetAccountId`) REFERENCES `battlenet_accounts` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `battlenet_item_appearances`
---
+/*Data for the table `battlenet_item_appearances` */
 
 LOCK TABLES `battlenet_item_appearances` WRITE;
-/*!40000 ALTER TABLE `battlenet_item_appearances` DISABLE KEYS */;
-/*!40000 ALTER TABLE `battlenet_item_appearances` ENABLE KEYS */;
+
 UNLOCK TABLES;
 
---
--- Table structure for table `battlenet_item_favorite_appearances`
---
+/*Table structure for table `battlenet_item_favorite_appearances` */
 
 DROP TABLE IF EXISTS `battlenet_item_favorite_appearances`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `battlenet_item_favorite_appearances` (
   `battlenetAccountId` int(10) unsigned NOT NULL,
   `itemModifiedAppearanceId` int(10) unsigned NOT NULL,
   PRIMARY KEY (`battlenetAccountId`,`itemModifiedAppearanceId`),
   CONSTRAINT `fk_battlenet_item_favorite_appearances` FOREIGN KEY (`battlenetAccountId`) REFERENCES `battlenet_accounts` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `battlenet_item_favorite_appearances`
---
+/*Data for the table `battlenet_item_favorite_appearances` */
 
 LOCK TABLES `battlenet_item_favorite_appearances` WRITE;
-/*!40000 ALTER TABLE `battlenet_item_favorite_appearances` DISABLE KEYS */;
-/*!40000 ALTER TABLE `battlenet_item_favorite_appearances` ENABLE KEYS */;
+
 UNLOCK TABLES;
 
---
--- Table structure for table `build_info`
---
+/*Table structure for table `build_info` */
 
 DROP TABLE IF EXISTS `build_info`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8mb4 */;
+
 CREATE TABLE `build_info` (
   `build` int(11) NOT NULL,
   `majorVersion` int(11) DEFAULT NULL,
@@ -454,15 +347,12 @@ CREATE TABLE `build_info` (
   `macChecksumSeed` varchar(40) DEFAULT NULL,
   PRIMARY KEY (`build`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `build_info`
---
+/*Data for the table `build_info` */
 
 LOCK TABLES `build_info` WRITE;
-/*!40000 ALTER TABLE `build_info` DISABLE KEYS */;
-INSERT INTO `build_info` VALUES
+
+insert  into `build_info`(`build`,`majorVersion`,`minorVersion`,`bugfixVersion`,`hotfixVersion`,`winAuthSeed`,`win64AuthSeed`,`mac64AuthSeed`,`winChecksumSeed`,`macChecksumSeed`) values 
 (5875,1,12,1,NULL,NULL,NULL,NULL,'95EDB27C7823B363CBDDAB56A392E7CB73FCCA20','8D173CC381961EEBABF336F5E6675B101BB513E5'),
 (6005,1,12,2,NULL,NULL,NULL,NULL,NULL,NULL),
 (6141,1,12,3,NULL,NULL,NULL,NULL,NULL,NULL),
@@ -535,28 +425,14 @@ INSERT INTO `build_info` VALUES
 (26654,7,3,5,NULL,'FAC2D693E702B9EC9F750F17245696D8','A752640E8B99FE5B57C1320BC492895A','9234C1BD5E9687ADBD19F764F2E0E811',NULL,NULL),
 (26822,7,3,5,NULL,'283E8D77ECF7060BE6347BE4EB99C7C7','2B05F6D746C0C6CC7EF79450B309E595','91003668C245D14ECD8DF094E065E06B',NULL,NULL),
 (26899,7,3,5,NULL,'F462CD2FE4EA3EADF875308FDBB18C99','3551EF0028B51E92170559BD25644B03','8368EFC2021329110A16339D298200D4',NULL,NULL),
-(26972,7,3,5,NULL,'797ECC19662DCBD5090A4481173F1D26','6E212DEF6A0124A3D9AD07F5E322F7AE','341CFEFE3D72ACA9A4407DC535DED66A',NULL,NULL),
-(28153,8,0,1,NULL,NULL,'DD626517CC6D31932B479934CCDC0ABF',NULL,NULL,NULL),
-(30706,8,1,5,NULL,NULL,'BB6D9866FE4A19A568015198783003FC',NULL,NULL,NULL),
-(30993,8,2,0,NULL,NULL,'2BAD61655ABC2FC3D04893B536403A91',NULL,NULL,NULL),
-(31229,8,2,0,NULL,NULL,'8A46F23670309F2AAE85C9A47276382B',NULL,NULL,NULL),
-(31429,8,2,0,NULL,NULL,'7795A507AF9DC3525EFF724FEE17E70C',NULL,NULL,NULL),
-(31478,8,2,0,NULL,NULL,'7973A8D54BDB8B798D9297B096E771EF',NULL,NULL,NULL),
-(32305,8,2,5,NULL,NULL,'21F5A6FC7AD89FBF411FDA8B8738186A',NULL,NULL,NULL),
-(32494,8,2,5,NULL,NULL,'58984ACE04919401835C61309A848F8A',NULL,NULL,NULL),
-(32580,8,2,5,NULL,NULL,'87C2FAA0D7931BF016299025C0DDCA14',NULL,NULL,NULL),
-(32638,8,2,5,NULL,NULL,'5D07ECE7D4A867DDDE615DAD22B76D4E',NULL,NULL,NULL),
-(32722,8,2,5,NULL,NULL,'1A09BE1D38A122586B4931BECCEAD4AA',NULL,NULL,NULL);
-/*!40000 ALTER TABLE `build_info` ENABLE KEYS */;
+(26972,7,3,5,NULL,'797ECC19662DCBD5090A4481173F1D26','6E212DEF6A0124A3D9AD07F5E322F7AE','341CFEFE3D72ACA9A4407DC535DED66A',NULL,NULL);
+
 UNLOCK TABLES;
 
---
--- Table structure for table `ip_banned`
---
+/*Table structure for table `ip_banned` */
 
 DROP TABLE IF EXISTS `ip_banned`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `ip_banned` (
   `ip` varchar(15) NOT NULL DEFAULT '127.0.0.1',
   `bandate` int(10) unsigned NOT NULL,
@@ -565,24 +441,17 @@ CREATE TABLE `ip_banned` (
   `banreason` varchar(255) NOT NULL DEFAULT 'no reason',
   PRIMARY KEY (`ip`,`bandate`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Banned IPs';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `ip_banned`
---
+/*Data for the table `ip_banned` */
 
 LOCK TABLES `ip_banned` WRITE;
-/*!40000 ALTER TABLE `ip_banned` DISABLE KEYS */;
-/*!40000 ALTER TABLE `ip_banned` ENABLE KEYS */;
+
 UNLOCK TABLES;
 
---
--- Table structure for table `logs`
---
+/*Table structure for table `logs` */
 
 DROP TABLE IF EXISTS `logs`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `logs` (
   `time` int(10) unsigned NOT NULL,
   `realm` int(10) unsigned NOT NULL,
@@ -590,24 +459,17 @@ CREATE TABLE `logs` (
   `level` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `string` text CHARACTER SET latin1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `logs`
---
+/*Data for the table `logs` */
 
 LOCK TABLES `logs` WRITE;
-/*!40000 ALTER TABLE `logs` DISABLE KEYS */;
-/*!40000 ALTER TABLE `logs` ENABLE KEYS */;
+
 UNLOCK TABLES;
 
---
--- Table structure for table `logs_ip_actions`
---
+/*Table structure for table `logs_ip_actions` */
 
 DROP TABLE IF EXISTS `logs_ip_actions`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `logs_ip_actions` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'Unique Identifier',
   `account_id` int(10) unsigned NOT NULL COMMENT 'Account ID',
@@ -620,24 +482,17 @@ CREATE TABLE `logs_ip_actions` (
   `comment` text COMMENT 'Allows users to add a comment',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Used to log ips of individual actions';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `logs_ip_actions`
---
+/*Data for the table `logs_ip_actions` */
 
 LOCK TABLES `logs_ip_actions` WRITE;
-/*!40000 ALTER TABLE `logs_ip_actions` DISABLE KEYS */;
-/*!40000 ALTER TABLE `logs_ip_actions` ENABLE KEYS */;
+
 UNLOCK TABLES;
 
---
--- Table structure for table `rbac_account_permissions`
---
+/*Table structure for table `rbac_account_permissions` */
 
 DROP TABLE IF EXISTS `rbac_account_permissions`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `rbac_account_permissions` (
   `accountId` int(10) unsigned NOT NULL COMMENT 'Account id',
   `permissionId` int(10) unsigned NOT NULL COMMENT 'Permission id',
@@ -648,24 +503,17 @@ CREATE TABLE `rbac_account_permissions` (
   CONSTRAINT `fk__rbac_account_permissions__account` FOREIGN KEY (`accountId`) REFERENCES `account` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk__rbac_account_roles__rbac_permissions` FOREIGN KEY (`permissionId`) REFERENCES `rbac_permissions` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Account-Permission relation';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `rbac_account_permissions`
---
+/*Data for the table `rbac_account_permissions` */
 
 LOCK TABLES `rbac_account_permissions` WRITE;
-/*!40000 ALTER TABLE `rbac_account_permissions` DISABLE KEYS */;
-/*!40000 ALTER TABLE `rbac_account_permissions` ENABLE KEYS */;
+
 UNLOCK TABLES;
 
---
--- Table structure for table `rbac_default_permissions`
---
+/*Table structure for table `rbac_default_permissions` */
 
 DROP TABLE IF EXISTS `rbac_default_permissions`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `rbac_default_permissions` (
   `secId` int(10) unsigned NOT NULL COMMENT 'Security Level id',
   `permissionId` int(10) unsigned NOT NULL COMMENT 'permission id',
@@ -674,29 +522,23 @@ CREATE TABLE `rbac_default_permissions` (
   KEY `fk__rbac_default_permissions__rbac_permissions` (`permissionId`),
   CONSTRAINT `fk__rbac_default_permissions__rbac_permissions` FOREIGN KEY (`permissionId`) REFERENCES `rbac_permissions` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Default permission to assign to different account security levels';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `rbac_default_permissions`
---
+/*Data for the table `rbac_default_permissions` */
 
 LOCK TABLES `rbac_default_permissions` WRITE;
-/*!40000 ALTER TABLE `rbac_default_permissions` DISABLE KEYS */;
-INSERT INTO `rbac_default_permissions` VALUES
-(0,195,-1),
-(1,194,-1),
+
+insert  into `rbac_default_permissions`(`secId`,`permissionId`,`realmId`) values 
+(3,192,-1),
 (2,193,-1),
-(3,192,-1);
-/*!40000 ALTER TABLE `rbac_default_permissions` ENABLE KEYS */;
+(1,194,-1),
+(0,195,-1);
+
 UNLOCK TABLES;
 
---
--- Table structure for table `rbac_linked_permissions`
---
+/*Table structure for table `rbac_linked_permissions` */
 
 DROP TABLE IF EXISTS `rbac_linked_permissions`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `rbac_linked_permissions` (
   `id` int(10) unsigned NOT NULL COMMENT 'Permission id',
   `linkedId` int(10) unsigned NOT NULL COMMENT 'Linked Permission id',
@@ -706,15 +548,12 @@ CREATE TABLE `rbac_linked_permissions` (
   CONSTRAINT `fk__rbac_linked_permissions__rbac_permissions1` FOREIGN KEY (`id`) REFERENCES `rbac_permissions` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk__rbac_linked_permissions__rbac_permissions2` FOREIGN KEY (`linkedId`) REFERENCES `rbac_permissions` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Permission - Linked Permission relation';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `rbac_linked_permissions`
---
+/*Data for the table `rbac_linked_permissions` */
 
 LOCK TABLES `rbac_linked_permissions` WRITE;
-/*!40000 ALTER TABLE `rbac_linked_permissions` DISABLE KEYS */;
-INSERT INTO `rbac_linked_permissions` VALUES
+
+insert  into `rbac_linked_permissions`(`id`,`linkedId`) values 
 (192,21),
 (192,42),
 (192,43),
@@ -749,6 +588,13 @@ INSERT INTO `rbac_linked_permissions` VALUES
 (192,851),
 (192,853),
 (192,854),
+(192,2000),
+(192,2001),
+(192,2002),
+(192,2004),
+(192,2005),
+(192,2006),
+(192,2007),
 (193,48),
 (193,194),
 (193,197),
@@ -1170,6 +1016,7 @@ INSERT INTO `rbac_linked_permissions` VALUES
 (196,842),
 (196,843),
 (196,869),
+(196,872),
 (197,232),
 (197,236),
 (197,237),
@@ -1256,6 +1103,8 @@ INSERT INTO `rbac_linked_permissions` VALUES
 (197,819),
 (197,821),
 (197,827),
+(197,2003),
+(197,2008),
 (198,218),
 (198,300),
 (198,312),
@@ -1382,30 +1231,24 @@ INSERT INTO `rbac_linked_permissions` VALUES
 (199,525),
 (199,534),
 (199,797);
-/*!40000 ALTER TABLE `rbac_linked_permissions` ENABLE KEYS */;
+
 UNLOCK TABLES;
 
---
--- Table structure for table `rbac_permissions`
---
+/*Table structure for table `rbac_permissions` */
 
 DROP TABLE IF EXISTS `rbac_permissions`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `rbac_permissions` (
   `id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT 'Permission id',
   `name` varchar(100) NOT NULL COMMENT 'Permission name',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Permission List';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `rbac_permissions`
---
+/*Data for the table `rbac_permissions` */
 
 LOCK TABLES `rbac_permissions` WRITE;
-/*!40000 ALTER TABLE `rbac_permissions` DISABLE KEYS */;
-INSERT INTO `rbac_permissions` VALUES
+
+insert  into `rbac_permissions`(`id`,`name`) values 
 (1,'Instant logout'),
 (2,'Skip Queue'),
 (3,'Join Normal Battleground'),
@@ -2090,17 +1933,24 @@ INSERT INTO `rbac_permissions` VALUES
 (853,'Command: .reload conversation_template'),
 (854,'Command: .debug conversation'),
 (868,'Command: modify power'),
-(869,'Command: debug send playerchoice');
-/*!40000 ALTER TABLE `rbac_permissions` ENABLE KEYS */;
+(869,'Command: debug send playerchoice'),
+(872,'Command: server debug'),
+(2000,'Command: .debug movementforce'),
+(2001,'Command: .debug movementforce apply'),
+(2002,'Command: .debug movementforce remove'),
+(2003,'Command: .list quests'),
+(2004,'Command: blackmarket'),
+(2005,'Command: blackmarket setduration'),
+(2006,'Command: npc reload'),
+(2007,'Command: lfg debug'),
+(2008,'Commands: ticket addon');
+
 UNLOCK TABLES;
 
---
--- Table structure for table `realmcharacters`
---
+/*Table structure for table `realmcharacters` */
 
 DROP TABLE IF EXISTS `realmcharacters`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `realmcharacters` (
   `realmid` int(10) unsigned NOT NULL DEFAULT '0',
   `acctid` int(10) unsigned NOT NULL,
@@ -2108,24 +1958,17 @@ CREATE TABLE `realmcharacters` (
   PRIMARY KEY (`realmid`,`acctid`),
   KEY `acctid` (`acctid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Realm Character Tracker';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `realmcharacters`
---
+/*Data for the table `realmcharacters` */
 
 LOCK TABLES `realmcharacters` WRITE;
-/*!40000 ALTER TABLE `realmcharacters` DISABLE KEYS */;
-/*!40000 ALTER TABLE `realmcharacters` ENABLE KEYS */;
+
 UNLOCK TABLES;
 
---
--- Table structure for table `realmlist`
---
+/*Table structure for table `realmlist` */
 
 DROP TABLE IF EXISTS `realmlist`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `realmlist` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(32) NOT NULL DEFAULT '',
@@ -2144,26 +1987,20 @@ CREATE TABLE `realmlist` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_name` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COMMENT='Realm System';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `realmlist`
---
+/*Data for the table `realmlist` */
 
 LOCK TABLES `realmlist` WRITE;
-/*!40000 ALTER TABLE `realmlist` DISABLE KEYS */;
-INSERT INTO `realmlist` VALUES
-(1,'Ashamane','127.0.0.1','127.0.0.1','255.255.255.0',8085,0,0,1,0,0,26972,1,1);
-/*!40000 ALTER TABLE `realmlist` ENABLE KEYS */;
+
+insert  into `realmlist`(`id`,`name`,`address`,`localAddress`,`localSubnetMask`,`port`,`icon`,`flag`,`timezone`,`allowedSecurityLevel`,`population`,`gamebuild`,`Region`,`Battlegroup`) values 
+(1,'Ashamane','127.0.0.1','127.0.0.1','255.255.255.0',8085,0,0,9,0,0,26972,1,1);
+
 UNLOCK TABLES;
 
---
--- Table structure for table `updates`
---
+/*Table structure for table `updates` */
 
 DROP TABLE IF EXISTS `updates`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `updates` (
   `name` varchar(200) NOT NULL COMMENT 'filename with extension of the update.',
   `hash` char(40) DEFAULT '' COMMENT 'sha1 hash of the sql file.',
@@ -2172,39 +2009,37 @@ CREATE TABLE `updates` (
   `speed` int(10) unsigned NOT NULL DEFAULT '0' COMMENT 'time the query takes to apply in ms.',
   PRIMARY KEY (`name`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='List of all applied updates in this database.';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Table structure for table `updates_include`
---
+/*Data for the table `updates` */
+
+LOCK TABLES `updates` WRITE;
+
+UNLOCK TABLES;
+
+/*Table structure for table `updates_include` */
 
 DROP TABLE IF EXISTS `updates_include`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `updates_include` (
   `path` varchar(200) NOT NULL COMMENT 'directory to include. $ means relative to the source directory.',
   `state` enum('RELEASED','ARCHIVED') NOT NULL DEFAULT 'RELEASED' COMMENT 'defines if the directory contains released or archived updates.',
   PRIMARY KEY (`path`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='List of directories where we want to include sql updates.';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `updates_include`
---
+/*Data for the table `updates_include` */
 
 LOCK TABLES `updates_include` WRITE;
-/*!40000 ALTER TABLE `updates_include` DISABLE KEYS */;
-INSERT INTO `updates_include` VALUES ('$/sql/ashamane/auth','RELEASED');
-/*!40000 ALTER TABLE `updates_include` ENABLE KEYS */;
+
+insert  into `updates_include`(`path`,`state`) values 
+('$/sql/updates/auth','RELEASED'),
+('$/sql/old/auth/2025','ARCHIVED');
+
 UNLOCK TABLES;
 
---
--- Table structure for table `uptime`
---
+/*Table structure for table `uptime` */
 
 DROP TABLE IF EXISTS `uptime`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
+
 CREATE TABLE `uptime` (
   `realmid` int(10) unsigned NOT NULL,
   `starttime` int(10) unsigned NOT NULL DEFAULT '0',
@@ -2213,24 +2048,17 @@ CREATE TABLE `uptime` (
   `revision` varchar(255) NOT NULL DEFAULT 'Trinitycore',
   PRIMARY KEY (`realmid`,`starttime`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Uptime system';
-/*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `uptime`
---
+/*Data for the table `uptime` */
 
 LOCK TABLES `uptime` WRITE;
-/*!40000 ALTER TABLE `uptime` DISABLE KEYS */;
-/*!40000 ALTER TABLE `uptime` ENABLE KEYS */;
+
+insert  into `uptime`(`realmid`,`starttime`,`uptime`,`maxplayers`,`revision`) values 
+(1,1752956523,0,0,'TrinityCore rev. 1c29c153e69b+ 2025-07-19 20:56:31 +0200 (master branch) (Win64, RelWithDebInfo, Static)');
+
 UNLOCK TABLES;
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
 /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
-
--- Dump completed on 2018-02-19 22:43:07
