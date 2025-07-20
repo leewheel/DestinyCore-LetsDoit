@@ -2230,6 +2230,12 @@ void Player::ResetAllPowers()
         case POWER_LUNAR_POWER:
             SetPower(POWER_LUNAR_POWER, 0);
             break;
+        case POWER_FURY:
+            SetPower(POWER_FURY, 0);
+            break;
+        case POWER_PAIN:
+            SetPower(POWER_PAIN, 0);
+            break;
         default:
             break;
     }
