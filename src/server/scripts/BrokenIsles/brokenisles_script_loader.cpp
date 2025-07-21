@@ -144,11 +144,11 @@ void AddSC_court_of_stars();
 void AddSC_instance_court_of_stars();
 
 //TheArcway
-void AddSC_freakz_instance_the_arcway();
-void AddSC_freakz_boss_general_xakal();
-void AddSC_freakz_boss_naltira();
-void AddSC_freakz_boss_ivanyr();
-void AddSC_freakz_boss_advisor_vandros();
+void AddSC_instance_the_arcway();
+void AddSC_boss_general_xakal();
+void AddSC_boss_naltira();
+void AddSC_boss_ivanyr();
+void AddSC_boss_advisor_vandros();
 
 // Seat of Triumvirate
 void AddSC_boss_zuraal_the_ascended();
@@ -188,6 +188,19 @@ void AddSC_boss_skorpyron();
 void AddSC_boss_chronomatic_anomaly();
 void AddSC_boss_trilliax();
 void AddSC_boss_aluriel();
+
+//KARAZHAN
+void AddSC_instance_new_karazhan();
+void AddSC_boss_maiden_of_virtue();
+void AddSC_boss_curator();
+void AddSC_boss_mana_devourer();
+void AddSC_boss_shade_of_medivh();
+void AddSC_boss_moroes();
+void AddSC_boss_attumen();
+void AddSC_boss_opera();
+void AddSC_boss_vizaduum();
+void AddSC_boss_nightbane();
+void AddSC_new_karazhan();
 
 // The name of this function should match:
 // void Add${NameOfDirectory}Scripts()
@@ -356,4 +369,17 @@ void AddBrokenIslesScripts()
     AddSC_boss_chronomatic_anomaly();
     AddSC_boss_trilliax();
     AddSC_boss_aluriel();
+  
+    //KARAZHAN
+    AddSC_instance_new_karazhan();
+    AddSC_boss_maiden_of_virtue();
+    AddSC_boss_curator();
+    AddSC_boss_mana_devourer();
+    AddSC_boss_shade_of_medivh();
+    AddSC_boss_moroes();
+    AddSC_boss_attumen();
+    AddSC_boss_opera();
+    AddSC_boss_vizaduum();
+    AddSC_boss_nightbane();
+    AddSC_new_karazhan();
 }
