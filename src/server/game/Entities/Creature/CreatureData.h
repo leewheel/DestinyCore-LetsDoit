@@ -568,6 +568,17 @@ struct CreatureAddon
     VisibilityDistanceType visibilityDistanceType;
 };
 
+// `creature_sparring_template` table
+struct CreatureSparring
+{
+    CreatureSparring(uint32 _victimEntry, float _healthLimitPct) : victimEntry(_victimEntry), healthLimitPct(_healthLimitPct) { }
+
+    uint32 victimEntry;
+    float healthLimitPct;
+
+    float GetHealthLimitPct() const { return healthLimitPct; }
+};
+
 // Vendors
 struct VendorItem
 {

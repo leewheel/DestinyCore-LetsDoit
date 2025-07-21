@@ -270,3 +270,20 @@ INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_
 (38910*100+1, 9, 5, 0, 0, 0, 100, 0, 0, 0, 0, 0, 53, 1, 3891001, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "Lilian Voss - On Script - Start Waypoint"),
 (38910*100+1, 9, 6, 0, 0, 0, 100, 0, 0, 0, 0, 0, 22, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "Lilian Voss - On Script - Set Event Phase 1");
 UPDATE creature_text SET emote = 18 WHERE CreatureID = 38910 AND GroupID = 0 AND ID = 0;
+UPDATE creature SET spawntimesecs = 60 WHERE id = 49428;
+UPDATE creature SET spawndist = 3, MovementType = 1 WHERE id IN (49422, 49423);
+DELETE FROM `smart_scripts` WHERE `entryorguid` IN (49422, 49423) AND `source_type` = 0;
+INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_type`, `event_phase_mask`, `event_chance`, `event_flags`, `event_param1`, `event_param2`, `event_param3`, `event_param4`, `action_type`, `action_param1`, `action_param2`, `action_param3`, `action_param4`, `action_param5`, `action_param6`, `target_type`, `target_param1`, `target_param2`, `target_param3`, `target_x`, `target_y`, `target_z`, `target_o`, `comment`) VALUES 
+(49422, 0, 0, 1, 2, 0, 100, 1, 0, 30, 0, 0, 11, 63227, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "Rotbrain Berserker - 0-30% HP - Cast Spell 'Enrage'"),
+(49422, 0, 1, 0, 61, 0, 100, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "Rotbrain Berserker - 0-30% HP (Link) - Say Text Line 0"),
+(49422, 0, 2, 0, 0, 0, 100, 0, 4000, 7000, 15000, 18000, 11, 79881, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, "Rotbrain Berserker - In Combat - Cast Spell 'Slam'"),
+(49422, 0, 3, 0, 25, 0, 100, 0, 0, 0, 0, 0, 49, 0, 0, 0, 0, 0, 0, 11, 49428, 50, 0, 0, 0, 0, 0, "Rotbrain Berserker - On Reset - Start Attack (Creature ID: 49428, 50 Yards)"),
+(49423, 0, 0, 0, 0, 0, 100, 0, 0, 0, 3400, 4700, 11, 9053, 64, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, "Rotbrain Magus - In Combat - Cast Spell 'Fireball'"),
+(49423, 0, 1, 0, 0, 0, 100, 0, 7000, 9000, 18000, 25000, 11, 11962, 1, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, "Rotbrain Magus - In Combat - Cast Spell 'Immolate'"),
+(49423, 0, 2, 0, 25, 0, 100, 0, 0, 0, 0, 0, 49, 0, 0, 0, 0, 0, 0, 11, 49428, 50, 0, 0, 0, 0, 0, "Rotbrain Magus - On Reset - Start Attack (Creature ID: 49428, 50 Yards)");
+DELETE FROM creature_sparring_template WHERE AttackerEntry IN (49428, 49422, 49423);
+INSERT INTO creature_sparring_template (AttackerEntry, VictimEntry, HealthLimitPct) VALUES
+(49428, 49422, 75),
+(49422, 49428, 75),
+(49428, 49423, 75),
+(49423, 49428, 75);
