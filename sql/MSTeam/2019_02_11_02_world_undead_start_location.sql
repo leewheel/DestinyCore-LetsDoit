@@ -270,7 +270,6 @@ INSERT INTO `smart_scripts` (`entryorguid`, `source_type`, `id`, `link`, `event_
 (38910*100+1, 9, 5, 0, 0, 0, 100, 0, 0, 0, 0, 0, 53, 1, 3891001, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "Lilian Voss - On Script - Start Waypoint"),
 (38910*100+1, 9, 6, 0, 0, 0, 100, 0, 0, 0, 0, 0, 22, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, "Lilian Voss - On Script - Set Event Phase 1");
 UPDATE creature_text SET emote = 18 WHERE CreatureID = 38910 AND GroupID = 0 AND ID = 0;
-UPDATE quest_template SET Flags = /*???*/1638400/*1572864*/ WHERE ID = 24970;
 UPDATE creature SET spawntimesecs = 60 WHERE id = 49428;
 DELETE FROM `creature_addon` WHERE `guid` IN (SELECT `guid` FROM `creature` WHERE `id` = 49428);
 DELETE FROM creature_template_addon WHERE entry = 49428;
