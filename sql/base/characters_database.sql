@@ -1138,7 +1138,7 @@ CREATE TABLE `character_recovery` (
   `spells` text NOT NULL,
   `at_login` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=50917 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 /*Data for the table `character_recovery` */
 
@@ -2952,7 +2952,7 @@ LOCK TABLES `updates_include` WRITE;
 
 insert  into `updates_include`(`path`,`state`) values 
 ('$/sql/updates/characters','RELEASED'),
-('$/sql/old/characters/2025','ARCHIVED');
+('$/sql/old/7/characters/2025','ARCHIVED');
 
 UNLOCK TABLES;
 

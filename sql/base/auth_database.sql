@@ -2032,7 +2032,7 @@ LOCK TABLES `updates_include` WRITE;
 
 insert  into `updates_include`(`path`,`state`) values 
 ('$/sql/updates/auth','RELEASED'),
-('$/sql/old/auth/2025','ARCHIVED');
+('$/sql/old/7/auth/2025','ARCHIVED');
 
 UNLOCK TABLES;
 
