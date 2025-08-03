@@ -608,6 +608,9 @@ update `creature_template` set `ScriptName` = "npc_korvas_2" where `entry` = 976
 update `creature_template` set `ScriptName` = "npc_altruis" where `entry` = 92986;
 update `creature_template` set `ScriptName` = "npc_altruis_cell" where `entry` = 103655;
 update `creature_template` set `ScriptName` = "npc_kayn_cell" where `entry` = 103658;
+update `creature_template` set `ScriptName` = "npc_khadgar" where `entry` = 97978;
+update `creature_template` set `ScriptName` = "npc_kayn_3" where `entry` = 96665;
+update `creature_template` set `ScriptName` = "npc_bastillax" where `entry` = 96783;
 
 DELETE FROM `creature_queststarter` WHERE `id` IN (92986);
 DELETE FROM `creature_questender` WHERE `id` IN (92986);
@@ -626,7 +629,28 @@ INSERT INTO `creature_questender` VALUES
 (96665, 38690), -- Kayn Sunfury, Rise of the Illidari
 (96665, 38723), -- Kayn Sunfury, Stop Gul'dan!
 (96665, 40253); -- Kayn Sunfury, Stop Gul'dan!
-
+DELETE FROM `creature_queststarter` WHERE `id` IN (96675);
+DELETE FROM `creature_questender` WHERE `id` IN (96675);
+INSERT INTO `creature_queststarter` VALUES
+(96675, 39686), -- Allari the Souleater, All The Way Up
+(96675, 39683), -- Allari the Souleater, Forged in Fire
+(96675, 40254); -- Allari the Souleater, Forged in Fire
+INSERT INTO `creature_questender` VALUES
+(96675, 39684), -- Allari the Souleater, Beam Me Up
+(96675, 39683), -- Allari the Souleater, Forged in Fire
+(96675, 40254), -- Allari the Souleater, Forged in Fire
+(96675, 39685); -- Allari the Souleater, Frozen in Time
+DELETE FROM `creature_queststarter` WHERE `id` IN (97644);
+DELETE FROM `creature_questender` WHERE `id` IN (97644);
+INSERT INTO `creature_queststarter` VALUES
+(97644, 40373), -- Kor'vas Bloodthorn, A New Direction
+(97644, 39688), -- Kor'vas Bloodthorn, Between Us and Freedom
+(97644, 39694), -- Kor'vas Bloodthorn, Between Us and Freedom
+(97644, 40255), -- Kor'vas Bloodthorn, Between Us and Freedom
+(97644, 40256); -- Kor'vas Bloodthorn, Between Us and Freedom
+INSERT INTO `creature_questender` VALUES
+(97644, 40373), -- Kor'vas Bloodthorn, A New Direction
+(97644, 39686); -- Kor'vas Bloodthorn, All The Way Up
 
 
 
