@@ -49,8 +49,8 @@ bool PetAI::_needToStop()
     // This is needed for charmed creatures, as once their target was reset other effects can trigger threat
     if (me->IsCharmed() && me->GetVictim() == me->GetCharmer())
         return true;
-
-    // dont allow pets to follow targets far away from owner
+	
+	// dont allow pets to follow targets far away from owner
     if (Unit* owner = me->GetCharmerOrOwner())
         if (owner->GetExactDist(me) >= (owner->GetVisibilityRange()-10.0f))
             return true;
@@ -446,8 +446,8 @@ void PetAI::HandleReturnMovement()
             me->GetMotionMaster()->MoveFollow(me->GetCharmerOrOwner(), PET_FOLLOW_DIST, me->GetFollowAngle());
         }
     }
-
-    me->ClearInPetCombat();
+	
+	me->ClearInPetCombat();
 }
 
 void PetAI::DoAttack(Unit* target, bool chase)
@@ -457,12 +457,12 @@ void PetAI::DoAttack(Unit* target, bool chase)
 
     if (me->Attack(target, true))
     {
-        // properly fix fake combat after pet is sent to attack
+		// properly fix fake combat after pet is sent to attack
         if (Unit* owner = me->GetOwner())
             owner->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PET_IN_COMBAT);
 
         me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PET_IN_COMBAT);
-
+		
         // Play sound to let the player know the pet is attacking something it picked on its own
         if (me->HasReactState(REACT_AGGRESSIVE) && !me->GetCharmInfo()->IsCommandAttack())
             me->SendPetAIReaction(me->GetGUID());
@@ -531,7 +531,6 @@ bool PetAI::CanAttack(Unit* target)
     if (!target->IsAlive())
     {
         // if target is invalid, pet should evade automaticly
-        // Clear target to prevent getting stuck on dead targets
         //me->AttackStop();
         //me->InterruptNonMeleeSpells(false);
         return false;
