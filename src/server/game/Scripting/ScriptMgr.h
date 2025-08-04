@@ -832,18 +832,18 @@ class TC_GAME_API PlayerScript : public UnitScript
         // Called when a charge recovery cooldown start for that player
         virtual void OnChargeRecoveryTimeStart(Player* /*player*/, uint32 /*chargeCategoryId*/, int32& /*chargeRecoveryTime*/) { }
 
-	//Called when a player Start ChallengeMode
+	    //Called when a player Start ChallengeMode
         virtual void OnStartChallengeMode(Player* /*player*/, uint8 /*level*/) { }
 
         virtual void OnCompleteQuestChoice(Player* /*player*/, uint32 /*choiceId*/, uint32 /*responseId*/) { }
 
-	// Called when a player UnsummonPetTemporary
+	    // Called when a player UnsummonPetTemporary
         virtual void OnUnsummonPetTemporary(Player* /*player*/) { }
 
         // Called when a player ResummonPetTemporary
         virtual void OnResummonPetTemporary(Player* /*player*/) { }
 		
-	// Called when a player Itemlevel changed
+	    // Called when a player Itemlevel changed
         virtual void OnItemLevelChange(Player* /*player*/) { }
 };
 
