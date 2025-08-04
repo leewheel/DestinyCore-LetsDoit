@@ -332,8 +332,15 @@ INSERT INTO `creature_text` (`CreatureID`, `GroupID`, `ID`, `Text`, `Type`, `Lan
 (448, 6, 0, "Nooooo...", 12, 0, 0, 0, 0, 0, 46938, 0, 'Hogger'),
 (46941, 0, 0, "Right away, General!", 12, 0, 0, 0, 0, 0, 147279, 0, 'High Sorcerer Andromath');
 
--- 179871 179874 179873 179877 179876
+-- Group#1
+-- 178787(l) 178789 178792 178795 178791 178794 178788 178790 178793
 
+-- Group#2
+-- 179871 179874 179873(l) 179877 179876 179869 178449 178448 178445
+
+-- WP Childs
+-- WP Murlocs
+-- WP Kobolds
 
 INSERT INTO `areatrigger` VALUES ('49', '100007', '1712', '245760', '-3442.35', '9521.4', '9.57194', '');
 INSERT INTO `areatrigger` VALUES ('48', '100010', '1669', '1', '-3217.97', '9423.45', '-172.491', '');
