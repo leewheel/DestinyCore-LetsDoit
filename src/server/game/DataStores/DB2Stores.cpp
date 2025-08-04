@@ -2461,3 +2461,9 @@ bool DB2Manager::MountTypeXCapabilityEntryComparator::Compare(MountTypeXCapabili
         return left->OrderIndex < right->OrderIndex;
     return left->MountTypeID < right->MountTypeID;
 }
+
+bool DB2Manager::HasItemBonusTree(uint32 itemId) const
+{
+    auto itemIdRange = _itemToBonusTree.equal_range(itemId);
+    return itemIdRange.first != itemIdRange.second;
+}

@@ -485,6 +485,7 @@ class TC_GAME_API Spell
         void EffectUpdateZoneAurasAndPhases(SpellEffIndex effIndex);
         void EffectGiveExperience(SpellEffIndex effIndex);
         void EffectIncreaseSkill(SpellEffIndex effIndex);
+	void EffectObliterateItem(SpellEffIndex effIndex);
         void EffectGiveArtifactPower(SpellEffIndex effIndex);
         void EffectGiveArtifactPowerNoBonus(SpellEffIndex effIndex);
         void EffectPlayScene(SpellEffIndex effIndex);
