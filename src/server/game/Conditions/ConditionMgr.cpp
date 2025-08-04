@@ -26,6 +26,7 @@
 #include "Group.h"
 #include "InstanceScript.h"
 #include "Item.h"
+#include "LFGMgr.h"
 #include "Log.h"
 #include "LootMgr.h"
 #include "Map.h"
@@ -2466,6 +2467,51 @@ inline bool PlayerConditionLogic(uint32 logic, std::array<bool, N>& results)
     }
 
     return result;
+}
+
+uint32 ConditionMgr::GetPlayerConditionLfgValue(Player const* player, PlayerConditionLfgStatus status)
+{
+    Group const* group = player->GetGroup();
+    if (!group)
+        return 0;
+
+    switch (status)
+    {
+    case PlayerConditionLfgStatus::InLFGDungeon:
+        return sLFGMgr->inLfgDungeonMap(player->GetGUID(), player->GetMapId(), player->GetMap()->GetDifficultyID()) ? 1 : 0;
+    case PlayerConditionLfgStatus::InLFGRandomDungeon:
+        return sLFGMgr->inLfgDungeonMap(player->GetGUID(), player->GetMapId(), player->GetMap()->GetDifficultyID()) &&
+            sLFGMgr->selectedRandomLfgDungeon(player->GetGUID()) ? 1 : 0;
+    case PlayerConditionLfgStatus::InLFGFirstRandomDungeon:
+    {
+        if (!sLFGMgr->inLfgDungeonMap(player->GetGUID(), player->GetMapId(), player->GetMap()->GetDifficultyID()))
+            return 0;
+
+        uint32 selectedRandomDungeon = sLFGMgr->GetSelectedRandomDungeon(player->GetGUID());
+        if (!selectedRandomDungeon)
+            return 0;
+
+        if (lfg::LfgReward const* reward = sLFGMgr->GetRandomDungeonReward(selectedRandomDungeon, player->getLevel()))
+            if (Quest const* quest = sObjectMgr->GetQuestTemplate(reward->firstQuest))
+                if (player->CanRewardQuest(quest, false))
+                    return 1;
+        return 0;
+    }
+    case PlayerConditionLfgStatus::PartialClear:
+        break;
+    case PlayerConditionLfgStatus::StrangerCount:
+        break;
+    case PlayerConditionLfgStatus::VoteKickCount:
+        break;
+    case PlayerConditionLfgStatus::BootCount:
+        break;
+    case PlayerConditionLfgStatus::GearDiff:
+        break;
+    default:
+        break;
+    }
+
+    return 0;
 }
 
 bool ConditionMgr::IsPlayerMeetingCondition(Player const* player, PlayerConditionEntry const* condition)

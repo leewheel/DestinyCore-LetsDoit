@@ -1572,3 +1572,5 @@ enum WorldStateExpressionFunctions
 
     WSE_FUNCTION_MAX,
 };
+
+#endif

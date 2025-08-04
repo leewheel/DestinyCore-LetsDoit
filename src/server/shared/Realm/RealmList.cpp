@@ -250,6 +250,15 @@ RealmBuildInfo const* RealmList::GetBuildInfo(uint32 build) const
     return nullptr;
 }
 
+uint32 RealmList::GetMinorMajorBugfixVersionForBuild(uint32 build) const
+{
+    auto buildInfo = std::lower_bound(_builds.begin(), _builds.end(), build, [](RealmBuildInfo const& buildInfo, uint32 value)
+        {
+            return buildInfo.Build < value;
+        });
+    return buildInfo != _builds.end() ? (buildInfo->MajorVersion * 10000 + buildInfo->MinorVersion * 100 + buildInfo->BugfixVersion) : 0;
+}
+
 void RealmList::WriteSubRegions(bgs::protocol::game_utilities::v1::GetAllValuesForAttributeResponse* response) const
 {
     boost::shared_lock<boost::shared_mutex> lock(*_realmsMutex);

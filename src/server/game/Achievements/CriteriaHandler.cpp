@@ -470,336 +470,336 @@ void CriteriaHandler::UpdateCriteria(CriteriaTypes type, uint64 miscValue1 /*= 0
         switch (type)
         {
             // std. case: increment at 1
-            case CRITERIA_TYPE_NUMBER_OF_TALENT_RESETS:
-            case CRITERIA_TYPE_LOSE_DUEL:
-            case CRITERIA_TYPE_CREATE_AUCTION:
-            case CRITERIA_TYPE_WON_AUCTIONS:    /* FIXME: for online player only currently */
-            case CRITERIA_TYPE_ROLL_NEED:
-            case CRITERIA_TYPE_ROLL_GREED:
-            case CRITERIA_TYPE_QUEST_ABANDONED:
-            case CRITERIA_TYPE_FLIGHT_PATHS_TAKEN:
-            case CRITERIA_TYPE_ACCEPTED_SUMMONINGS:
-            case CRITERIA_TYPE_LOOT_EPIC_ITEM:
-            case CRITERIA_TYPE_RECEIVE_EPIC_ITEM:
-            case CRITERIA_TYPE_DEATH:
-            case CRITERIA_TYPE_COMPLETE_DAILY_QUEST:
-            case CRITERIA_TYPE_DEATH_AT_MAP:
-            case CRITERIA_TYPE_DEATH_IN_DUNGEON:
-            case CRITERIA_TYPE_KILLED_BY_CREATURE:
-            case CRITERIA_TYPE_KILLED_BY_PLAYER:
-            case CRITERIA_TYPE_DEATHS_FROM:
-            case CRITERIA_TYPE_BE_SPELL_TARGET:
-            case CRITERIA_TYPE_BE_SPELL_TARGET2:
-            case CRITERIA_TYPE_CAST_SPELL:
-            case CRITERIA_TYPE_CAST_SPELL2:
-            case CRITERIA_TYPE_WIN_RATED_ARENA:
-            case CRITERIA_TYPE_USE_ITEM:
-            case CRITERIA_TYPE_ROLL_NEED_ON_LOOT:
-            case CRITERIA_TYPE_ROLL_GREED_ON_LOOT:
-            case CRITERIA_TYPE_DO_EMOTE:
-            case CRITERIA_TYPE_USE_GAMEOBJECT:
-            case CRITERIA_TYPE_FISH_IN_GAMEOBJECT:
-            case CRITERIA_TYPE_WIN_DUEL:
-            case CRITERIA_TYPE_HK_CLASS:
-            case CRITERIA_TYPE_HK_RACE:
-            case CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE:
-            case CRITERIA_TYPE_HONORABLE_KILL:
-            case CRITERIA_TYPE_SPECIAL_PVP_KILL:
-            case CRITERIA_TYPE_GET_KILLING_BLOWS:
-            case CRITERIA_TYPE_HONORABLE_KILL_AT_AREA:
-            case CRITERIA_TYPE_WIN_ARENA: // This also behaves like CRITERIA_TYPE_WIN_RATED_ARENA
-            case CRITERIA_TYPE_ON_LOGIN:
-            case CRITERIA_TYPE_PLACE_GARRISON_BUILDING:
-            case CRITERIA_TYPE_OWN_BATTLE_PET_COUNT:
-            case CRITERIA_TYPE_HONOR_LEVEL_REACHED:
-            case CRITERIA_TYPE_PRESTIGE_REACHED:
-                SetCriteriaProgress(criteria, 1, referencePlayer, PROGRESS_ACCUMULATE);
-                break;
+        case CRITERIA_TYPE_NUMBER_OF_TALENT_RESETS:
+        case CRITERIA_TYPE_LOSE_DUEL:
+        case CRITERIA_TYPE_CREATE_AUCTION:
+        case CRITERIA_TYPE_WON_AUCTIONS:    /* FIXME: for online player only currently */
+        case CRITERIA_TYPE_ROLL_NEED:
+        case CRITERIA_TYPE_ROLL_GREED:
+        case CRITERIA_TYPE_QUEST_ABANDONED:
+        case CRITERIA_TYPE_FLIGHT_PATHS_TAKEN:
+        case CRITERIA_TYPE_ACCEPTED_SUMMONINGS:
+        case CRITERIA_TYPE_LOOT_EPIC_ITEM:
+        case CRITERIA_TYPE_RECEIVE_EPIC_ITEM:
+        case CRITERIA_TYPE_DEATH:
+        case CRITERIA_TYPE_COMPLETE_DAILY_QUEST:
+        case CRITERIA_TYPE_DEATH_AT_MAP:
+        case CRITERIA_TYPE_DEATH_IN_DUNGEON:
+        case CRITERIA_TYPE_KILLED_BY_CREATURE:
+        case CRITERIA_TYPE_KILLED_BY_PLAYER:
+        case CRITERIA_TYPE_DEATHS_FROM:
+        case CRITERIA_TYPE_BE_SPELL_TARGET:
+        case CRITERIA_TYPE_BE_SPELL_TARGET2:
+        case CRITERIA_TYPE_CAST_SPELL:
+        case CRITERIA_TYPE_CAST_SPELL2:
+        case CRITERIA_TYPE_WIN_RATED_ARENA:
+        case CRITERIA_TYPE_USE_ITEM:
+        case CRITERIA_TYPE_ROLL_NEED_ON_LOOT:
+        case CRITERIA_TYPE_ROLL_GREED_ON_LOOT:
+        case CRITERIA_TYPE_DO_EMOTE:
+        case CRITERIA_TYPE_USE_GAMEOBJECT:
+        case CRITERIA_TYPE_FISH_IN_GAMEOBJECT:
+        case CRITERIA_TYPE_WIN_DUEL:
+        case CRITERIA_TYPE_HK_CLASS:
+        case CRITERIA_TYPE_HK_RACE:
+        case CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE:
+        case CRITERIA_TYPE_HONORABLE_KILL:
+        case CRITERIA_TYPE_SPECIAL_PVP_KILL:
+        case CRITERIA_TYPE_GET_KILLING_BLOWS:
+        case CRITERIA_TYPE_HONORABLE_KILL_AT_AREA:
+        case CRITERIA_TYPE_WIN_ARENA: // This also behaves like CRITERIA_TYPE_WIN_RATED_ARENA
+        case CRITERIA_TYPE_ON_LOGIN:
+        case CRITERIA_TYPE_PLACE_GARRISON_BUILDING:
+        case CRITERIA_TYPE_OWN_BATTLE_PET_COUNT:
+        case CRITERIA_TYPE_HONOR_LEVEL_REACHED:
+        case CRITERIA_TYPE_PRESTIGE_REACHED:
+            SetCriteriaProgress(criteria, 1, referencePlayer, PROGRESS_ACCUMULATE);
+            break;
             // std case: increment at miscValue1
-            case CRITERIA_TYPE_MONEY_FROM_VENDORS:
-            case CRITERIA_TYPE_GOLD_SPENT_FOR_TALENTS:
-            case CRITERIA_TYPE_MONEY_FROM_QUEST_REWARD:
-            case CRITERIA_TYPE_GOLD_SPENT_FOR_TRAVELLING:
-            case CRITERIA_TYPE_GOLD_SPENT_AT_BARBER:
-            case CRITERIA_TYPE_GOLD_SPENT_FOR_MAIL:
-            case CRITERIA_TYPE_LOOT_MONEY:
-            case CRITERIA_TYPE_GOLD_EARNED_BY_AUCTIONS:/* FIXME: for online player only currently */
-            case CRITERIA_TYPE_TOTAL_DAMAGE_RECEIVED:
-            case CRITERIA_TYPE_TOTAL_HEALING_RECEIVED:
-            case CRITERIA_TYPE_USE_LFD_TO_GROUP_WITH_PLAYERS:
-            case CRITERIA_TYPE_WIN_BG:
-            case CRITERIA_TYPE_COMPLETE_BATTLEGROUND:
-            case CRITERIA_TYPE_DAMAGE_DONE:
-            case CRITERIA_TYPE_HEALING_DONE:
-                SetCriteriaProgress(criteria, miscValue1, referencePlayer, PROGRESS_ACCUMULATE);
-                break;
-            case CRITERIA_TYPE_KILL_CREATURE:
-            case CRITERIA_TYPE_KILL_CREATURE_TYPE:
-            case CRITERIA_TYPE_LOOT_TYPE:
-            case CRITERIA_TYPE_OWN_ITEM:
-            case CRITERIA_TYPE_LOOT_ITEM:
-            case CRITERIA_TYPE_CURRENCY:
-                SetCriteriaProgress(criteria, miscValue2, referencePlayer, PROGRESS_ACCUMULATE);
-                break;
+        case CRITERIA_TYPE_MONEY_FROM_VENDORS:
+        case CRITERIA_TYPE_GOLD_SPENT_FOR_TALENTS:
+        case CRITERIA_TYPE_MONEY_FROM_QUEST_REWARD:
+        case CRITERIA_TYPE_GOLD_SPENT_FOR_TRAVELLING:
+        case CRITERIA_TYPE_GOLD_SPENT_AT_BARBER:
+        case CRITERIA_TYPE_GOLD_SPENT_FOR_MAIL:
+        case CRITERIA_TYPE_LOOT_MONEY:
+        case CRITERIA_TYPE_GOLD_EARNED_BY_AUCTIONS:/* FIXME: for online player only currently */
+        case CRITERIA_TYPE_TOTAL_DAMAGE_RECEIVED:
+        case CRITERIA_TYPE_TOTAL_HEALING_RECEIVED:
+        case CRITERIA_TYPE_USE_LFD_TO_GROUP_WITH_PLAYERS:
+        case CRITERIA_TYPE_WIN_BG:
+        case CRITERIA_TYPE_COMPLETE_BATTLEGROUND:
+        case CRITERIA_TYPE_DAMAGE_DONE:
+        case CRITERIA_TYPE_HEALING_DONE:
+            SetCriteriaProgress(criteria, miscValue1, referencePlayer, PROGRESS_ACCUMULATE);
+            break;
+        case CRITERIA_TYPE_KILL_CREATURE:
+        case CRITERIA_TYPE_KILL_CREATURE_TYPE:
+        case CRITERIA_TYPE_LOOT_TYPE:
+        case CRITERIA_TYPE_OWN_ITEM:
+        case CRITERIA_TYPE_LOOT_ITEM:
+        case CRITERIA_TYPE_CURRENCY:
+            SetCriteriaProgress(criteria, miscValue2, referencePlayer, PROGRESS_ACCUMULATE);
+            break;
             // std case: high value at miscValue1
-            case CRITERIA_TYPE_HIGHEST_AUCTION_BID:
-            case CRITERIA_TYPE_HIGHEST_AUCTION_SOLD: /* FIXME: for online player only currently */
-            case CRITERIA_TYPE_HIGHEST_HIT_DEALT:
-            case CRITERIA_TYPE_HIGHEST_HIT_RECEIVED:
-            case CRITERIA_TYPE_HIGHEST_HEAL_CAST:
-            case CRITERIA_TYPE_HIGHEST_HEALING_RECEIVED:
-                SetCriteriaProgress(criteria, miscValue1, referencePlayer, PROGRESS_HIGHEST);
-                break;
-            case CRITERIA_TYPE_REACH_LEVEL:
-                SetCriteriaProgress(criteria, referencePlayer->getLevel(), referencePlayer);
-                break;
-            case CRITERIA_TYPE_REACH_SKILL_LEVEL:
-                if (uint32 skillvalue = referencePlayer->GetBaseSkillValue(criteria->Entry->Asset.SkillID))
-                    SetCriteriaProgress(criteria, skillvalue, referencePlayer);
-                break;
-            case CRITERIA_TYPE_LEARN_SKILL_LEVEL:
-                if (uint32 maxSkillvalue = referencePlayer->GetPureMaxSkillValue(criteria->Entry->Asset.SkillID))
-                    SetCriteriaProgress(criteria, maxSkillvalue, referencePlayer);
-                break;
-            case CRITERIA_TYPE_COMPLETE_QUEST_COUNT:
-                SetCriteriaProgress(criteria, referencePlayer->GetRewardedQuestCount(), referencePlayer);
-                break;
-            case CRITERIA_TYPE_COMPLETE_DAILY_QUEST_DAILY:
+        case CRITERIA_TYPE_HIGHEST_AUCTION_BID:
+        case CRITERIA_TYPE_HIGHEST_AUCTION_SOLD: /* FIXME: for online player only currently */
+        case CRITERIA_TYPE_HIGHEST_HIT_DEALT:
+        case CRITERIA_TYPE_HIGHEST_HIT_RECEIVED:
+        case CRITERIA_TYPE_HIGHEST_HEAL_CAST:
+        case CRITERIA_TYPE_HIGHEST_HEALING_RECEIVED:
+            SetCriteriaProgress(criteria, miscValue1, referencePlayer, PROGRESS_HIGHEST);
+            break;
+        case CRITERIA_TYPE_REACH_LEVEL:
+            SetCriteriaProgress(criteria, referencePlayer->getLevel(), referencePlayer);
+            break;
+        case CRITERIA_TYPE_REACH_SKILL_LEVEL:
+            if (uint32 skillvalue = referencePlayer->GetBaseSkillValue(criteria->Entry->Asset.SkillID))
+                SetCriteriaProgress(criteria, skillvalue, referencePlayer);
+            break;
+        case CRITERIA_TYPE_LEARN_SKILL_LEVEL:
+            if (uint32 maxSkillvalue = referencePlayer->GetPureMaxSkillValue(criteria->Entry->Asset.SkillID))
+                SetCriteriaProgress(criteria, maxSkillvalue, referencePlayer);
+            break;
+        case CRITERIA_TYPE_COMPLETE_QUEST_COUNT:
+            SetCriteriaProgress(criteria, referencePlayer->GetRewardedQuestCount(), referencePlayer);
+            break;
+        case CRITERIA_TYPE_COMPLETE_DAILY_QUEST_DAILY:
+        {
+            time_t nextDailyResetTime = sWorld->GetNextDailyQuestsResetTime();
+            CriteriaProgress* progress = GetCriteriaProgress(criteria);
+
+            if (!miscValue1) // Login case.
             {
-                time_t nextDailyResetTime = sWorld->GetNextDailyQuestsResetTime();
-                CriteriaProgress *progress = GetCriteriaProgress(criteria);
-
-                if (!miscValue1) // Login case.
-                {
-                    // reset if player missed one day.
-                    if (progress && progress->Date < (nextDailyResetTime - 2 * DAY))
-                        SetCriteriaProgress(criteria, 0, referencePlayer, PROGRESS_SET);
-                    continue;
-                }
-
-                ProgressType progressType;
-                if (!progress)
-                    // 1st time. Start count.
-                    progressType = PROGRESS_SET;
-                else if (progress->Date < (nextDailyResetTime - 2 * DAY))
-                    // last progress is older than 2 days. Player missed 1 day => Restart count.
-                    progressType = PROGRESS_SET;
-                else if (progress->Date < (nextDailyResetTime - DAY))
-                    // last progress is between 1 and 2 days. => 1st time of the day.
-                    progressType = PROGRESS_ACCUMULATE;
-                else
-                    // last progress is within the day before the reset => Already counted today.
-                    continue;
-
-                SetCriteriaProgress(criteria, 1, referencePlayer, progressType);
-                break;
+                // reset if player missed one day.
+                if (progress && progress->Date < (nextDailyResetTime - 2 * DAY))
+                    SetCriteriaProgress(criteria, 0, referencePlayer, PROGRESS_SET);
+                continue;
             }
-            case CRITERIA_TYPE_COMPLETE_QUESTS_IN_ZONE:
-            {
-                if (miscValue1)
-                {
-                    SetCriteriaProgress(criteria, 1, referencePlayer, PROGRESS_ACCUMULATE);
-                }
-                else // login case
-                {
-                    uint32 counter = 0;
 
-                    const RewardedQuestSet& rewQuests = referencePlayer->getRewardedQuests();
-                    for (RewardedQuestSet::const_iterator itr = rewQuests.begin(); itr != rewQuests.end(); ++itr)
-                    {
-                        Quest const* quest = sObjectMgr->GetQuestTemplate(*itr);
-                        if (quest && quest->GetZoneOrSort() >= 0 && quest->GetZoneOrSort() == criteria->Entry->Asset.ZoneID)
+            ProgressType progressType;
+            if (!progress)
+                // 1st time. Start count.
+                progressType = PROGRESS_SET;
+            else if (progress->Date < (nextDailyResetTime - 2 * DAY))
+                // last progress is older than 2 days. Player missed 1 day => Restart count.
+                progressType = PROGRESS_SET;
+            else if (progress->Date < (nextDailyResetTime - DAY))
+                // last progress is between 1 and 2 days. => 1st time of the day.
+                progressType = PROGRESS_ACCUMULATE;
+            else
+                // last progress is within the day before the reset => Already counted today.
+                continue;
+
+            SetCriteriaProgress(criteria, 1, referencePlayer, progressType);
+            break;
+        }
+        case CRITERIA_TYPE_COMPLETE_QUESTS_IN_ZONE:
+        {
+            if (miscValue1)
+            {
+                SetCriteriaProgress(criteria, 1, referencePlayer, PROGRESS_ACCUMULATE);
+            }
+            else // login case
+            {
+                uint32 counter = 0;
+
+                const RewardedQuestSet& rewQuests = referencePlayer->getRewardedQuests();
+                for (RewardedQuestSet::const_iterator itr = rewQuests.begin(); itr != rewQuests.end(); ++itr)
+                {
+                    Quest const* quest = sObjectMgr->GetQuestTemplate(*itr);
+                    if (quest && quest->GetZoneOrSort() >= 0 && quest->GetZoneOrSort() == criteria->Entry->Asset.ZoneID)
 
                         ++counter;
-                    }
-                    SetCriteriaProgress(criteria, counter, referencePlayer, PROGRESS_HIGHEST);
-                break;
-            }
-            case CRITERIA_TYPE_FALL_WITHOUT_DYING:
-                // miscValue1 is the ingame fallheight*100 as stored in dbc
-                SetCriteriaProgress(criteria, miscValue1, referencePlayer);
-                break;
-            case CRITERIA_TYPE_COMPLETE_QUEST:
-            case CRITERIA_TYPE_LEARN_SPELL:
-            case CRITERIA_TYPE_EXPLORE_AREA:
-            case CRITERIA_TYPE_VISIT_BARBER_SHOP:
-            case CRITERIA_TYPE_EQUIP_EPIC_ITEM:
-            case CRITERIA_TYPE_EQUIP_ITEM:
-            case CRITERIA_TYPE_COMPLETE_ACHIEVEMENT:
-            case CRITERIA_TYPE_RECRUIT_GARRISON_FOLLOWER:
-            case CRITERIA_TYPE_OWN_BATTLE_PET:
-                SetCriteriaProgress(criteria, 1, referencePlayer);
-                break;
-            case CRITERIA_TYPE_BUY_BANK_SLOT:
-                SetCriteriaProgress(criteria, referencePlayer->GetBankBagSlotCount(), referencePlayer);
-                break;
-            case CRITERIA_TYPE_GAIN_REPUTATION:
-            {
-                int32 reputation = referencePlayer->GetReputationMgr().GetReputation(criteria->Entry->Asset.FactionID);
-                if (reputation > 0)
-                    SetCriteriaProgress(criteria, reputation, referencePlayer);
-                break;
-            }
-            case CRITERIA_TYPE_GAIN_EXALTED_REPUTATION:
-                SetCriteriaProgress(criteria, referencePlayer->GetReputationMgr().GetExaltedFactionCount(), referencePlayer);
-                break;
-            case CRITERIA_TYPE_LEARN_SKILLLINE_SPELLS:
-            case CRITERIA_TYPE_LEARN_SKILL_LINE:
-            {
-                uint32 spellCount = 0;
-                for (PlayerSpellMap::const_iterator spellIter = referencePlayer->GetSpellMap().begin();
-                    spellIter != referencePlayer->GetSpellMap().end();
-                    ++spellIter)
-                {
-                    SkillLineAbilityMapBounds bounds = sSpellMgr->GetSkillLineAbilityMapBounds(spellIter->first);
-                    for (SkillLineAbilityMap::const_iterator skillIter = bounds.first; skillIter != bounds.second; ++skillIter)
-                    {
-                        if (skillIter->second->SkillLine == int32(criteria->Entry->Asset.SkillID))
-                            spellCount++;
-                    }
                 }
-                SetCriteriaProgress(criteria, spellCount, referencePlayer);
+                SetCriteriaProgress(criteria, counter, referencePlayer, PROGRESS_HIGHEST);
                 break;
             }
-            case CRITERIA_TYPE_GAIN_REVERED_REPUTATION:
-                SetCriteriaProgress(criteria, referencePlayer->GetReputationMgr().GetReveredFactionCount(), referencePlayer);
-                break;
-            case CRITERIA_TYPE_GAIN_HONORED_REPUTATION:
-                SetCriteriaProgress(criteria, referencePlayer->GetReputationMgr().GetHonoredFactionCount(), referencePlayer);
-                break;
-            case CRITERIA_TYPE_KNOWN_FACTIONS:
-                SetCriteriaProgress(criteria, referencePlayer->GetReputationMgr().GetVisibleFactionCount(), referencePlayer);
-                break;
-            case CRITERIA_TYPE_EARN_HONORABLE_KILL:
-                SetCriteriaProgress(criteria, referencePlayer->GetUInt32Value(PLAYER_FIELD_LIFETIME_HONORABLE_KILLS), referencePlayer);
-                break;
-            case CRITERIA_TYPE_HIGHEST_GOLD_VALUE_OWNED:
-                SetCriteriaProgress(criteria, referencePlayer->GetMoney(), referencePlayer, PROGRESS_HIGHEST);
-                break;
-            case CRITERIA_TYPE_EARN_ACHIEVEMENT_POINTS:
-                if (!miscValue1)
-                    continue;
-                SetCriteriaProgress(criteria, miscValue1, referencePlayer, PROGRESS_ACCUMULATE);
-                break;
-            case CRITERIA_TYPE_HIGHEST_PERSONAL_RATING:
+        case CRITERIA_TYPE_FALL_WITHOUT_DYING:
+            // miscValue1 is the ingame fallheight*100 as stored in dbc
+            SetCriteriaProgress(criteria, miscValue1, referencePlayer);
+            break;
+        case CRITERIA_TYPE_COMPLETE_QUEST:
+        case CRITERIA_TYPE_LEARN_SPELL:
+        case CRITERIA_TYPE_EXPLORE_AREA:
+        case CRITERIA_TYPE_VISIT_BARBER_SHOP:
+        case CRITERIA_TYPE_EQUIP_EPIC_ITEM:
+        case CRITERIA_TYPE_EQUIP_ITEM:
+        case CRITERIA_TYPE_COMPLETE_ACHIEVEMENT:
+        case CRITERIA_TYPE_RECRUIT_GARRISON_FOLLOWER:
+        case CRITERIA_TYPE_OWN_BATTLE_PET:
+            SetCriteriaProgress(criteria, 1, referencePlayer);
+            break;
+        case CRITERIA_TYPE_BUY_BANK_SLOT:
+            SetCriteriaProgress(criteria, referencePlayer->GetBankBagSlotCount(), referencePlayer);
+            break;
+        case CRITERIA_TYPE_GAIN_REPUTATION:
+        {
+            int32 reputation = referencePlayer->GetReputationMgr().GetReputation(criteria->Entry->Asset.FactionID);
+            if (reputation > 0)
+                SetCriteriaProgress(criteria, reputation, referencePlayer);
+            break;
+        }
+        case CRITERIA_TYPE_GAIN_EXALTED_REPUTATION:
+            SetCriteriaProgress(criteria, referencePlayer->GetReputationMgr().GetExaltedFactionCount(), referencePlayer);
+            break;
+        case CRITERIA_TYPE_LEARN_SKILLLINE_SPELLS:
+        case CRITERIA_TYPE_LEARN_SKILL_LINE:
+        {
+            uint32 spellCount = 0;
+            for (PlayerSpellMap::const_iterator spellIter = referencePlayer->GetSpellMap().begin();
+                spellIter != referencePlayer->GetSpellMap().end();
+                ++spellIter)
             {
-                uint32 reqTeamType = criteria->Entry->Asset.TeamType;
+                SkillLineAbilityMapBounds bounds = sSpellMgr->GetSkillLineAbilityMapBounds(spellIter->first);
+                for (SkillLineAbilityMap::const_iterator skillIter = bounds.first; skillIter != bounds.second; ++skillIter)
+                {
+                    if (skillIter->second->SkillLine == int32(criteria->Entry->Asset.SkillID))
+                        spellCount++;
+                }
+            }
+            SetCriteriaProgress(criteria, spellCount, referencePlayer);
+            break;
+        }
+        case CRITERIA_TYPE_GAIN_REVERED_REPUTATION:
+            SetCriteriaProgress(criteria, referencePlayer->GetReputationMgr().GetReveredFactionCount(), referencePlayer);
+            break;
+        case CRITERIA_TYPE_GAIN_HONORED_REPUTATION:
+            SetCriteriaProgress(criteria, referencePlayer->GetReputationMgr().GetHonoredFactionCount(), referencePlayer);
+            break;
+        case CRITERIA_TYPE_KNOWN_FACTIONS:
+            SetCriteriaProgress(criteria, referencePlayer->GetReputationMgr().GetVisibleFactionCount(), referencePlayer);
+            break;
+        case CRITERIA_TYPE_EARN_HONORABLE_KILL:
+            SetCriteriaProgress(criteria, referencePlayer->GetUInt32Value(PLAYER_FIELD_LIFETIME_HONORABLE_KILLS), referencePlayer);
+            break;
+        case CRITERIA_TYPE_HIGHEST_GOLD_VALUE_OWNED:
+            SetCriteriaProgress(criteria, referencePlayer->GetMoney(), referencePlayer, PROGRESS_HIGHEST);
+            break;
+        case CRITERIA_TYPE_EARN_ACHIEVEMENT_POINTS:
+            if (!miscValue1)
+                continue;
+            SetCriteriaProgress(criteria, miscValue1, referencePlayer, PROGRESS_ACCUMULATE);
+            break;
+        case CRITERIA_TYPE_HIGHEST_PERSONAL_RATING:
+        {
+            uint32 reqTeamType = criteria->Entry->Asset.TeamType;
 
-                if (miscValue1)
-                {
-                    if (miscValue2 != reqTeamType)
-                        continue;
+            if (miscValue1)
+            {
+                if (miscValue2 != reqTeamType)
+                    continue;
 
-                    SetCriteriaProgress(criteria, miscValue1, referencePlayer, PROGRESS_HIGHEST);
-                }
-                else // login case
-                {
-                    for (uint8 arena_slot = 0; arena_slot < MAX_ARENA_SLOT; ++arena_slot)
-                        SetCriteriaProgress(criteria, referencePlayer->GetArenaPersonalRating(arena_slot), referencePlayer, PROGRESS_HIGHEST);
-                }
-                break;
+                SetCriteriaProgress(criteria, miscValue1, referencePlayer, PROGRESS_HIGHEST);
             }
-            case CRITERIA_TYPE_REACH_GUILD_LEVEL:
-                SetCriteriaProgress(criteria, miscValue1, referencePlayer);
-                break;
-            case CRITERIA_TYPE_TRANSMOG_SET_UNLOCKED:
-                if (miscValue1 != criteria->Entry->Asset.TransmogSetGroupID)
-                    continue;
-                SetCriteriaProgress(criteria, 1, referencePlayer, PROGRESS_ACCUMULATE);
-                break;
-            case CRITERIA_TYPE_APPEARANCE_UNLOCKED_BY_SLOT:
-                if (!miscValue2 /*login case*/ || miscValue1 != criteria->Entry->Asset.EquipmentSlot)
-                    continue;
-                SetCriteriaProgress(criteria, 1, referencePlayer, PROGRESS_ACCUMULATE);
-                break;
-            case CRITERIA_TYPE_COMPLETE_DUNGEON_ENCOUNTER:
-                if (miscValue1 != criteria->Entry->Asset.DungeonEncounterID)
-                    continue;
-                SetCriteriaProgress(criteria, 1, referencePlayer, PROGRESS_ACCUMULATE);
-                break;
-            case CRITERIA_TYPE_SEND_EVENT_SCENARIO:
-                if (miscValue1 != criteria->Entry->Asset.ScenarioEventID)
-                    continue;
-                SetCriteriaProgress(criteria, 1, referencePlayer);
-                break;
+            else // login case
+            {
+                for (uint8 arena_slot = 0; arena_slot < MAX_ARENA_SLOT; ++arena_slot)
+                    SetCriteriaProgress(criteria, referencePlayer->GetArenaPersonalRating(arena_slot), referencePlayer, PROGRESS_HIGHEST);
+            }
+            break;
+        }
+        case CRITERIA_TYPE_REACH_GUILD_LEVEL:
+            SetCriteriaProgress(criteria, miscValue1, referencePlayer);
+            break;
+        case CRITERIA_TYPE_TRANSMOG_SET_UNLOCKED:
+            if (miscValue1 != criteria->Entry->Asset.TransmogSetGroupID)
+                continue;
+            SetCriteriaProgress(criteria, 1, referencePlayer, PROGRESS_ACCUMULATE);
+            break;
+        case CRITERIA_TYPE_APPEARANCE_UNLOCKED_BY_SLOT:
+            if (!miscValue2 /*login case*/ || miscValue1 != criteria->Entry->Asset.EquipmentSlot)
+                continue;
+            SetCriteriaProgress(criteria, 1, referencePlayer, PROGRESS_ACCUMULATE);
+            break;
+        case CRITERIA_TYPE_COMPLETE_DUNGEON_ENCOUNTER:
+            if (miscValue1 != criteria->Entry->Asset.DungeonEncounterID)
+                continue;
+            SetCriteriaProgress(criteria, 1, referencePlayer, PROGRESS_ACCUMULATE);
+            break;
+        case CRITERIA_TYPE_SEND_EVENT_SCENARIO:
+            if (miscValue1 != criteria->Entry->Asset.ScenarioEventID)
+                continue;
+            SetCriteriaProgress(criteria, 1, referencePlayer);
+            break;
             // FIXME: not triggered in code as result, need to implement
-            case CRITERIA_TYPE_COMPLETE_RAID:
-            case CRITERIA_TYPE_PLAY_ARENA:
-            case CRITERIA_TYPE_HIGHEST_TEAM_RATING:
-            case CRITERIA_TYPE_OWN_RANK:
-            case CRITERIA_TYPE_SPENT_GOLD_GUILD_REPAIRS:
-            case CRITERIA_TYPE_CRAFT_ITEMS_GUILD:
-            case CRITERIA_TYPE_CATCH_FROM_POOL:
-            case CRITERIA_TYPE_BUY_GUILD_BANK_SLOTS:
-            case CRITERIA_TYPE_EARN_GUILD_ACHIEVEMENT_POINTS:
-            case CRITERIA_TYPE_WIN_RATED_BATTLEGROUND:
-            case CRITERIA_TYPE_REACH_BG_RATING:
-            case CRITERIA_TYPE_BUY_GUILD_TABARD:
-            case CRITERIA_TYPE_COMPLETE_QUESTS_GUILD:
-            case CRITERIA_TYPE_HONORABLE_KILLS_GUILD:
-            case CRITERIA_TYPE_KILL_CREATURE_TYPE_GUILD:
-            case CRITERIA_TYPE_COMPLETE_ARCHAEOLOGY_PROJECTS:
-            case CRITERIA_TYPE_COMPLETE_GUILD_CHALLENGE_TYPE:
-            case CRITERIA_TYPE_COMPLETE_GUILD_CHALLENGE:
-            case CRITERIA_TYPE_LFR_DUNGEONS_COMPLETED:
-            case CRITERIA_TYPE_LFR_LEAVES:
-            case CRITERIA_TYPE_LFR_VOTE_KICKS_INITIATED_BY_PLAYER:
-            case CRITERIA_TYPE_LFR_VOTE_KICKS_NOT_INIT_BY_PLAYER:
-            case CRITERIA_TYPE_BE_KICKED_FROM_LFR:
-            case CRITERIA_TYPE_COUNT_OF_LFR_QUEUE_BOOSTS_BY_TANK:
-            case CRITERIA_TYPE_COMPLETE_SCENARIO_COUNT:
-            case CRITERIA_TYPE_COMPLETE_SCENARIO:
-            case CRITERIA_TYPE_CAPTURE_BATTLE_PET:
-            case CRITERIA_TYPE_WIN_PET_BATTLE:
-            case CRITERIA_TYPE_LEVEL_BATTLE_PET:
-            case CRITERIA_TYPE_CAPTURE_BATTLE_PET_CREDIT:
-            case CRITERIA_TYPE_LEVEL_BATTLE_PET_CREDIT:
-            case CRITERIA_TYPE_ENTER_AREA:
-            case CRITERIA_TYPE_LEAVE_AREA:
-            case CRITERIA_TYPE_UPGRADE_GARRISON_BUILDING:
-            case CRITERIA_TYPE_CONSTRUCT_GARRISON_BUILDING:
-            case CRITERIA_TYPE_UPGRADE_GARRISON:
-            case CRITERIA_TYPE_START_GARRISON_MISSION:
-            case CRITERIA_TYPE_COMPLETE_GARRISON_MISSION_COUNT:
-            case CRITERIA_TYPE_COMPLETE_GARRISON_MISSION:
-            case CRITERIA_TYPE_RECRUIT_GARRISON_FOLLOWER_COUNT:
-            case CRITERIA_TYPE_LEARN_GARRISON_BLUEPRINT_COUNT:
-            case CRITERIA_TYPE_COMPLETE_GARRISON_SHIPMENT:
-            case CRITERIA_TYPE_RAISE_GARRISON_FOLLOWER_ITEM_LEVEL:
-            case CRITERIA_TYPE_RAISE_GARRISON_FOLLOWER_LEVEL:
-            case CRITERIA_TYPE_OWN_TOY:
-            case CRITERIA_TYPE_OWN_TOY_COUNT:
-            case CRITERIA_TYPE_OWN_HEIRLOOMS:
-            case CRITERIA_TYPE_SURVEY_GAMEOBJECT:
-            case CRITERIA_TYPE_CLEAR_DIGSITE:
-            case CRITERIA_TYPE_MANUAL_COMPLETE_CRITERIA:
-            case CRITERIA_TYPE_COMPLETE_CHALLENGE_MODE_GUILD:
-            case CRITERIA_TYPE_DEFEAT_CREATURE_GROUP:
-            case CRITERIA_TYPE_COMPLETE_CHALLENGE_MODE:
-            case CRITERIA_TYPE_SEND_EVENT:
-            case CRITERIA_TYPE_COOK_RECIPES_GUILD:
-            case CRITERIA_TYPE_EARN_PET_BATTLE_ACHIEVEMENT_POINTS:
-            case CRITERIA_TYPE_RELEASE_SPIRIT:
-            case CRITERIA_TYPE_OWN_PET:
-            case CRITERIA_TYPE_GARRISON_COMPLETE_DUNGEON_ENCOUNTER:
-            case CRITERIA_TYPE_COMPLETE_LFG_DUNGEON:
-            case CRITERIA_TYPE_LFG_VOTE_KICKS_INITIATED_BY_PLAYER:
-            case CRITERIA_TYPE_LFG_VOTE_KICKS_NOT_INIT_BY_PLAYER:
-            case CRITERIA_TYPE_BE_KICKED_FROM_LFG:
-            case CRITERIA_TYPE_LFG_LEAVES:
-            case CRITERIA_TYPE_COUNT_OF_LFG_QUEUE_BOOSTS_BY_TANK:
-            case CRITERIA_TYPE_REACH_AREATRIGGER_WITH_ACTIONSET:
-            case CRITERIA_TYPE_START_ORDER_HALL_MISSION:
-            case CRITERIA_TYPE_RECRUIT_GARRISON_FOLLOWER_WITH_QUALITY:
-            case CRITERIA_TYPE_ARTIFACT_POWER_EARNED:
-            case CRITERIA_TYPE_ARTIFACT_TRAITS_UNLOCKED:
-            case CRITERIA_TYPE_ORDER_HALL_TALENT_LEARNED:
-            case CRITERIA_TYPE_ORDER_HALL_RECRUIT_TROOP:
-            case CRITERIA_TYPE_COMPLETE_WORLD_QUEST:
-            case CRITERIA_TYPE_GAIN_PARAGON_REPUTATION:
-            case CRITERIA_TYPE_EARN_HONOR_XP:
-            case CRITERIA_TYPE_RELIC_TALENT_UNLOCKED:
-                break;                                   // Not implemented yet :(
+        case CRITERIA_TYPE_COMPLETE_RAID:
+        case CRITERIA_TYPE_PLAY_ARENA:
+        case CRITERIA_TYPE_HIGHEST_TEAM_RATING:
+        case CRITERIA_TYPE_OWN_RANK:
+        case CRITERIA_TYPE_SPENT_GOLD_GUILD_REPAIRS:
+        case CRITERIA_TYPE_CRAFT_ITEMS_GUILD:
+        case CRITERIA_TYPE_CATCH_FROM_POOL:
+        case CRITERIA_TYPE_BUY_GUILD_BANK_SLOTS:
+        case CRITERIA_TYPE_EARN_GUILD_ACHIEVEMENT_POINTS:
+        case CRITERIA_TYPE_WIN_RATED_BATTLEGROUND:
+        case CRITERIA_TYPE_REACH_BG_RATING:
+        case CRITERIA_TYPE_BUY_GUILD_TABARD:
+        case CRITERIA_TYPE_COMPLETE_QUESTS_GUILD:
+        case CRITERIA_TYPE_HONORABLE_KILLS_GUILD:
+        case CRITERIA_TYPE_KILL_CREATURE_TYPE_GUILD:
+        case CRITERIA_TYPE_COMPLETE_ARCHAEOLOGY_PROJECTS:
+        case CRITERIA_TYPE_COMPLETE_GUILD_CHALLENGE_TYPE:
+        case CRITERIA_TYPE_COMPLETE_GUILD_CHALLENGE:
+        case CRITERIA_TYPE_LFR_DUNGEONS_COMPLETED:
+        case CRITERIA_TYPE_LFR_LEAVES:
+        case CRITERIA_TYPE_LFR_VOTE_KICKS_INITIATED_BY_PLAYER:
+        case CRITERIA_TYPE_LFR_VOTE_KICKS_NOT_INIT_BY_PLAYER:
+        case CRITERIA_TYPE_BE_KICKED_FROM_LFR:
+        case CRITERIA_TYPE_COUNT_OF_LFR_QUEUE_BOOSTS_BY_TANK:
+        case CRITERIA_TYPE_COMPLETE_SCENARIO_COUNT:
+        case CRITERIA_TYPE_COMPLETE_SCENARIO:
+        case CRITERIA_TYPE_CAPTURE_BATTLE_PET:
+        case CRITERIA_TYPE_WIN_PET_BATTLE:
+        case CRITERIA_TYPE_LEVEL_BATTLE_PET:
+        case CRITERIA_TYPE_CAPTURE_BATTLE_PET_CREDIT:
+        case CRITERIA_TYPE_LEVEL_BATTLE_PET_CREDIT:
+        case CRITERIA_TYPE_ENTER_AREA:
+        case CRITERIA_TYPE_LEAVE_AREA:
+        case CRITERIA_TYPE_UPGRADE_GARRISON_BUILDING:
+        case CRITERIA_TYPE_CONSTRUCT_GARRISON_BUILDING:
+        case CRITERIA_TYPE_UPGRADE_GARRISON:
+        case CRITERIA_TYPE_START_GARRISON_MISSION:
+        case CRITERIA_TYPE_COMPLETE_GARRISON_MISSION_COUNT:
+        case CRITERIA_TYPE_COMPLETE_GARRISON_MISSION:
+        case CRITERIA_TYPE_RECRUIT_GARRISON_FOLLOWER_COUNT:
+        case CRITERIA_TYPE_LEARN_GARRISON_BLUEPRINT_COUNT:
+        case CRITERIA_TYPE_COMPLETE_GARRISON_SHIPMENT:
+        case CRITERIA_TYPE_RAISE_GARRISON_FOLLOWER_ITEM_LEVEL:
+        case CRITERIA_TYPE_RAISE_GARRISON_FOLLOWER_LEVEL:
+        case CRITERIA_TYPE_OWN_TOY:
+        case CRITERIA_TYPE_OWN_TOY_COUNT:
+        case CRITERIA_TYPE_OWN_HEIRLOOMS:
+        case CRITERIA_TYPE_SURVEY_GAMEOBJECT:
+        case CRITERIA_TYPE_CLEAR_DIGSITE:
+        case CRITERIA_TYPE_MANUAL_COMPLETE_CRITERIA:
+        case CRITERIA_TYPE_COMPLETE_CHALLENGE_MODE_GUILD:
+        case CRITERIA_TYPE_DEFEAT_CREATURE_GROUP:
+        case CRITERIA_TYPE_COMPLETE_CHALLENGE_MODE:
+        case CRITERIA_TYPE_SEND_EVENT:
+        case CRITERIA_TYPE_COOK_RECIPES_GUILD:
+        case CRITERIA_TYPE_EARN_PET_BATTLE_ACHIEVEMENT_POINTS:
+        case CRITERIA_TYPE_RELEASE_SPIRIT:
+        case CRITERIA_TYPE_OWN_PET:
+        case CRITERIA_TYPE_GARRISON_COMPLETE_DUNGEON_ENCOUNTER:
+        case CRITERIA_TYPE_COMPLETE_LFG_DUNGEON:
+        case CRITERIA_TYPE_LFG_VOTE_KICKS_INITIATED_BY_PLAYER:
+        case CRITERIA_TYPE_LFG_VOTE_KICKS_NOT_INIT_BY_PLAYER:
+        case CRITERIA_TYPE_BE_KICKED_FROM_LFG:
+        case CRITERIA_TYPE_LFG_LEAVES:
+        case CRITERIA_TYPE_COUNT_OF_LFG_QUEUE_BOOSTS_BY_TANK:
+        case CRITERIA_TYPE_REACH_AREATRIGGER_WITH_ACTIONSET:
+        case CRITERIA_TYPE_START_ORDER_HALL_MISSION:
+        case CRITERIA_TYPE_RECRUIT_GARRISON_FOLLOWER_WITH_QUALITY:
+        case CRITERIA_TYPE_ARTIFACT_POWER_EARNED:
+        case CRITERIA_TYPE_ARTIFACT_TRAITS_UNLOCKED:
+        case CRITERIA_TYPE_ORDER_HALL_TALENT_LEARNED:
+        case CRITERIA_TYPE_ORDER_HALL_RECRUIT_TROOP:
+        case CRITERIA_TYPE_COMPLETE_WORLD_QUEST:
+        case CRITERIA_TYPE_GAIN_PARAGON_REPUTATION:
+        case CRITERIA_TYPE_EARN_HONOR_XP:
+        case CRITERIA_TYPE_RELIC_TALENT_UNLOCKED:
+            break;                                   // Not implemented yet :(
         }
 
         for (CriteriaTree const* tree : *trees)
@@ -808,6 +808,7 @@ void CriteriaHandler::UpdateCriteria(CriteriaTypes type, uint64 miscValue1 /*= 0
                 CompletedCriteriaTree(tree, referencePlayer);
 
             AfterCriteriaTreeUpdate(tree, referencePlayer);
+        }
         }
     }
 }
@@ -1580,28 +1581,29 @@ bool CriteriaHandler::ModifierTreeSatisfied(ModifierTreeNode const* tree, uint64
 {
     switch (ModifierTreeOperator(tree->Entry->Operator))
     {
-        case ModifierTreeOperator::SingleTrue:
-            return tree->Entry->Type && ModifierSatisfied(tree->Entry, miscValue1, miscValue2, unit, referencePlayer);
-        case ModifierTreeOperator::SingleFalse:
-            return tree->Entry->Type && !ModifierSatisfied(tree->Entry, miscValue1, miscValue2, unit, referencePlayer);
-        case ModifierTreeOperator::All:
-            for (ModifierTreeNode const* node : tree->Children)
-                if (!ModifierTreeSatisfied(node, miscValue1, miscValue2, unit, referencePlayer))
-                    return false;
-            return true;
-        case ModifierTreeOperator::Some:
-        {
-            int8 requiredAmount = std::max<int8>(tree->Entry->Amount, 1);
-            for (ModifierTreeNode const* node : tree->Children)
-                if (ModifierTreeSatisfied(node, miscValue1, miscValue2, unit, referencePlayer))
-                    if (!--requiredAmount)
-                        return true;
+    case ModifierTreeOperator::SingleTrue:
+        return tree->Entry->Type && ModifierSatisfied(tree->Entry, miscValue1, miscValue2, unit, referencePlayer);
+    case ModifierTreeOperator::SingleFalse:
+        return tree->Entry->Type && !ModifierSatisfied(tree->Entry, miscValue1, miscValue2, unit, referencePlayer);
+    case ModifierTreeOperator::All:
+        for (ModifierTreeNode const* node : tree->Children)
+            if (!ModifierTreeSatisfied(node, miscValue1, miscValue2, unit, referencePlayer))
+                return false;
+        return true;
+    case ModifierTreeOperator::Some:
+    {
+        int8 requiredAmount = std::max<int8>(tree->Entry->Amount, 1);
+        for (ModifierTreeNode const* node : tree->Children)
+            if (ModifierTreeSatisfied(node, miscValue1, miscValue2, unit, referencePlayer))
+                if (!--requiredAmount)
+                    return true;
 
-            return false;
-        }
-        default:
-            break;
+        return false;
     }
+    default:
+        break;
+    }
+}
 
 bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint64 miscValue1, uint64 miscValue2, Unit const* unit, Player* referencePlayer) const
 {
@@ -1613,8 +1615,7 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
     {
         case CRITERIA_ADDITIONAL_CONDITION_SOURCE_DRUNK_VALUE: // 1
         {
-            uint32 inebriation = std::min(std::max<uint32>(referencePlayer->GetDrunkValue(), *referencePlayer->m_playerData->FakeInebriation), 100u);
-            if (inebriation < reqValue)
+            if (referencePlayer->GetDrunkValue() < reqValue)
                 return false;
             break;
         }
@@ -1900,8 +1901,8 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
                 return false;
             break;
         case CRITERIA_ADDITIONAL_CONDITION_WORLD_STATE_EXPRESSION: // 67
-            if (WorldStateExpressionEntry const* worldStateExpression = sWorldStateExpressionStore.LookupEntry(reqValue))
-                return ConditionMgr::IsPlayerMeetingExpression(referencePlayer, worldStateExpression);
+            //if (WorldStateExpressionEntry const* worldStateExpression = sWorldStateExpressionStore.LookupEntry(reqValue))
+            //    return ConditionMgr::IsPlayerMeetingExpression(referencePlayer, worldStateExpression); @toDo
             return false;
         case CRITERIA_ADDITIONAL_CONDITION_MAP_DIFFICULTY: // 68
         {
@@ -1985,8 +1986,8 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
                 return false;
             break;
         case CRITERIA_ADDITIONAL_CONDITION_SOURCE_NATIVE_SEX: // 98
-            if (referencePlayer->m_playerData->NativeSex != uint8(reqValue))
-                return false;
+            //if (referencePlayer->m_playerData->NativeSex != uint8(reqValue))
+            //    return false; @toDo
             break;
         case CRITERIA_ADDITIONAL_CONDITION_SKILL: // 99
             if (referencePlayer->GetPureSkillValue(reqValue) < uint16(secondaryAsset))
@@ -2017,15 +2018,6 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
                 return false;
             break;
         case CRITERIA_ADDITIONAL_CONDITION_REWARDED_QUEST: // 110
-            if (uint32 questBit = sDB2Manager.GetQuestUniqueBitFlag(reqValue))
-                if (!(referencePlayer->m_activePlayerData->QuestCompleted[((questBit - 1) >> 6)] & (UI64LIT(1) << ((questBit - 1) & 63))))
-                    return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_COMPLETED_QUEST: // 111
-            if (referencePlayer->GetQuestStatus(reqValue) != QUEST_STATUS_COMPLETE)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_REWARDED_QUEST: // 110
             if (!referencePlayer->GetQuestRewardStatus(reqValue))
                 return false;
             break;
@@ -2033,7 +2025,7 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
             if (referencePlayer->GetQuestStatus(reqValue) != QUEST_STATUS_COMPLETE)
                 return false;
             break;
-        case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWER_ENTRY: // 144
+        case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWER_WITH_TRAIT: // 144
         {
             if (!referencePlayer)
                 return false;
@@ -2047,7 +2039,7 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
 
             return false;
         }
-        case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWER_QUALITY: // 145
+        case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWER_ABOVE_QUALITY_WOD: // 145
         {
             if (!referencePlayer)
                 return false;
@@ -2061,7 +2053,7 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
 
             return false;
         }
-        case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWER_LEVEL: // 146
+        case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWER_EQUAL_LEVEL: // 146
         {
             if (!referencePlayer)
                 return false;
@@ -2075,7 +2067,7 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
 
             return false;
         }
-        case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWER_ILVL: // 184
+        case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWERS_ITEM_LEVEL_ABOVE: // 184
         {
             if (!referencePlayer)
                 return false;

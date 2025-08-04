@@ -210,13 +210,6 @@ enum Objects
     DATA_PRIESTESS_LUNASPYRE,
 };
 
-uint32 extraDatas[3] =
-{
-    DATA_HUNTRESS_KASPARIAN,
-    DATA_CAPTAIN_YATHAE_MOONSTRIKE,
-    DATA_PRIESTESS_LUNASPYRE,
-};
-
 class boss_sisters_of_the_moon : public CreatureScript
 {
     public:
