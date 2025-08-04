@@ -61,32 +61,35 @@ Position const KasparianJumps[5] =
 
 enum Says
 {
-    //Sisters
-    SAY_SISTERS_AGGRO     = 1,
-    SAY_SISTERS_DEATH     = 2,
-    SAY_SISTERS_EVADE     = 3,
-	SAY_SISTER_KILLS      = 4,
-    //Kasparian 
-	SAY_KASPARIAN_AGGRO   = 1,
-    SAY_SPELL_GLAIVE      = 2,
-	SAY_KASPARIAN_KILLS   = 3,
-	SAY_KASPARIAN_EVADE   = 4,
-	SAY_KASPARIAN_DIED    = 5,
-    //Yathae
-	SAY_YATHAE_AGGRO      = 6,
-    SAY_PHASE_COMBAT      = 7,
-    SAY_SPELLS_ARROW      = 8,
-    SAY_SPELL_AOE         = 9,
-	SAY_YATHAE_KILLS      = 10,
-	SAY_YATHAE_EVADE      = 11,
-	SAY_YATHAE_DIED       = 12,
-    //Lunaspyre
-	SAY_LUNASPYRE_AGGRO   = 13,
-    SAY_SPELL             = 14,
-    SAY_FOUNTAIN_OF_ELUNE = 15,
-	SAY_LUNASPYRE_KILLS   = 16,
-	SAY_LUNASPYRE_EVADE   = 17,
-	SAY_LUNASPYRE_DIED    = 18,
+    // Sisters
+    SAY_SISTERS_AGGRO                               = 1,
+    SAY_SISTERS_DEATH                               = 2,
+    SAY_SISTERS_EVADE                               = 3,
+    SAY_SISTER_KILLS                                = 4,
+
+    // Kasparian
+    SAY_KASPARIAN_AGGRO                             = 1,
+    SAY_SPELL_GLAIVE                                = 2,
+    SAY_KASPARIAN_KILLS                             = 3,
+    SAY_KASPARIAN_EVADE                             = 4,
+    SAY_KASPARIAN_DIED                              = 5,
+
+    // Yathae
+    SAY_YATHAE_AGGRO                                = 6,
+    SAY_PHASE_COMBAT                                = 7,
+    SAY_SPELLS_ARROW                                = 8,
+    SAY_SPELL_AOE                                   = 9,
+    SAY_YATHAE_KILLS                                = 10,
+    SAY_YATHAE_EVADE                                = 11,
+    SAY_YATHAE_DIED                                 = 12,
+
+    // Lunaspyre
+    SAY_LUNASPYRE_AGGRO                             = 13,
+    SAY_SPELL                                       = 14,
+    SAY_FOUNTAIN_OF_ELUNE                           = 15,
+    SAY_LUNASPYRE_KILLS                             = 16,
+    SAY_LUNASPYRE_EVADE                             = 17,
+    SAY_LUNASPYRE_DIED                              = 18
 };
 
 enum SistersSpells
@@ -142,7 +145,7 @@ enum SistersSpells
     SPELL_LUNAR_FIRE                                = 239264, // Only on current target,active.
     SPELL_LUNAR_STRIKE                              = 237632,
     SPELL_MOON_BURN                                 = 236518, // Astral Purge will remove this.
-    SPELL_LUNAR_BARRAGE_AT                          = 236726, //AT 9807
+    SPELL_LUNAR_BARRAGE_AT                          = 236726, // AT 9807
     SPELL_LUNAR_BARRAGE_DAMAGE                      = 237351
 };
 
@@ -183,13 +186,13 @@ enum SistersEvents
 
 enum Actions
 {
-    ACTION_SAY_SISTERS_AGGRO                        = 1,
-    ACTION_RETURN_PHASE1                            = 2,
-    ACTION_RETURN                                   = 3,
-    ACTION_SISTERS_DEAD                             = 4,
+    ACTION_RETURN_PHASE1                            = 1,
+    ACTION_RETURN                                   = 2,
+    ACTION_SAY_SISTERS_AGGRO                        = 3,
+    ACTION_EVADE                                    = 4,
     ACTION_PHASE_2                                  = 5,
     ACTION_PHASE_3                                  = 6,
-    ACTION_EVADE                                    = 7
+    ACTION_SISTERS_DEAD                             = 7
 };
 
 enum Phases
@@ -202,9 +205,9 @@ enum Phases
 
 enum Objects
 {
-	DATA_HUNTRESS_KASPARIAN,
-	DATA_CAPTAIN_YATHAE_MOONSTRIKE,
-	DATA_PRIESTESS_LUNASPYRE,
+    DATA_HUNTRESS_KASPARIAN,
+    DATA_CAPTAIN_YATHAE_MOONSTRIKE,
+    DATA_PRIESTESS_LUNASPYRE,
 };
 
 uint32 extraDatas[3] =
@@ -219,9 +222,9 @@ class boss_sisters_of_the_moon : public CreatureScript
     public:
         boss_sisters_of_the_moon() : CreatureScript("boss_sisters_of_the_moon") { }
 
-        struct boss_sisters_of_the_moonAI : public BossAI
+        struct boss_sisters_of_the_moon_AI : public BossAI
         {
-            boss_sisters_of_the_moonAI(Creature* creature) : BossAI(creature, DATA_SISTERS_OF_THE_MOON)
+            boss_sisters_of_the_moon_AI(Creature* creature) : BossAI(creature, DATA_SISTERS_OF_THE_MOON)
             {
                 creature->GetInstanceScript();
 
@@ -240,6 +243,7 @@ class boss_sisters_of_the_moon : public CreatureScript
             void Reset() override
             {
                 me->RemoveAllAreaTriggers();
+
                 events.Reset();
 
                 if (instance)
@@ -267,7 +271,7 @@ class boss_sisters_of_the_moon : public CreatureScript
                    instance->SetBossState(DATA_SISTERS_OF_THE_MOON, IN_PROGRESS);
                 }
 
-                events.SetPhase(THE_HUNTRESS);
+                events.AddPhase(THE_HUNTRESS);
                 DoAction(ACTION_SAY_SISTERS_AGGRO);
                 DoZoneInCombat();
 
@@ -286,8 +290,8 @@ class boss_sisters_of_the_moon : public CreatureScript
                     break;
                     case NPC_PRIESTESS_LUNASPYRE:
                         events.ScheduleEvent(EVENT_LUNAR_FIRE, 12s);
-                        events.ScheduleEvent(EVENT_LUNAR_BEACON, 17s, 0, THE_PRIESTESS);
-                        events.ScheduleEvent(EVENT_MOON_BURN, 10s, 0, THE_PRIESTESS);
+                        events.ScheduleEvent(EVENT_LUNAR_BEACON, 17s, 0 , THE_PRIESTESS);
+                        events.ScheduleEvent(EVENT_MOON_BURN, 10s, 0 , THE_PRIESTESS);
                         events.ScheduleEvent(EVENT_INCORPOREAL_TELEPORT, 30s, 38s, ((THE_HUNTRESS), (THE_CAPTAIN)));
                     break;
                 }
@@ -297,34 +301,37 @@ class boss_sisters_of_the_moon : public CreatureScript
             {
                 _DespawnAtEvade();
 
-				RemoveAllAreaTriggers();
-				
-				instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_MOON_BURN);
-				instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_RAPID_SHOT);
-				instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_MOON_GLAIVE);
-				instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_LUNAR_BARRAGE_DAMAGE);
-				
-				switch (me->GetEntry())
-				{
-					case NPC_HUNTRESS_KASPARIAN:
-					{
-						if (events.IsInPhase(THE_HUNTRESS))
-                            me->AI()->Talk(SAY_KASPARIAN_EVADE);
-						break;
-					}
-					case NPC_CAPTAIN_YATHAE_MOONSTRIKE:
-					{
-						if (events.IsInPhase(THE_CAPTAIN))
-                            me->AI()->Talk(SAY_YATHAE_EVADE);
-						break;
-					}
-					case NPC_PRIESTESS_LUNASPYRE:
-					{
-						if (events.IsInPhase(THE_PRIESTESS))
-                            me->AI()->Talk(SAY_LUNASPYRE_EVADE);
-						break;
-					}
-					default:
+                me->RemoveAllAreaTriggers();
+
+                instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_MOON_BURN);
+                instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_RAPID_SHOT);
+                instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_MOON_GLAIVE);
+                instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_LUNAR_BARRAGE_DAMAGE);
+
+                switch (me->GetEntry())
+                {
+                    case NPC_HUNTRESS_KASPARIAN:
+                    {
+                        if (events.IsInPhase(THE_HUNTRESS))
+                            Talk(SAY_KASPARIAN_EVADE);
+                        break;
+                    }
+
+                    case NPC_CAPTAIN_YATHAE_MOONSTRIKE:
+                    {
+                        if (events.IsInPhase(THE_CAPTAIN))
+                            Talk(SAY_YATHAE_EVADE);
+                        break;
+                    }
+
+                    case NPC_PRIESTESS_LUNASPYRE:
+                    {
+                        if (events.IsInPhase(THE_PRIESTESS))
+                            Talk(SAY_LUNASPYRE_EVADE);
+                        break;
+                    }
+
+                    default:
                         break;
                 }
             }
@@ -339,19 +346,19 @@ class boss_sisters_of_the_moon : public CreatureScript
                         {
                             case NPC_HUNTRESS_KASPARIAN:
                             {
-                                me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
+                                me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE|UNIT_FLAG_NOT_SELECTABLE);
                                 me->RemoveAurasDueToSpell(SPELL_GHOST_AURA);
                                 break;
                             }
                             case NPC_CAPTAIN_YATHAE_MOONSTRIKE:
                             case NPC_PRIESTESS_LUNASPYRE:
                             {
-                                me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
+                                me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE|UNIT_FLAG_NOT_SELECTABLE);
                                 me->AddAura(SPELL_GHOST_AURA, me);
                                 break;
                             }
-                        default:
-                            break;
+                            default:
+                                break;
                         }
                         break;
                     }
@@ -367,13 +374,15 @@ class boss_sisters_of_the_moon : public CreatureScript
                                 // Disable Movement
                                 break;
                             }
+
                             case NPC_CAPTAIN_YATHAE_MOONSTRIKE:
                             {
                                 me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
                                 events.ScheduleEvent(EVENT_TELEPORT_CENTER_COMBAT, 0s);
-                                // Enable Movement
+                                //Enable Movement
                                 break;
                             }
+
                             case NPC_PRIESTESS_LUNASPYRE:
                                 break;
                             default:
@@ -396,6 +405,7 @@ class boss_sisters_of_the_moon : public CreatureScript
                                 // Disable Movement
                                 break;
                             }
+
                             case NPC_PRIESTESS_LUNASPYRE:
                             {
                                 me->RemoveAurasDueToSpell(SPELL_GHOST_AURA);
@@ -454,11 +464,11 @@ class boss_sisters_of_the_moon : public CreatureScript
                 DoAction(ACTION_SISTERS_DEAD);
             }
 
-            void KilledUnit(Unit* victim) override
+            void KilledUnit(Unit* killer) override
             {
-                /*if (victim->GetTypeId() == TYPEID_PLAYER && !me->IsInEvadeMode())
+                if (killer->GetTypeId() == TYPEID_PLAYER && !me->IsInEvadeMode())
                 {
-                    switch (killer->GetEntry())
+                    /*switch (killer)
                     {
                         case NPC_HUNTRESS_KASPARIAN:
                         {
@@ -470,6 +480,7 @@ class boss_sisters_of_the_moon : public CreatureScript
                                 lunaspyre->AI()->Talk(SAY_SISTER_KILLS);
                             break;
                         }
+
                         case NPC_CAPTAIN_YATHAE_MOONSTRIKE:
                         {
                             if (events.IsInPhase(THE_HUNTRESS))
@@ -480,6 +491,7 @@ class boss_sisters_of_the_moon : public CreatureScript
                                 lunaspyre->AI()->Talk(SAY_SISTER_KILLS);
                             break;
                         }
+
                         case NPC_PRIESTESS_LUNASPYRE:
                         {
                             if (events.IsInPhase(THE_HUNTRESS))
@@ -492,8 +504,8 @@ class boss_sisters_of_the_moon : public CreatureScript
                         }
                         default:
                             break;
-                    }
-                }*/
+                    }*/
+                }
             }
 
             void UpdateAI(const uint32 diff) override
@@ -517,8 +529,8 @@ class boss_sisters_of_the_moon : public CreatureScript
 
                         case EVENT_MOON_GLAIVE:
                         {
-                            DoCastVictim(SPELL_MOON_GLAIVE);
-                            events.Repeat(17s);
+                          DoCastVictim(SPELL_MOON_GLAIVE);
+                          events.Repeat(17s);
                         }
                         break;
 
@@ -533,8 +545,8 @@ class boss_sisters_of_the_moon : public CreatureScript
                         break;
 
                         case EVENT_KASPARIAN_JUST_DIED:
-                            Talk(SAY_KASPARIAN_DIED);
-                            break;
+                              Talk(SAY_KASPARIAN_DIED);
+                             break;
 
                         // Yathae
                         case EVENT_YATHAE_AGGRO:
@@ -549,9 +561,8 @@ class boss_sisters_of_the_moon : public CreatureScript
                         case EVENT_TWILIGHT_VOLLEY:
                         {
                             if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
-                            {
-                                DoCast(target, SPELL_TWILIGHT_VOLLEY_AT);
-                            }
+                               DoCast(target, SPELL_TWILIGHT_VOLLEY_AT);
+
                             events.Repeat(15s);
                         }
                         break;
@@ -589,6 +600,7 @@ class boss_sisters_of_the_moon : public CreatureScript
                         case EVENT_LUNAR_BEACON:
                             if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
                                 DoCast(target, SPELL_LUNAR_BEACON);
+
                             events.Repeat(12s);
                             break;
 
@@ -600,12 +612,14 @@ class boss_sisters_of_the_moon : public CreatureScript
                         case EVENT_MOON_BURN:
                             if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
                                 DoCast(target, SPELL_MOON_BURN);
+
                             events.Repeat(14s);
                             break;
 
                         case EVENT_LUNAR_STRIKE:
                             if (Unit* target = SelectTarget(SELECT_TARGET_RANDOM, 0))
                                 DoCast(target, SPELL_LUNAR_STRIKE);
+
                             events.Repeat(16s);
                             break;
 
@@ -627,21 +641,26 @@ class boss_sisters_of_the_moon : public CreatureScript
                     {
                         if (events.IsInPhase(THE_HUNTRESS))
                             DoMeleeAttackIfReady();
-                        else DoSpellAttackIfReady(SPELL_MOON_GLAIVE);
+                        else
+                            DoSpellAttackIfReady(SPELL_MOON_GLAIVE);
                         break;
                     }
+
                     case NPC_CAPTAIN_YATHAE_MOONSTRIKE:
                     {
                         if (events.IsInPhase(THE_CAPTAIN))
                             DoMeleeAttackIfReady();
-                        else DoSpellAttackIfReady(SPELL_SHADOW_SHOT);
+                        else
+                            DoSpellAttackIfReady(SPELL_SHADOW_SHOT);
                         break;
                     }
+
                     case NPC_PRIESTESS_LUNASPYRE:
                     {
                         if (events.IsInPhase(THE_PRIESTESS))
                             DoMeleeAttackIfReady();
-                        else DoSpellAttackIfReady(SPELL_LUNAR_STRIKE);
+                        else
+                            DoSpellAttackIfReady(SPELL_LUNAR_STRIKE);
                         break;
                     }
                 }
@@ -650,7 +669,7 @@ class boss_sisters_of_the_moon : public CreatureScript
 
         CreatureAI* GetAI(Creature* creature) const override
         {
-            return new boss_sisters_of_the_moonAI(creature);
+            return new boss_sisters_of_the_moon_AI(creature);
         }
 };
 
@@ -729,98 +748,84 @@ struct at_twilight_volley : AreaTriggerAI
 // Lunasypre Spells & AT
 /*class spell_embrace_of_the_eclipse : public SpellScriptLoader
 {
-	public:
-	   spell_embrace_of_the_eclipse() : SpellScriptLoader("spell_embrace_of_the_eclipse") { }
-	   
-	   class spell_embrace_of_the_eclipse_SpellScript : public SpellScript
-	   {
-		   PrepareSpellScript(spell_embrace_of_the_eclipse_SpellScript);
-		   
-		   bool Validate(SpellInfo const* /*spellInfo*/) override
-		   {
-			   return ValidateSpellInfo({ SPELL_EMBRACE_OF_THE_ECLIPSE_HEAL,
-			                              SPELL_EMBRACE_OF_THE_ECLIPSE_BOSS });
-		   }
-		   
-		   void HandleAfterCast()
-		   {
-			   Unit* caster = GetCaster();
-			   Unit* target GetExplUnitTarget();
-			   Creature* kasparian = instance->GetCreature(NPC_HUNTRESS_KASPARIAN);
-			   Creature* yathae = instance->GetCreature(NPC_CAPTAIN_YATHAE_MOONSTRIKE);
-			   
-			   
-			   if (!caster)
-				   return;
-			   
-			   std::list<Player*> playerList;
-			   GetPlayerListInGrid(playerList, me, 200.0f);
-			   
-			   for (auto itr : playerList)
-				   itr->RemoveAura(SPELL_EMBRACE_OF_THE_ECLIPSE_HEAL);
-			   
-			   //Encontrar la hermana mas cercana activa y ponerle el escudo
-			   
-		   }
-		   
-		   void Register() override
-		   {
-			   AfterCast += SpellCastFn(spell_embrace_of_the_eclipse_SpellScript::HandleAfterCast);
-		   }
-	   };
-	   
-	   class spell_embrace_of_the_eclipse_AuraScript : public AuraScript
-	   {
-		   PrepareAuraScript(spell_embrace_of_the_eclipse_AuraScript);
-		   
-		   bool Validate(SpellInfo const* /*spellInfo*/) override
-		   {
-			   
-		       return ValidateSpellInfo({ SPELL_EMBRACE_OF_THE_ECLIPSE_BOSS,
-		                                  SPELL_EMBRACE_OF_THE_ECLIPSE_HEAL });
-		   }
-		   
-		   void HandleRemove(AuraEffect const* aurEff, uint32 &shieldType, AuraEffectHandleModes /*mode*/)
-		   {
-			    AuraRemoveMode removeMode = GetTargetApplication()->GetRemoveMode();
-				if (removeMode == AURA_REMOVE_BY_EXPIRE)
-				{
-					switch (shieldType)
-					{
-						case SPELL_EMBRACE_OF_THE_ECLIPSE_BOSS:
-						{
-							//Hacer Dano al Expirar
-							break;
-						}
-						case SPELL_EMBRACE_OF_THE_ECLIPSE_HEAL:
-						{
-							//Hacer Dano al expirar
-							break;
-						}
-						default:
-						    break;
-					}
-				}
-		   }
-		   
-		   void Register() override
-		   {
-			   OnEffectRemove += AuraEffectRemoveFn(spell_embrace_of_the_eclipse_AuraScript::HandleRemove, EFFECT_0, SPELL_AURA_ABSORB, AURA_EFFECT_HANDLE_REAL);
-		   }
-	   };
-	   
-	   SpellScript* GetSpellScript() const override
-	   {
-		   return new spell_embrace_of_the_eclipse_SpellScript();
-	   }
-	   
-	   AuraScript* GetAuraScript() const override
-	   {
-		   return new spell_embrace_of_the_eclipse_AuraScript();
-	   }
-};
-					   
-			
+    public:
+        spell_embrace_of_the_eclipse() : SpellScriptLoader("spell_embrace_of_the_eclipse") { }
+
+        class spell_embrace_of_the_eclipse_SpellScript : public SpellScript
+        {
+           PrepareSpellScript(spell_embrace_of_the_eclipse_SpellScript);
+
+            bool Validate(SpellInfo const* /*spellInfo*//*) override
+            {
+                return ValidateSpellInfo({ SPELL_EMBRACE_OF_THE_ECLIPSE_HEAL, SPELL_EMBRACE_OF_THE_ECLIPSE_BOSS });
+            }
+
+            void HandleAfterCast()
+            {
+                Unit* caster = GetCaster();
+                Creature* kasparian = instance->GetCreature(NPC_HUNTRESS_KASPARIAN);
+                Creature* yathae = instance->GetCreature(NPC_CAPTAIN_YATHAE_MOONSTRIKE);
+
+                if (!caster)
+                    return;
+
+                std::list<Player*> playerList;
+                GetPlayerListInGrid(playerList, me, 200.0f);
+
+                for (auto itr : playerList)
+                    itr->RemoveAura(SPELL_EMBRACE_OF_THE_ECLIPSE_HEAL);
+           }
+
+           void Register() override
+           {
+               AfterCast += SpellCastFn(spell_embrace_of_the_eclipse_SpellScript::HandleAfterCast);
+           }
+       };
+
+        class spell_embrace_of_the_eclipse_AuraScript : public AuraScript
+        {
+            PrepareAuraScript(spell_embrace_of_the_eclipse_AuraScript);
+
+            bool Validate(SpellInfo const* /*spellInfo*//*) override
+            {
+                return ValidateSpellInfo({ SPELL_EMBRACE_OF_THE_ECLIPSE_BOSS, SPELL_EMBRACE_OF_THE_ECLIPSE_HEAL });
+            }
+
+            void HandleRemove(AuraEffect const* aurEff, uint32 &shieldType, AuraEffectHandleModes /*mode*//*)
+            {
+                AuraRemoveMode removeMode = GetTargetApplication()->GetRemoveMode();
+
+                if (removeMode == AURA_REMOVE_BY_EXPIRE)
+                {
+                    switch (shieldType)
+                    {
+                        case SPELL_EMBRACE_OF_THE_ECLIPSE_BOSS:
+                            break;
+                        case SPELL_EMBRACE_OF_THE_ECLIPSE_HEAL:
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            void Register() override
+            {
+                OnEffectRemove += AuraEffectRemoveFn(spell_embrace_of_the_eclipse_AuraScript::HandleRemove, EFFECT_0, SPELL_AURA_ABSORB, AURA_EFFECT_HANDLE_REAL);
+            }
+        };
+
+        SpellScript* GetSpellScript() const override
+        {
+            return new spell_embrace_of_the_eclipse_SpellScript();
+        }
+
+        AuraScript* GetAuraScript() const override
+        {
+            return new spell_embrace_of_the_eclipse_AuraScript();
+        }
+};*/
+
 class spell_lunar_beacon : public SpellScriptLoader
 {
 public:
@@ -844,7 +849,6 @@ public:
                 if (removeMode == AURA_REMOVE_BY_EXPIRE)
                     GetCaster()->CastSpell(GetTarget(), SPELL_LUNAR_BARRAGE_AT, true);
             }
-            
         }
 
         void Register() override
@@ -865,11 +869,11 @@ struct at_lunar_barrage : AreaTriggerAI
 
     void OnInitialize() override
     {
-        /*if (Unit* caster = at->GetCaster())
+        if (Unit* caster = at->GetCaster())
             if (Creature* creCaster = caster->ToCreature())
                 if (creCaster->IsAIEnabled)
                     if (Unit* target = ObjectAccessor::GetUnit(*creCaster, creCaster->AI()->GetGUID()))
-                        at->SetPosition(*target);*/
+                        at->SetDestination(*target, 1000);
     }
 
     void OnUnitEnter(Unit* /*unit*/) override
@@ -891,13 +895,13 @@ struct at_lunar_barrage : AreaTriggerAI
 
 void AddSC_boss_sisters_of_the_moon_debug()
 {
-   //Boss
+   // Boss
    new boss_sisters_of_the_moon();
-   //Kasparian ATs & Spells
+   // Kasparian ATs & Spells
    RegisterAreaTriggerAI(at_twilight_glaive);
-   //Yathae ATs & Spells
+   // Yathae ATs & Spells
    RegisterAreaTriggerAI(at_twilight_volley);
-   //Lunaspyre ATs & Spells
+   // Lunaspyre ATs & Spells
    new spell_lunar_beacon();
    //new spell_embrace_of_the_eclipse();
    RegisterAreaTriggerAI(at_lunar_barrage);
