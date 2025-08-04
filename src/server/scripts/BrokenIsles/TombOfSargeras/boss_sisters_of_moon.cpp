@@ -61,35 +61,32 @@ Position const KasparianJumps[5] =
 
 enum Says
 {
-    // Sisters
-    SAY_SISTERS_AGGRO                               = 1,
-    SAY_SISTERS_DEATH                               = 2,
-    SAY_SISTERS_EVADE                               = 3,
-    SAY_SISTER_KILLS                                = 4,
-
-    // Kasparian
-    SAY_KASPARIAN_AGGRO                             = 1,
-    SAY_SPELL_GLAIVE                                = 2,
-    SAY_KASPARIAN_KILLS                             = 3,
-    SAY_KASPARIAN_EVADE                             = 4,
-    SAY_KASPARIAN_DIED                              = 5,
-
-    // Yathae
-    SAY_YATHAE_AGGRO                                = 6,
-    SAY_PHASE_COMBAT                                = 7,
-    SAY_SPELLS_ARROW                                = 8,
-    SAY_SPELL_AOE                                   = 9,
-    SAY_YATHAE_KILLS                                = 10,
-    SAY_YATHAE_EVADE                                = 11,
-    SAY_YATHAE_DIED                                 = 12,
-
-    // Lunaspyre
-    SAY_LUNASPYRE_AGGRO                             = 13,
-    SAY_SPELL                                       = 14,
-    SAY_FOUNTAIN_OF_ELUNE                           = 15,
-    SAY_LUNASPYRE_KILLS                             = 16,
-    SAY_LUNASPYRE_EVADE                             = 17,
-    SAY_LUNASPYRE_DIED                              = 18
+    //Sisters
+    SAY_SISTERS_AGGRO     = 1,
+    SAY_SISTERS_DEATH     = 2,
+    SAY_SISTERS_EVADE     = 3,
+	SAY_SISTER_KILLS      = 4,
+    //Kasparian 
+	SAY_KASPARIAN_AGGRO   = 1,
+    SAY_SPELL_GLAIVE      = 2,
+	SAY_KASPARIAN_KILLS   = 3,
+	SAY_KASPARIAN_EVADE   = 4,
+	SAY_KASPARIAN_DIED    = 5,
+    //Yathae
+	SAY_YATHAE_AGGRO      = 6,
+    SAY_PHASE_COMBAT      = 7,
+    SAY_SPELLS_ARROW      = 8,
+    SAY_SPELL_AOE         = 9,
+	SAY_YATHAE_KILLS      = 10,
+	SAY_YATHAE_EVADE      = 11,
+	SAY_YATHAE_DIED       = 12,
+    //Lunaspyre
+	SAY_LUNASPYRE_AGGRO   = 13,
+    SAY_SPELL             = 14,
+    SAY_FOUNTAIN_OF_ELUNE = 15,
+	SAY_LUNASPYRE_KILLS   = 16,
+	SAY_LUNASPYRE_EVADE   = 17,
+	SAY_LUNASPYRE_DIED    = 18,
 };
 
 enum SistersSpells
@@ -299,34 +296,35 @@ class boss_sisters_of_the_moon : public CreatureScript
             void EnterEvadeMode(EvadeReason /*why*/) override
             {
                 _DespawnAtEvade();
-                me->RemoveAllAreaTriggers();
 
-                instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_MOON_BURN);
-                instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_RAPID_SHOT);
-                instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_MOON_GLAIVE);
-                instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_LUNAR_BARRAGE_DAMAGE);
-
-                switch (me->GetEntry())
-                {
-                    case NPC_HUNTRESS_KASPARIAN:
-                    {
-                        if (events.IsInPhase(THE_HUNTRESS))
-                            Talk(SAY_KASPARIAN_EVADE);
-                        break;
-                    }
-                    case NPC_CAPTAIN_YATHAE_MOONSTRIKE:
-                    {
-                        if (events.IsInPhase(THE_CAPTAIN))
-                            Talk(SAY_YATHAE_EVADE);
-                        break;
-                    }
-                    case NPC_PRIESTESS_LUNASPYRE:
-                    {
-                        if (events.IsInPhase(THE_PRIESTESS))
-                            Talk(SAY_LUNASPYRE_EVADE);
-                        break;
-                    }
-                    default:
+				RemoveAllAreaTriggers();
+				
+				instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_MOON_BURN);
+				instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_RAPID_SHOT);
+				instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_MOON_GLAIVE);
+				instance->DoRemoveAurasDueToSpellOnPlayers(SPELL_LUNAR_BARRAGE_DAMAGE);
+				
+				switch (me->GetEntry())
+				{
+					case NPC_HUNTRESS_KASPARIAN:
+					{
+						if (events.IsInPhase(THE_HUNTRESS))
+                            me->AI()->Talk(SAY_KASPARIAN_EVADE);
+						break;
+					}
+					case NPC_CAPTAIN_YATHAE_MOONSTRIKE:
+					{
+						if (events.IsInPhase(THE_CAPTAIN))
+                            me->AI()->Talk(SAY_YATHAE_EVADE);
+						break;
+					}
+					case NPC_PRIESTESS_LUNASPYRE:
+					{
+						if (events.IsInPhase(THE_PRIESTESS))
+                            me->AI()->Talk(SAY_LUNASPYRE_EVADE);
+						break;
+					}
+					default:
                         break;
                 }
             }
@@ -731,84 +729,98 @@ struct at_twilight_volley : AreaTriggerAI
 // Lunasypre Spells & AT
 /*class spell_embrace_of_the_eclipse : public SpellScriptLoader
 {
-    public:
-       spell_embrace_of_the_eclipse() : SpellScriptLoader("spell_embrace_of_the_eclipse") { }
-
-       class spell_embrace_of_the_eclipse_SpellScript : public SpellScript
-       {
-           PrepareSpellScript(spell_embrace_of_the_eclipse_SpellScript);
-
-           bool Validate(SpellInfo const* /*spellInfo*//*) override
-           {
-               return ValidateSpellInfo({ SPELL_EMBRACE_OF_THE_ECLIPSE_HEAL, SPELL_EMBRACE_OF_THE_ECLIPSE_BOSS });
-           }
-
-           void HandleAfterCast()
-           {
-               Unit* caster = GetCaster();
-               Creature* kasparian = instance->GetCreature(NPC_HUNTRESS_KASPARIAN);
-               Creature* yathae = instance->GetCreature(NPC_CAPTAIN_YATHAE_MOONSTRIKE);
-
-               if (!caster)
-                   return;
-
-               std::list<Player*> playerList;
-               GetPlayerListInGrid(playerList, me, 200.0f);
-
-               for (auto itr : playerList)
-                   itr->AddAura(itr, SPELL_EMBRACE_OF_THE_ECLIPSE_HEAL);
-           }
-
-           void Register() override
-           {
-               AfterCast += SpellCastFn(spell_embrace_of_the_eclipse_SpellScript::HandleAfterCast);
-           }
-       };
-
-       class spell_embrace_of_the_eclipse_AuraScript : public AuraScript
-       {
-           PrepareAuraScript(spell_embrace_of_the_eclipse_AuraScript);
-
-           bool Validate(SpellInfo const* /*spellInfo*//*) override
-           {
-               return ValidateSpellInfo({ SPELL_EMBRACE_OF_THE_ECLIPSE_BOSS, SPELL_EMBRACE_OF_THE_ECLIPSE_HEAL });
-           }
-
-           void HandleRemove(AuraEffect const* aurEff, uint32 &shieldType, AuraEffectHandleModes /*mode*//*)
-           {
-                AuraRemoveMode removeMode = GetTargetApplication()->GetRemoveMode();
-
-                if (removeMode == AURA_REMOVE_BY_EXPIRE)
-                {
-                    switch (shieldType)
-                    {
-                        case SPELL_EMBRACE_OF_THE_ECLIPSE_BOSS:
-                            break;
-                        case SPELL_EMBRACE_OF_THE_ECLIPSE_HEAL:
-                            break;
-                        default:
-                            break;
-                    }
-                }
-           }
-
-           void Register() override
-           {
-               OnEffectRemove += AuraEffectRemoveFn(spell_embrace_of_the_eclipse_AuraScript::HandleRemove, EFFECT_0, SPELL_AURA_SCHOOL_ABSORB, AURA_EFFECT_HANDLE_REAL);
-           }
-       };
-
-       SpellScript* GetSpellScript() const override
-       {
-           return new spell_embrace_of_the_eclipse_SpellScript();
-       }
-
-       AuraScript* GetAuraScript() const override
-       {
-           return new spell_embrace_of_the_eclipse_AuraScript();
-       }
-};*/
-
+	public:
+	   spell_embrace_of_the_eclipse() : SpellScriptLoader("spell_embrace_of_the_eclipse") { }
+	   
+	   class spell_embrace_of_the_eclipse_SpellScript : public SpellScript
+	   {
+		   PrepareSpellScript(spell_embrace_of_the_eclipse_SpellScript);
+		   
+		   bool Validate(SpellInfo const* /*spellInfo*/) override
+		   {
+			   return ValidateSpellInfo({ SPELL_EMBRACE_OF_THE_ECLIPSE_HEAL,
+			                              SPELL_EMBRACE_OF_THE_ECLIPSE_BOSS });
+		   }
+		   
+		   void HandleAfterCast()
+		   {
+			   Unit* caster = GetCaster();
+			   Unit* target GetExplUnitTarget();
+			   Creature* kasparian = instance->GetCreature(NPC_HUNTRESS_KASPARIAN);
+			   Creature* yathae = instance->GetCreature(NPC_CAPTAIN_YATHAE_MOONSTRIKE);
+			   
+			   
+			   if (!caster)
+				   return;
+			   
+			   std::list<Player*> playerList;
+			   GetPlayerListInGrid(playerList, me, 200.0f);
+			   
+			   for (auto itr : playerList)
+				   itr->RemoveAura(SPELL_EMBRACE_OF_THE_ECLIPSE_HEAL);
+			   
+			   //Encontrar la hermana mas cercana activa y ponerle el escudo
+			   
+		   }
+		   
+		   void Register() override
+		   {
+			   AfterCast += SpellCastFn(spell_embrace_of_the_eclipse_SpellScript::HandleAfterCast);
+		   }
+	   };
+	   
+	   class spell_embrace_of_the_eclipse_AuraScript : public AuraScript
+	   {
+		   PrepareAuraScript(spell_embrace_of_the_eclipse_AuraScript);
+		   
+		   bool Validate(SpellInfo const* /*spellInfo*/) override
+		   {
+			   
+		       return ValidateSpellInfo({ SPELL_EMBRACE_OF_THE_ECLIPSE_BOSS,
+		                                  SPELL_EMBRACE_OF_THE_ECLIPSE_HEAL });
+		   }
+		   
+		   void HandleRemove(AuraEffect const* aurEff, uint32 &shieldType, AuraEffectHandleModes /*mode*/)
+		   {
+			    AuraRemoveMode removeMode = GetTargetApplication()->GetRemoveMode();
+				if (removeMode == AURA_REMOVE_BY_EXPIRE)
+				{
+					switch (shieldType)
+					{
+						case SPELL_EMBRACE_OF_THE_ECLIPSE_BOSS:
+						{
+							//Hacer Dano al Expirar
+							break;
+						}
+						case SPELL_EMBRACE_OF_THE_ECLIPSE_HEAL:
+						{
+							//Hacer Dano al expirar
+							break;
+						}
+						default:
+						    break;
+					}
+				}
+		   }
+		   
+		   void Register() override
+		   {
+			   OnEffectRemove += AuraEffectRemoveFn(spell_embrace_of_the_eclipse_AuraScript::HandleRemove, EFFECT_0, SPELL_AURA_ABSORB, AURA_EFFECT_HANDLE_REAL);
+		   }
+	   };
+	   
+	   SpellScript* GetSpellScript() const override
+	   {
+		   return new spell_embrace_of_the_eclipse_SpellScript();
+	   }
+	   
+	   AuraScript* GetAuraScript() const override
+	   {
+		   return new spell_embrace_of_the_eclipse_AuraScript();
+	   }
+};
+					   
+			
 class spell_lunar_beacon : public SpellScriptLoader
 {
 public:
