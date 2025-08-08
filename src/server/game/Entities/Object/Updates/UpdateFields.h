@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -170,8 +169,8 @@ enum UnitFields
     UNIT_FIELD_MIN_ITEM_LEVEL_CUTOFF                       = OBJECT_END + 0x0B4, // Size: 1, Flags: PUBLIC
     UNIT_FIELD_MIN_ITEM_LEVEL                              = OBJECT_END + 0x0B5, // Size: 1, Flags: PUBLIC
     UNIT_FIELD_MAXITEMLEVEL                                = OBJECT_END + 0x0B6, // Size: 1, Flags: PUBLIC
-    UNIT_FIELD_WILD_BATTLEPET_LEVEL                        = OBJECT_END + 0x0B7, // Size: 1, Flags: PUBLIC
-    UNIT_FIELD_BATTLEPET_COMPANION_NAME_TIMESTAMP          = OBJECT_END + 0x0B8, // Size: 1, Flags: PUBLIC
+    UNIT_FIELD_WILD_BATTLE_PET_LEVEL                       = OBJECT_END + 0x0B7, // Size: 1, Flags: PUBLIC
+    UNIT_FIELD_BATTLE_PET_COMPANION_NAME_TIMESTAMP         = OBJECT_END + 0x0B8, // Size: 1, Flags: PUBLIC
     UNIT_FIELD_INTERACT_SPELLID                            = OBJECT_END + 0x0B9, // Size: 1, Flags: PUBLIC
     UNIT_FIELD_STATE_SPELL_VISUAL_ID                       = OBJECT_END + 0x0BA, // Size: 1, Flags: DYNAMIC, URGENT
     UNIT_FIELD_STATE_ANIM_ID                               = OBJECT_END + 0x0BB, // Size: 1, Flags: DYNAMIC, URGENT
@@ -223,7 +222,7 @@ enum PlayerFields
     PLAYER_FIELD_INV_SLOT_HEAD                             = UNIT_END + 0x369, // Size: 780, Flags: PRIVATE
     PLAYER_FIELD_END_NOT_SELF                              = UNIT_END + 0x369,
     PLAYER_FARSIGHT                                        = UNIT_END + 0x675, // Size: 4, Flags: PRIVATE
-    PLAYER_FIELD_SUMMONED_BATTLE_PET_ID                    = UNIT_END + 0x679, // Size: 4, Flags: PRIVATE
+    PLAYER_FIELD_SUMMONED_BATTLE_PET_GUID                  = UNIT_END + 0x679, // Size: 4, Flags: PRIVATE
     PLAYER__FIELD_KNOWN_TITLES                             = UNIT_END + 0x67D, // Size: 12, Flags: PRIVATE
     PLAYER_FIELD_COINAGE                                   = UNIT_END + 0x689, // Size: 2, Flags: PRIVATE
     PLAYER_XP                                              = UNIT_END + 0x68B, // Size: 1, Flags: PRIVATE

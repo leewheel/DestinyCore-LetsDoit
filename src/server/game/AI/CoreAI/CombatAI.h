@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -51,6 +50,17 @@ class TC_GAME_API CombatAI : public CreatureAI
     protected:
         EventMap events;
         SpellVct spells;
+};
+
+class TC_GAME_API BattlePetAI : public CreatureAI
+{
+public:
+    explicit BattlePetAI(Creature* c) : CreatureAI(c) {}
+
+    void InitializeAI();
+    void UpdateAI(uint32);
+    static int Permissible(const Creature*);
+    void MovementInform(uint32 moveType, uint32 data);
 };
 
 class TC_GAME_API CasterAI : public CombatAI

@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -17,8 +16,6 @@
  */
 
 #include "WorldPacket.h"
-#include "BattlePet.h"
-#include "BattlePetMgr.h"
 #include "Common.h"
 #include "Creature.h"
 #include "DatabaseEnv.h"
@@ -1194,15 +1191,6 @@ void WorldSession::HandleUseCritterItem(WorldPackets::Item::UseCritterItem& useC
         return;
 
     int32 spellToLearn = item->GetTemplate()->Effects[1]->SpellID;
-    for (BattlePetSpeciesEntry const* entry : sBattlePetSpeciesStore)
-    {
-        if (entry->SummonSpellID == spellToLearn)
-        {
-            GetBattlePetMgr()->AddPet(entry->ID, entry->CreatureID, sBattlePetDataStore->RollPetBreed(entry->ID), sBattlePetDataStore->GetDefaultPetQuality(entry->ID));
-            _player->UpdateCriteria(CRITERIA_TYPE_OWN_BATTLE_PET_COUNT);
-            break;
-        }
-    }
 
     _player->DestroyItem(item->GetBagSlot(), item->GetSlot(), true);
 }

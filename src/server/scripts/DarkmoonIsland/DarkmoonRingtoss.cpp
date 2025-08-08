@@ -25,7 +25,7 @@
 #include "ScriptedGossip.h"
 #include "MotionMaster.h"
 #include <G3D/Quat.h>
-#include "DarkmoonIsland.h"
+#include "darkmoon_island.h"
 
 // 54485 - Jessica Rogers
 class npc_jessica_rogers : public CreatureScript

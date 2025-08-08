@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,7 +19,6 @@
 #include "Battleground.h"
 #include "DatabaseEnv.h"
 #include "AchievementMgr.h"
-#include "BattlePetMgr.h"
 #include "CollectionMgr.h"
 #include "Creature.h"
 #include "Garrison.h"
@@ -37,6 +36,7 @@
 #include "Log.h"
 #include "MapManager.h"
 #include "ObjectMgr.h"
+#include "PetBattle.h"
 #include "Player.h"
 #include "ReputationMgr.h"
 #include "ScriptMgr.h"
@@ -510,7 +510,6 @@ void CriteriaHandler::UpdateCriteria(CriteriaTypes type, uint64 miscValue1 /*= 0
         case CRITERIA_TYPE_WIN_ARENA: // This also behaves like CRITERIA_TYPE_WIN_RATED_ARENA
         case CRITERIA_TYPE_ON_LOGIN:
         case CRITERIA_TYPE_PLACE_GARRISON_BUILDING:
-        case CRITERIA_TYPE_OWN_BATTLE_PET_COUNT:
         case CRITERIA_TYPE_HONOR_LEVEL_REACHED:
         case CRITERIA_TYPE_PRESTIGE_REACHED:
             SetCriteriaProgress(criteria, 1, referencePlayer, PROGRESS_ACCUMULATE);
@@ -627,7 +626,6 @@ void CriteriaHandler::UpdateCriteria(CriteriaTypes type, uint64 miscValue1 /*= 0
         case CRITERIA_TYPE_EQUIP_ITEM:
         case CRITERIA_TYPE_COMPLETE_ACHIEVEMENT:
         case CRITERIA_TYPE_RECRUIT_GARRISON_FOLLOWER:
-        case CRITERIA_TYPE_OWN_BATTLE_PET:
             SetCriteriaProgress(criteria, 1, referencePlayer);
             break;
         case CRITERIA_TYPE_BUY_BANK_SLOT:
@@ -749,11 +747,6 @@ void CriteriaHandler::UpdateCriteria(CriteriaTypes type, uint64 miscValue1 /*= 0
         case CRITERIA_TYPE_COUNT_OF_LFR_QUEUE_BOOSTS_BY_TANK:
         case CRITERIA_TYPE_COMPLETE_SCENARIO_COUNT:
         case CRITERIA_TYPE_COMPLETE_SCENARIO:
-        case CRITERIA_TYPE_CAPTURE_BATTLE_PET:
-        case CRITERIA_TYPE_WIN_PET_BATTLE:
-        case CRITERIA_TYPE_LEVEL_BATTLE_PET:
-        case CRITERIA_TYPE_CAPTURE_BATTLE_PET_CREDIT:
-        case CRITERIA_TYPE_LEVEL_BATTLE_PET_CREDIT:
         case CRITERIA_TYPE_ENTER_AREA:
         case CRITERIA_TYPE_LEAVE_AREA:
         case CRITERIA_TYPE_UPGRADE_GARRISON_BUILDING:
@@ -778,9 +771,7 @@ void CriteriaHandler::UpdateCriteria(CriteriaTypes type, uint64 miscValue1 /*= 0
         case CRITERIA_TYPE_COMPLETE_CHALLENGE_MODE:
         case CRITERIA_TYPE_SEND_EVENT:
         case CRITERIA_TYPE_COOK_RECIPES_GUILD:
-        case CRITERIA_TYPE_EARN_PET_BATTLE_ACHIEVEMENT_POINTS:
         case CRITERIA_TYPE_RELEASE_SPIRIT:
-        case CRITERIA_TYPE_OWN_PET:
         case CRITERIA_TYPE_GARRISON_COMPLETE_DUNGEON_ENCOUNTER:
         case CRITERIA_TYPE_COMPLETE_LFG_DUNGEON:
         case CRITERIA_TYPE_LFG_VOTE_KICKS_INITIATED_BY_PLAYER:
@@ -1157,7 +1148,6 @@ bool CriteriaHandler::IsCompletedCriteria(Criteria const* criteria, uint64 requi
         case CRITERIA_TYPE_GET_KILLING_BLOWS:
         case CRITERIA_TYPE_CURRENCY:
         case CRITERIA_TYPE_PLACE_GARRISON_BUILDING:
-        case CRITERIA_TYPE_OWN_BATTLE_PET_COUNT:
         case CRITERIA_TYPE_APPEARANCE_UNLOCKED_BY_SLOT:
         case CRITERIA_TYPE_GAIN_PARAGON_REPUTATION:
         case CRITERIA_TYPE_EARN_HONOR_XP:
@@ -1170,7 +1160,6 @@ bool CriteriaHandler::IsCompletedCriteria(Criteria const* criteria, uint64 requi
         case CRITERIA_TYPE_LEARN_SPELL:
         case CRITERIA_TYPE_EXPLORE_AREA:
         case CRITERIA_TYPE_RECRUIT_GARRISON_FOLLOWER:
-        case CRITERIA_TYPE_OWN_BATTLE_PET:
         case CRITERIA_TYPE_HONOR_LEVEL_REACHED:
         case CRITERIA_TYPE_PRESTIGE_REACHED:
         case CRITERIA_TYPE_TRANSMOG_SET_UNLOCKED:
@@ -1779,9 +1768,9 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
                 return false;
             break;
         case CRITERIA_ADDITIONAL_CONDITION_BATTLE_PET_TEAM_LEVEL: // 34
-            for (WorldPackets::BattlePet::BattlePetSlot const& slot : referencePlayer->GetSession()->GetBattlePetMgr()->GetSlots())
-                if (slot.Pet.Level != reqValue)
-                    return false;
+        //    for (WorldPackets::BattlePet::BattlePetSlot const& slot : referencePlayer->GetSession()->GetBattlePetMgr()->GetSlots())
+        //        if (slot.Pet.Level != reqValue)
+        //            return false;
             break;
         case CRITERIA_ADDITIONAL_CONDITION_NOT_IN_GROUP: // 35
             if (referencePlayer->GetGroup())
@@ -1967,10 +1956,6 @@ bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint6
             break;
         case CRITERIA_ADDITIONAL_CONDITION_CLOUD_SERPENT_REPUTATION: // 88
             if (referencePlayer->GetReputationMgr().GetReputation(1271) < int32(reqValue))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_BATTLE_PET_SPECIES: // 91
-            if (miscValue1 != reqValue)
                 return false;
             break;
         case CRITERIA_ADDITIONAL_CONDITION_ACTIVE_EXPANSION: // 92
@@ -2260,8 +2245,6 @@ char const* CriteriaMgr::GetCriteriaTypeString(CriteriaTypes type)
             return "COOK_RECIPE_GUILD";
         case CRITERIA_TYPE_GOLD_EARNED_BY_AUCTIONS:
             return "GOLD_EARNED_BY_AUCTIONS";
-        case CRITERIA_TYPE_EARN_PET_BATTLE_ACHIEVEMENT_POINTS:
-            return "EARN_PET_BATTLE_ACHIEVEMENT_POINTS";
         case CRITERIA_TYPE_CREATE_AUCTION:
             return "CREATE_AUCTION";
         case CRITERIA_TYPE_HIGHEST_AUCTION_BID:
@@ -2290,8 +2273,6 @@ char const* CriteriaMgr::GetCriteriaTypeString(CriteriaTypes type)
             return "ROLL_GREED";
         case CRITERIA_TYPE_RELEASE_SPIRIT:
             return "RELEASE_SPIRIT";
-        case CRITERIA_TYPE_OWN_PET:
-            return "OWN_PET";
         case CRITERIA_TYPE_GARRISON_COMPLETE_DUNGEON_ENCOUNTER:
             return "GARRISON_COMPLETE_DUNGEON_ENCOUNTER";
         case CRITERIA_TYPE_HIGHEST_HIT_DEALT:
@@ -2382,20 +2363,6 @@ char const* CriteriaMgr::GetCriteriaTypeString(CriteriaTypes type)
             return "COMPLETE_SCENARIO";
         case CRITERIA_TYPE_REACH_AREATRIGGER_WITH_ACTIONSET:
             return "REACH_AREATRIGGER_WITH_ACTIONSET";
-        case CRITERIA_TYPE_OWN_BATTLE_PET:
-            return "OWN_BATTLE_PET";
-        case CRITERIA_TYPE_OWN_BATTLE_PET_COUNT:
-            return "OWN_BATTLE_PET_COUNT";
-        case CRITERIA_TYPE_CAPTURE_BATTLE_PET:
-            return "CAPTURE_BATTLE_PET";
-        case CRITERIA_TYPE_WIN_PET_BATTLE:
-            return "WIN_PET_BATTLE";
-        case CRITERIA_TYPE_LEVEL_BATTLE_PET:
-            return "LEVEL_BATTLE_PET";
-        case CRITERIA_TYPE_CAPTURE_BATTLE_PET_CREDIT:
-            return "CAPTURE_BATTLE_PET_CREDIT";
-        case CRITERIA_TYPE_LEVEL_BATTLE_PET_CREDIT:
-            return "LEVEL_BATTLE_PET_CREDIT";
         case CRITERIA_TYPE_ENTER_AREA:
             return "ENTER_AREA";
         case CRITERIA_TYPE_LEAVE_AREA:

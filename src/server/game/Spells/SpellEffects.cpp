@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -17,14 +16,15 @@
  */
 
 #include "Spell.h"
+#include "PetBattle.h"
+#include "PetbattleSystem.h"
+#include "PetBattleAbilityEffect.h"
 #include "AccountMgr.h"
 #include "ArchaeologyMgr.h"
 #include "ArchaeologyPlayerMgr.h"
 #include "AreaTrigger.h"
 #include "Battleground.h"
 #include "BattlegroundMgr.h"
-#include "BattlePet.h"
-#include "BattlePetMgr.h"
 #include "ClassHall.h"
 #include "CombatLogPackets.h"
 #include "CombatPackets.h"
@@ -132,7 +132,7 @@ pEffect SpellEffects[TOTAL_SPELL_EFFECTS]=
     &Spell::EffectUnused,                                   // 49 SPELL_EFFECT_DETECT                   one spell: Detect
     &Spell::EffectTransmitted,                              // 50 SPELL_EFFECT_TRANS_DOOR
     &Spell::EffectUnused,                                   // 51 SPELL_EFFECT_FORCE_CRITICAL_HIT       unused
-    &Spell::EffectUnused,                                   // 52 SPELL_EFFECT_SET_MAX_BATTLE_PET_COUNT
+    &Spell::EffectSetMaxBattlePetCount,                     // 52 SPELL_EFFECT_SET_MAX_BATTLE_PET_COUNT
     &Spell::EffectEnchantItemPerm,                          // 53 SPELL_EFFECT_ENCHANT_ITEM
     &Spell::EffectEnchantItemTmp,                           // 54 SPELL_EFFECT_ENCHANT_ITEM_TEMPORARY
     &Spell::EffectTameCreature,                             // 55 SPELL_EFFECT_TAMECREATURE
@@ -272,7 +272,7 @@ pEffect SpellEffects[TOTAL_SPELL_EFFECTS]=
     &Spell::EffectLootWithToast,                            //189 SPELL_EFFECT_LOOT
     &Spell::EffectNULL,                                     //190 SPELL_EFFECT_190
     &Spell::EffectNULL,                                     //191 SPELL_EFFECT_TELEPORT_TO_DIGSITE
-    &Spell::EffectUncageBattlePet,                          //192 SPELL_EFFECT_UNCAGE_BATTLEPET
+    &Spell::EffectUncageBattlePet,                          //192 SPELL_EFFECT_UNCAGE_BATTLE_PET
     &Spell::EffectNULL,                                     //193 SPELL_EFFECT_START_PET_BATTLE
     &Spell::EffectNULL,                                     //194 SPELL_EFFECT_194
     &Spell::EffectNULL,                                     //195 SPELL_EFFECT_195
@@ -281,10 +281,10 @@ pEffect SpellEffects[TOTAL_SPELL_EFFECTS]=
     &Spell::EffectPlayScene,                                //198 SPELL_EFFECT_PLAY_SCENE
     &Spell::EffectNULL,                                     //199 SPELL_EFFECT_199
     &Spell::EffectHealBattlePetPct,                         //200 SPELL_EFFECT_HEAL_BATTLEPET_PCT
-    &Spell::EffectEnableBattlePets,                         //201 SPELL_EFFECT_ENABLE_BATTLE_PETS
+    &Spell::EffectUnlockPetBattles,                         //201 SPELL_EFFECT_UNLOCK_PET_BATTLES
     &Spell::EffectApplyAuraWithAmount,                      //202 SPELL_EFFECT_APPLY_AURA_WITH_AMOUNT
     &Spell::EffectRemoveAura,                               //203 SPELL_EFFECT_REMOVE_AURA_2
-    &Spell::EffectNULL,                                     //204 SPELL_EFFECT_CHANGE_BATTLEPET_QUALITY
+    &Spell::EffectUpgradeBattlePet,                         //204 SPELL_EFFECT_UPGRADE_BATTLE_PET
     &Spell::EffectLaunchQuestChoice,                        //205 SPELL_EFFECT_LAUNCH_QUEST_CHOICE
     &Spell::EffectNULL,                                     //206 SPELL_EFFECT_ALTER_ITEM
     &Spell::EffectNULL,                                     //207 SPELL_EFFECT_LAUNCH_QUEST_TASK
@@ -305,7 +305,7 @@ pEffect SpellEffects[TOTAL_SPELL_EFFECTS]=
     &Spell::EffectCreateHeirloomItem,                       //222 SPELL_EFFECT_CREATE_HEIRLOOM_ITEM
     &Spell::EffectChangeItemBonus,                          //223 SPELL_EFFECT_CHANGE_ITEM_BONUSES
     &Spell::EffectActivateGarrisonBuilding,                 //224 SPELL_EFFECT_ACTIVATE_GARRISON_BUILDING
-    &Spell::EffectNULL,                                     //225 SPELL_EFFECT_GRANT_BATTLEPET_LEVEL
+    &Spell::EffectGrantBattlePetLevel,                      //225 SPELL_EFFECT_GRANT_BATTLEPET_LEVEL
     &Spell::EffectNULL,                                     //226 SPELL_EFFECT_226
     &Spell::EffectTeleportToLFG,                            //227 SPELL_EFFECT_TELEPORT_TO_LFG_DUNGEON
     &Spell::EffectNULL,                                     //228 SPELL_EFFECT_228
@@ -4341,6 +4341,219 @@ void Spell::EffectForceDeselect(SpellEffIndex /*effIndex*/)
     m_caster->SendMessageToSet(clearTarget.Write(), true);
 }
 
+void Spell::EffectUncageBattlePet(SpellEffIndex /*effIndex*/)
+{
+    if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT_TARGET)
+        return;
+
+    if (!m_CastItem || m_CastItem->GetEntry() != BATTLE_PET_CAGE_ITEM_ID)
+        return;
+
+    Player* player = m_caster->ToPlayer();
+    if (!player)
+        return;
+
+    uint32 speciesID = m_CastItem->GetModifier(ITEM_MODIFIER_BATTLE_PET_SPECIES_ID);
+
+    auto const& speciesEntry = sBattlePetSpeciesStore.LookupEntry(speciesID);
+    if (!speciesEntry)
+        return;
+
+    uint8 speciesCount = player->GetBattlePetCountForSpecies(speciesID);
+    if ((sDB2Manager.HasBattlePetSpeciesFlag(speciesID, BATTLEPET_SPECIES_FLAG_UNIQUE) && speciesCount >= 1) || speciesCount >= MAX_BATTLE_PETS_PER_SPECIES)
+    {
+        player->GetSession()->SendBattlePetError(BattlePetError::ERR_CANT_HAVE_MORE_PETS_OF_THAT_TYPE, speciesEntry->CreatureID);
+        SendCastResult(SPELL_FAILED_CANT_ADD_BATTLE_PET);
+        return;
+    }
+
+    //if (static_cast<uint16>(battlePetMgr.BattlePets.size()) >= battlePetMgr.GetMaxBattlePets())
+    //{
+    //    player->GetSession()->SendBattlePetError(BattlePetError::ERR_CANT_HAVE_MORE_PETS, speciesEntry->CreatureID);
+    //    SendCastResult(SPELL_FAILED_CANT_ADD_BATTLE_PET);
+    //    return;
+    //}
+
+    uint32 tempData = m_CastItem->GetModifier(ITEM_MODIFIER_BATTLE_PET_BREED_DATA);
+
+    auto BattlePetPtr = std::make_shared<BattlePet>();
+    BattlePetPtr->Slot = PETBATTLE_NULL_SLOT;
+    BattlePetPtr->NameTimeStamp = 0;
+    BattlePetPtr->Species = speciesID;
+    BattlePetPtr->DisplayModelID = m_CastItem->GetModifier(ITEM_MODIFIER_BATTLE_PET_DISPLAY_ID);
+    BattlePetPtr->Flags = 0;
+    BattlePetPtr->Level = m_CastItem->GetModifier(ITEM_MODIFIER_BATTLE_PET_LEVEL);
+    BattlePetPtr->XP = 0;
+    BattlePetPtr->Breed = tempData & 0xFFFFFF;
+    BattlePetPtr->Quality = (tempData >> 24) & 0xFF;
+    BattlePetPtr->UpdateStats();
+    BattlePetPtr->Health = BattlePetPtr->InfoMaxHealth;
+    BattlePetPtr->AddToPlayer(player);
+
+    player->_battlePets.emplace(BattlePetPtr->JournalID, BattlePetPtr);
+    player->GetSession()->SendBattlePetUpdates();
+
+    ;
+    player->DestroyItem(m_CastItem->GetBagSlot(), m_CastItem->GetSlot(), true);
+    m_CastItem = nullptr;
+}
+
+void Spell::EffectSetMaxBattlePetCount(SpellEffIndex /*effIndex*/)
+{
+    if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT_TARGET)
+        return;
+
+    //if (Player* player = m_caster->ToPlayer())
+    //    player->GetBattlePetMgr().SetMaxBattlePets(m_spellInfo->GetEffect(effIndex, m_diffMode)->BasePoints);
+}
+
+void Spell::EffectGrantBattlePetLevel(SpellEffIndex effIndex)
+{
+    if (effectHandleMode != SPELL_EFFECT_HANDLE_LAUNCH_TARGET)
+        return;
+
+    if (!m_CastItem)
+        return;
+
+    Player* player = m_caster->ToPlayer();
+    if (!player)
+        return;
+
+    auto const& battlePet = player->GetBattlePet(player->GetGuidValue(PLAYER_FIELD_SUMMONED_BATTLE_PET_GUID));
+    if (!battlePet)
+        return;
+
+    auto const& familyMask = 1 << sBattlePetSpeciesStore.AssertEntry(battlePet->Species)->PetTypeEnum;
+    if ((familyMask & m_spellInfo->GetEffect(effIndex)->MiscValue) == 0)
+    {
+        SendCastResult(SPELL_FAILED_WRONG_BATTLE_PET_TYPE);
+        return;
+    }
+
+    if (battlePet->Level == BATTLEPET_MAX_LEVEL)
+    {
+        SendCastResult(SPELL_FAILED_CANT_UPGRADE_BATTLE_PET);
+        return;
+    }
+
+    battlePet->Level += m_spellInfo->GetEffect(effIndex)->BasePoints;
+    battlePet->needSave = true;
+
+    if (battlePet->Level > BATTLEPET_MAX_LEVEL)
+        battlePet->Level = BATTLEPET_MAX_LEVEL;
+
+    player->GetSession()->SendBattlePetUpdates(nullptr, true);
+
+    BattlePetSpeciesEntry const* speciesInfo = sBattlePetSpeciesStore.LookupEntry(battlePet->Species);
+    if (speciesInfo)
+    {
+        player->UpdateCriteria(CRITERIA_TYPE_BATTLEPET_LEVEL_UP, battlePet->Level, speciesInfo->PetTypeEnum, battlePet->Species);
+        player->UpdateCriteria(CRITERIA_TYPE_LEVEL_BATTLE_PET_CREDIT, speciesInfo->ID, battlePet->Level, battlePet->Species);
+    }
+
+
+    player->DestroyItem(m_CastItem->GetBagSlot(), m_CastItem->GetSlot(), true);
+    m_CastItem = nullptr;
+}
+
+void Spell::EffectUpgradeBattlePet(SpellEffIndex effIndex)
+{
+    if (effectHandleMode != SPELL_EFFECT_HANDLE_LAUNCH_TARGET)
+        return;
+
+    if (!m_CastItem)
+        return;
+
+    Player* player = m_caster->ToPlayer();
+    if (!player)
+        return;
+
+    auto const& battlePet = player->GetBattlePet(player->GetGuidValue(PLAYER_FIELD_SUMMONED_BATTLE_PET_GUID));
+    if (!battlePet)
+        return;
+
+    auto const& familyMask = 1 << sBattlePetSpeciesStore.AssertEntry(battlePet->Species)->PetTypeEnum;
+    if ((familyMask & m_spellInfo->GetEffect(effIndex)->MiscValue) == 0)
+    {
+        SendCastResult(SPELL_FAILED_WRONG_BATTLE_PET_TYPE);
+        return;
+    }
+
+    uint8 quality = 1;
+    switch (RoundingFloatValue(m_spellInfo->GetEffect(effIndex)->BasePoints))
+    {
+    case 75: // Uncommon
+        quality = BATTLEPET_QUALITY_UNCOMMON;
+        break;
+    case 85: // Rare
+        quality = BATTLEPET_QUALITY_RARE;
+        break;
+    case 98: // Epic
+    case 99: // Epic
+        quality = BATTLEPET_QUALITY_EPIC;
+        break;
+    default:
+        break;
+    }
+
+    if (quality >= BATTLEPET_QUALITY_EPIC)
+    {
+        SendCastResult(SPELL_FAILED_CANT_UPGRADE_BATTLE_PET);
+        return;
+    }
+
+    if (battlePet->Quality >= quality)
+    {
+        SendCastResult(SPELL_FAILED_CANT_UPGRADE_BATTLE_PET);
+        return;
+    }
+
+    battlePet->Quality = quality;
+    battlePet->needSave = true;
+
+    if (battlePet->Level >= 15)
+    {
+        battlePet->Level = battlePet->Level - 2;
+        m_targets.GetUnitTarget()->SetUInt32Value(UNIT_FIELD_WILD_BATTLE_PET_LEVEL, battlePet->Level);
+    }
+
+
+    player->GetSession()->SendBattlePetUpdates(nullptr, true);
+    player->DestroyItem(m_CastItem->GetBagSlot(), m_CastItem->GetSlot(), true);
+    player->SetUInt32Value(PLAYER_FIELD_CURRENT_BATTLE_PET_BREED_QUALITY, battlePet->Quality);
+    m_CastItem = nullptr;
+}
+
+void Spell::EffectUnlockPetBattles(SpellEffIndex /*effIndex*/)
+{
+    if (!unitTarget)
+        return;
+
+    if (Player* player = unitTarget->ToPlayer())
+        player->GetSession()->SendPetBattleSlotUpdates();
+}
+
+void Spell::EffectHealBattlePetPct(SpellEffIndex /*effIndex*/)
+{
+    if (effectHandleMode != SPELL_EFFECT_HANDLE_LAUNCH_TARGET)
+        return;
+
+    if (Player* player = m_caster->ToPlayer())
+    {
+        BattlePetMap* pets = player->GetBattlePets();
+        for (auto& pet : *pets)
+        {
+            pet.second->UpdateStats();
+            if (pet.second->Health != pet.second->InfoMaxHealth)
+                pet.second->needSave = true;
+            pet.second->Health = pet.second->InfoMaxHealth;
+        }
+
+        player->GetSession()->SendBattlePetsHealed();
+        player->GetSession()->SendBattlePetUpdates();
+    }
+}
+
 void Spell::EffectSelfResurrect(SpellEffIndex /*effIndex*/)
 {
     if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT)
@@ -5843,31 +6056,6 @@ void Spell::EffectActivateGarrisonBuilding(SpellEffIndex /*effIndex*/)
         garrison->ToWodGarrison()->ActivateBuilding(effectInfo->MiscValue);
 }
 
-void Spell::EffectHealBattlePetPct(SpellEffIndex /*effIndex*/)
-{
-    if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT_TARGET)
-        return;
-
-    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
-        return;
-
-    if (BattlePetMgr* battlePetMgr = unitTarget->ToPlayer()->GetSession()->GetBattlePetMgr())
-        battlePetMgr->HealBattlePetsPct(damage);
-}
-
-void Spell::EffectEnableBattlePets(SpellEffIndex /*effIndex*/)
-{
-    if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT_TARGET)
-        return;
-
-    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
-        return;
-
-    Player* plr = unitTarget->ToPlayer();
-    plr->SetFlag(PLAYER_FLAGS, PLAYER_FLAGS_PET_BATTLES_UNLOCKED);
-    plr->GetSession()->GetBattlePetMgr()->UnlockSlot(0);
-}
-
 void Spell::EffectApplyAuraWithAmount(SpellEffIndex effIndex)
 {
     if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT_TARGET)
@@ -5899,59 +6087,6 @@ void Spell::EffectLootWithToast(SpellEffIndex /*effIndex*/)
         return;
 
     unitTarget->ToPlayer()->AutoStoreLoot(m_spellInfo->Id, LootTemplates_Spell, false, true, TOAST_METHOD_POPUP);
-}
-
-void Spell::EffectUncageBattlePet(SpellEffIndex /*effIndex*/)
-{
-    if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT)
-        return;
-
-    if (!m_CastItem || !m_caster || m_caster->GetTypeId() != TYPEID_PLAYER)
-        return;
-
-    Player* plr = m_caster->ToPlayer();
-
-    // are we allowed to learn battle pets without it?
-    /*if (plr->HasFlag(PLAYER_FLAGS, PLAYER_FLAGS_PET_BATTLES_UNLOCKED))
-        return; // send some error*/
-
-    uint32 speciesId = m_CastItem->GetModifier(ITEM_MODIFIER_BATTLE_PET_SPECIES_ID);
-    uint16 breed = m_CastItem->GetModifier(ITEM_MODIFIER_BATTLE_PET_BREED_DATA) & 0xFFFFFF;
-    uint8 quality = (m_CastItem->GetModifier(ITEM_MODIFIER_BATTLE_PET_BREED_DATA) >> 24) & 0xFF;
-    uint16 level = m_CastItem->GetModifier(ITEM_MODIFIER_BATTLE_PET_LEVEL);
-    uint32 creatureId = m_CastItem->GetModifier(ITEM_MODIFIER_BATTLE_PET_DISPLAY_ID);
-
-    BattlePetSpeciesEntry const* speciesEntry = sBattlePetSpeciesStore.LookupEntry(speciesId);
-    if (!speciesEntry)
-        return;
-
-    BattlePetMgr* battlePetMgr = plr->GetSession()->GetBattlePetMgr();
-    if (!battlePetMgr)
-        return;
-
-    // TODO: This means if you put your highest lvl pet into cage, you won't be able to uncage it again which is probably wrong.
-    // We will need to store maxLearnedLevel somewhere to avoid this behaviour.
-    if (battlePetMgr->GetMaxPetLevel() < level)
-    {
-        battlePetMgr->SendError(BATTLEPETRESULT_TOO_HIGH_LEVEL_TO_UNCAGE, creatureId); // or speciesEntry.CreatureID
-        SendCastResult(SPELL_FAILED_CANT_ADD_BATTLE_PET);
-        return;
-    }
-
-    if (battlePetMgr->GetPetCount(speciesId) >= MAX_BATTLE_PETS_PER_SPECIES)
-    {
-        battlePetMgr->SendError(BATTLEPETRESULT_CANT_HAVE_MORE_PETS_OF_THAT_TYPE, creatureId); // or speciesEntry.CreatureID
-        SendCastResult(SPELL_FAILED_CANT_ADD_BATTLE_PET);
-        return;
-    }
-
-    battlePetMgr->AddPet(speciesId, creatureId, breed, quality, level);
-
-    if (!plr->HasSpell(speciesEntry->SummonSpellID))
-        plr->LearnSpell(speciesEntry->SummonSpellID, false);
-
-    plr->DestroyItem(m_CastItem->GetBagSlot(), m_CastItem->GetSlot(), true);
-    m_CastItem = nullptr;
 }
 
 void Spell::EffectUpgradeHeirloom(SpellEffIndex /*effIndex*/)

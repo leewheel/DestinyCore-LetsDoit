@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -124,27 +124,42 @@ void HotfixDatabaseConnection::DoPrepareStatements()
     PREPARE_LOCALE_STMT(HOTFIX_SEL_BARBER_SHOP_STYLE, "SELECT ID, DisplayName_lang, Description_lang FROM barber_shop_style_locale WHERE locale = ?", CONNECTION_SYNCH);
 
     // BattlePetAbility.db2
-    PrepareStatement(HOTFIX_SEL_BATTLE_PET_ABILITY, "SELECT ID, Name, Description, IconFileDataID, BattlePetVisualID, PetTypeEnum, Flags, Cooldown "
-        "FROM battle_pet_ability ORDER BY ID DESC", CONNECTION_SYNCH);
+    PrepareStatement(HOTFIX_SEL_BATTLE_PET_ABILITY, "SELECT ID, Name, Description, IconFileDataID, BattlePetVisualID, PetTypeEnum, Flags, Cooldown"
+        " FROM battle_pet_ability ORDER BY ID DESC", CONNECTION_SYNCH);
     PREPARE_LOCALE_STMT(HOTFIX_SEL_BATTLE_PET_ABILITY, "SELECT ID, Name_lang, Description_lang FROM battle_pet_ability_locale WHERE locale = ?", CONNECTION_SYNCH);
 
     // BattlePetAbilityEffect.db2
-    PrepareStatement(HOTFIX_SEL_BATTLE_PET_ABILITY_EFFECT, "SELECT BattlePetAbilityTurnID, BattlePetVisualID, AuraBattlePetAbilityID, BattlePetEffectPropertiesID, "
-        "Param1, Param2, Param3, Param4, Param5, Param6, OrderIndex, ID FROM battle_pet_ability_effect ORDER BY ID DESC", CONNECTION_SYNCH);
+    PrepareStatement(HOTFIX_SEL_BATTLE_PET_ABILITY_EFFECT, "SELECT BattlePetAbilityTurnID, BattlePetVisualID, AuraBattlePetAbilityID, "
+        "BattlePetEffectPropertiesID, Param1, Param2, Param3, Param4, Param5, Param6, OrderIndex, ID FROM battle_pet_ability_effect ORDER BY ID DESC", CONNECTION_SYNCH);
 
     // BattlePetAbilityState.db2
-    PrepareStatement(HOTFIX_SEL_BATTLE_PET_ABILITY_STATE, "SELECT ID, Value, BattlePetStateID, BattlePetAbilityID FROM battle_pet_ability_state ORDER BY ID DESC", CONNECTION_SYNCH);
+    PrepareStatement(HOTFIX_SEL_BATTLE_PET_ABILITY_STATE, "SELECT ID, Value, BattlePetStateID, BattlePetAbilityID FROM battle_pet_ability_state"
+        " ORDER BY ID DESC", CONNECTION_SYNCH);
 
     // BattlePetAbilityTurn.db2
-    PrepareStatement(HOTFIX_SEL_BATTLE_PET_ABILITY_TURN, "SELECT BattlePetAbilityID, BattlePetVisualID, OrderIndex, TurnTypeEnum, EventTypeEnum, ID "
-        "FROM battle_pet_ability_turn ORDER BY ID DESC", CONNECTION_SYNCH);
+    PrepareStatement(HOTFIX_SEL_BATTLE_PET_ABILITY_TURN, "SELECT BattlePetAbilityID, BattlePetVisualID, OrderIndex, TurnTypeEnum, EventTypeEnum, ID"
+        " FROM battle_pet_ability_turn ORDER BY ID DESC", CONNECTION_SYNCH);
 
     // BattlePetBreedQuality.db2
     PrepareStatement(HOTFIX_SEL_BATTLE_PET_BREED_QUALITY, "SELECT ID, StateMultiplier, QualityEnum FROM battle_pet_breed_quality ORDER BY ID DESC", CONNECTION_SYNCH);
 
     // BattlePetBreedState.db2
-    PrepareStatement(HOTFIX_SEL_BATTLE_PET_BREED_STATE, "SELECT ID, Value, BattlePetStateID, BattlePetBreedID FROM battle_pet_breed_state"
-        " ORDER BY ID DESC", CONNECTION_SYNCH);
+    PrepareStatement(HOTFIX_SEL_BATTLE_PET_BREED_STATE, "SELECT ID, Value, BattlePetStateID, BreedID FROM battle_pet_breed_state ORDER BY ID DESC", CONNECTION_SYNCH);
+
+    // BattlePetDisplayOverride.db2
+    PrepareStatement(HOTFIX_SEL_BATTLE_PET_DISPLAY_OVERRIDE, "SELECT ID, BattlePetSpeciesID, PlayerConditionID, CreatureDisplayInfoID, "
+        "PriorityCategory FROM battle_pet_display_override ORDER BY ID DESC", CONNECTION_SYNCH);
+
+    // BattlePetEffectProperties.db2
+    PrepareStatement(HOTFIX_SEL_BATTLE_PET_EFFECT_PROPERTIES, "SELECT ID, ParamLabel1, ParamLabel2, ParamLabel3, ParamLabel4, ParamLabel5, "
+        "ParamLabel6, BattlePetVisualID, ParamTypeEnum1, ParamTypeEnum2, ParamTypeEnum3, ParamTypeEnum4, ParamTypeEnum5, ParamTypeEnum6"
+        " FROM battle_pet_effect_properties ORDER BY ID DESC", CONNECTION_SYNCH);
+    PREPARE_LOCALE_STMT(HOTFIX_SEL_BATTLE_PET_EFFECT_PROPERTIES, "SELECT ID, ParamLabel1_lang, ParamLabel2_lang, ParamLabel3_lang, ParamLabel4_lang, "
+        "ParamLabel5_lang, ParamLabel6_lang FROM battle_pet_effect_properties_locale WHERE locale = ?", CONNECTION_SYNCH);
+
+    // BattlePetNPCTeamMember.db2
+    PrepareStatement(HOTFIX_SEL_BATTLE_PET_N_P_C_TEAM_MEMBER, "SELECT ID, Name FROM battle_pet_n_p_c_team_member ORDER BY ID DESC", CONNECTION_SYNCH);
+    PREPARE_LOCALE_STMT(HOTFIX_SEL_BATTLE_PET_N_P_C_TEAM_MEMBER, "SELECT ID, Name_lang FROM battle_pet_n_p_c_team_member_locale WHERE locale = ?", CONNECTION_SYNCH);
 
     // BattlePetSpecies.db2
     PrepareStatement(HOTFIX_SEL_BATTLE_PET_SPECIES, "SELECT SourceText, Description, CreatureID, IconFileDataID, SummonSpellID, Flags, PetTypeEnum, "
@@ -152,12 +167,21 @@ void HotfixDatabaseConnection::DoPrepareStatements()
     PREPARE_LOCALE_STMT(HOTFIX_SEL_BATTLE_PET_SPECIES, "SELECT ID, SourceText_lang, Description_lang FROM battle_pet_species_locale WHERE locale = ?", CONNECTION_SYNCH);
 
     // BattlePetSpeciesState.db2
-    PrepareStatement(HOTFIX_SEL_BATTLE_PET_SPECIES_STATE, "SELECT ID, Value, BattlePetStateID, BattlePetSpeciesID FROM battle_pet_species_state"
+    PrepareStatement(HOTFIX_SEL_BATTLE_PET_SPECIES_STATE, "SELECT ID, Value, BattlePetStateID, SpeciesID FROM battle_pet_species_state"
         " ORDER BY ID DESC", CONNECTION_SYNCH);
 
     // BattlePetSpeciesXAbility.db2
-    PrepareStatement(HOTFIX_SEL_BATTLE_PET_SPECIES_X_ABILITY, "SELECT ID, BattlePetAbilityID, RequiredLevel, SlotEnum, BattlePetSpeciesID FROM battle_pet_species_x_abitily"
-        " ORDER BY ID DESC", CONNECTION_SYNCH);
+    PrepareStatement(HOTFIX_SEL_BATTLE_PET_SPECIES_X_ABILITY, "SELECT ID, BattlePetAbilityID, RequiredLevel, SlotEnum, BattlePetSpeciesID"
+        " FROM battle_pet_species_x_ability ORDER BY ID DESC", CONNECTION_SYNCH);
+
+    // BattlePetState.db2
+    PrepareStatement(HOTFIX_SEL_BATTLE_PET_STATE, "SELECT ID, LuaName, BattlePetVisualID, Flags FROM battle_pet_state ORDER BY ID DESC", CONNECTION_SYNCH);
+    PREPARE_LOCALE_STMT(HOTFIX_SEL_BATTLE_PET_STATE, "SELECT ID, LuaName_lang FROM battle_pet_state_locale WHERE locale = ?", CONNECTION_SYNCH);
+
+    // BattlePetVisual.db2
+    PrepareStatement(HOTFIX_SEL_BATTLE_PET_VISUAL, "SELECT ID, SceneScriptFunction, SpellVisualID, CastMilliSeconds, ImpactMilliSeconds, "
+        "SceneScriptPackageID, RangeTypeEnum, Flags FROM battle_pet_visual ORDER BY ID DESC", CONNECTION_SYNCH);
+    PREPARE_LOCALE_STMT(HOTFIX_SEL_BATTLE_PET_VISUAL, "SELECT ID, SceneScriptFunction_lang FROM battle_pet_visual_locale WHERE locale = ?", CONNECTION_SYNCH);
 
     // BattlemasterList.db2
     PrepareStatement(HOTFIX_SEL_BATTLEMASTER_LIST, "SELECT ID, Name, GameType, ShortDescription, LongDescription, IconFileDataID, MapID1, MapID2, "

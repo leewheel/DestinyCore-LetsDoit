@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -41,6 +41,26 @@ struct GtArtifactLevelXPEntry
 struct GtBarberShopCostBaseEntry
 {
     float Cost = 0.0f;
+};
+
+struct GtBattlePetXPEntry
+{
+    float Wins = 0.0f;
+    float Xp = 0.0f;
+};
+
+struct GtBattlePetTypeDamageModEntry
+{
+    float Humanoid = 0.0f;
+    float Dragonkin = 0.0f;
+    float Flying = 0.0f;
+    float Undead = 0.0f;
+    float Critter = 0.0f;
+    float Magic = 0.0f;
+    float Elemental = 0.0f;
+    float Beast = 0.0f;
+    float Aquatic = 0.0f;
+    float Mechanical = 0.0f;
 };
 
 struct GtBaseMPEntry
@@ -234,6 +254,8 @@ TC_GAME_API extern GameTable<GtNpcManaCostScalerEntry>              sNpcManaCost
 TC_GAME_API extern GameTable<GtNpcTotalHpEntry>                     sNpcTotalHpGameTable[MAX_EXPANSIONS];
 TC_GAME_API extern GameTable<GtSpellScalingEntry>                   sSpellScalingGameTable;
 TC_GAME_API extern GameTable<GtXpEntry>                             sXpGameTable;
+TC_GAME_API extern GameTable<GtBattlePetXPEntry>                    sBattlePetXPTable;
+TC_GAME_API extern GameTable<GtBattlePetTypeDamageModEntry>         sBattlePetTypeDamageModTable;
 
 TC_GAME_API void LoadGameTables(std::string const& dataPath);
 

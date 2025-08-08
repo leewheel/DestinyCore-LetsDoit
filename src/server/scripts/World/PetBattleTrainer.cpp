@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 AshamaneProject <https://github.com/AshamaneProject>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,28 +15,18 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef TRINITYCORE_WILDBATTLEPET_H
-#define TRINITYCORE_WILDBATTLEPET_H
+#include "ScriptMgr.h"
+#include "ScriptedGossip.h"
+#include "PetBattle.h"
+#include "BattlePetDataStore.h"
+#include "Player.h"
+#include "WorldSession.h"
 
-class BattlePet;
-class Creature;
+#include "PetBattleSystem.h"
 
-class TC_GAME_API WildBattlePet
+enum
 {
-    public:
-        WildBattlePet(Creature* creature);
-        ~WildBattlePet();
-
-        void Initialize();
-
-        Creature* GetCreature() { return m_creature; }
-        BattlePet* GetBattlePet() { return m_battlePet; }
-
-        uint8 GetLevel() { return m_battlePet->Level; }
-
-    private:
-        Creature* m_creature;
-        BattlePet* m_battlePet;
+    PetBattleTrainerFightActionID = GOSSIP_ACTION_INFO_DEF + 0xABCD
 };
 
-#endif
+

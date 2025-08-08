@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -63,9 +63,14 @@ DB2Storage<BattlePetAbilityStateEntry>          sBattlePetAbilityStateStore("Bat
 DB2Storage<BattlePetAbilityTurnEntry>           sBattlePetAbilityTurnStore("BattlePetAbilityTurn.db2", BattlePetAbilityTurnLoadInfo::Instance());
 DB2Storage<BattlePetBreedQualityEntry>          sBattlePetBreedQualityStore("BattlePetBreedQuality.db2", BattlePetBreedQualityLoadInfo::Instance());
 DB2Storage<BattlePetBreedStateEntry>            sBattlePetBreedStateStore("BattlePetBreedState.db2", BattlePetBreedStateLoadInfo::Instance());
+DB2Storage<BattlePetDisplayOverrideEntry>       sBattlePetDisplayOverrideStore("BattlePetDisplayOverride.db2", BattlePetDisplayOverrideLoadInfo::Instance());
+DB2Storage<BattlePetEffectPropertiesEntry>      sBattlePetEffectPropertiesStore("BattlePetEffectProperties.db2", BattlePetEffectPropertiesLoadInfo::Instance());
+DB2Storage<BattlePetNPCTeamMemberEntry>         sBattlePetNPCTeamMemberStore("BattlePetNPCTeamMember.db2", BattlePetNPCTeamMemberLoadInfo::Instance());
 DB2Storage<BattlePetSpeciesEntry>               sBattlePetSpeciesStore("BattlePetSpecies.db2", BattlePetSpeciesLoadInfo::Instance());
 DB2Storage<BattlePetSpeciesStateEntry>          sBattlePetSpeciesStateStore("BattlePetSpeciesState.db2", BattlePetSpeciesStateLoadInfo::Instance());
 DB2Storage<BattlePetSpeciesXAbilityEntry>       sBattlePetSpeciesXAbilityStore("BattlePetSpeciesXAbility.db2", BattlePetSpeciesXAbilityLoadInfo::Instance());
+DB2Storage<BattlePetStateEntry>                 sBattlePetStateStore("BattlePetState.db2", BattlePetStateLoadInfo::Instance());
+DB2Storage<BattlePetVisualEntry>                sBattlePetVisualStore("BattlePetVisual.db2", BattlePetVisualLoadInfo::Instance());
 DB2Storage<BattlemasterListEntry>               sBattlemasterListStore("BattlemasterList.db2", BattlemasterListLoadInfo::Instance());
 DB2Storage<BroadcastTextEntry>                  sBroadcastTextStore("BroadcastText.db2", BroadcastTextLoadInfo::Instance());
 DB2Storage<Cfg_RegionsEntry>                    sCfgRegionsStore("Cfg_Regions.db2", CfgRegionsLoadInfo::Instance());
@@ -356,6 +361,9 @@ typedef std::unordered_set<uint32> ToyItemIdsContainer;
 typedef std::tuple<uint16, uint8, int32> WMOAreaTableKey;
 typedef std::map<WMOAreaTableKey, WMOAreaTableEntry const*> WMOAreaTableLookupContainer;
 typedef std::unordered_map<uint32, WorldMapAreaEntry const*> WorldMapAreaByAreaIDContainer;
+typedef std::vector<BattlePetSpeciesEntry const*> BattlePetSpeciesContainer;
+typedef std::vector<BattlePetSpeciesEntry const*> CreatureToSpeciesContainer;
+typedef std::unordered_map<uint32 /*SpellID*/, BattlePetSpeciesEntry const*> SpellToSpeciesContainer;
 
 namespace
 {
@@ -367,7 +375,6 @@ namespace
     ArtifactPowersContainer _artifactPowers;
     ArtifactPowerLinksContainer _artifactPowerLinks;
     ArtifactPowerRanksContainer _artifactPowerRanks;
-    std::unordered_map<uint32, BattlePetSpeciesEntry const*> _battlePetSpeciesByCreatureId;
     std::set<std::tuple<uint8, uint8, uint32>> _characterFacialHairStyles;
     std::multimap<std::tuple<uint8, uint8, CharBaseSectionVariation>, CharSectionsEntry const*> _charSections;
     CharStartOutfitContainer _charStartOutfits;
@@ -423,6 +430,9 @@ namespace
     std::unordered_map<uint32, std::vector<TransmogSetItemEntry const*>> _transmogSetItemsByTransmogSet;
     WMOAreaTableLookupContainer _wmoAreaTableLookup;
     WorldMapAreaByAreaIDContainer _worldMapAreaByAreaID;
+    BattlePetSpeciesContainer _battlePetSpeciesContainer;
+    SpellToSpeciesContainer _spellToSpeciesContainer;
+    CreatureToSpeciesContainer _creatureToSpeciesContainer;
 }
 
 typedef std::vector<std::string> DB2StoreProblemList;
@@ -534,9 +544,14 @@ void DB2Manager::LoadStores(std::string const& dataPath, uint32 defaultLocale)
     LOAD_DB2(sBattlePetAbilityTurnStore);
     LOAD_DB2(sBattlePetBreedQualityStore);
     LOAD_DB2(sBattlePetBreedStateStore);
+    //LOAD_DB2(sBattlePetDisplayOverrideStore);
+    LOAD_DB2(sBattlePetEffectPropertiesStore);
+    //LOAD_DB2(sBattlePetNPCTeamMemberStore);
     LOAD_DB2(sBattlePetSpeciesStore);
     LOAD_DB2(sBattlePetSpeciesStateStore);
     LOAD_DB2(sBattlePetSpeciesXAbilityStore);
+    LOAD_DB2(sBattlePetStateStore);
+    //LOAD_DB2(sBattlePetVisualStore);
     LOAD_DB2(sBattlemasterListStore);
     LOAD_DB2(sBroadcastTextStore);
     LOAD_DB2(sCfgRegionsStore);
@@ -765,6 +780,20 @@ void DB2Manager::LoadStores(std::string const& dataPath, uint32 defaultLocale)
 
 #undef LOAD_DB2
 
+    ASSERT(BATTLE_PET_SPECIES_MAX_ID >= sBattlePetSpeciesStore.GetNumRows(),
+        "BATTLE_PET_SPECIES_MAX_ID (%d) must be equal to or greater than %u", BATTLE_PET_SPECIES_MAX_ID, sBattlePetSpeciesStore.GetNumRows());
+    _battlePetSpeciesContainer.resize(sBattlePetSpeciesStore.GetNumRows(), nullptr);
+
+    for (auto const& bps : sBattlePetSpeciesStore)
+    {
+        _battlePetSpeciesContainer[bps->ID] = bps;
+        _spellToSpeciesContainer[bps->SummonSpellID] = bps;
+
+        if (bps->CreatureID >= _creatureToSpeciesContainer.size())
+            _creatureToSpeciesContainer.resize(bps->CreatureID + 1, nullptr);
+        _creatureToSpeciesContainer[bps->CreatureID] = bps;
+    }
+
     for (AreaGroupMemberEntry const* areaGroupMember : sAreaGroupMemberStore)
         _areaGroupMembers[areaGroupMember->AreaGroupID].push_back(areaGroupMember->AreaID);
 
@@ -779,12 +808,6 @@ void DB2Manager::LoadStores(std::string const& dataPath, uint32 defaultLocale)
 
     for (ArtifactPowerRankEntry const* artifactPowerRank : sArtifactPowerRankStore)
         _artifactPowerRanks[std::pair<uint32, uint8>{ artifactPowerRank->ArtifactPowerID, artifactPowerRank->RankIndex }] = artifactPowerRank;
-
-    ASSERT(BATTLE_PET_SPECIES_MAX_ID >= sBattlePetSpeciesStore.GetNumRows(),
-        "BATTLE_PET_SPECIES_MAX_ID (%d) must be equal to or greater than %u", BATTLE_PET_SPECIES_MAX_ID, sBattlePetSpeciesStore.GetNumRows());
-
-    for (BattlePetSpeciesEntry const* battlePetSpeciesEntry : sBattlePetSpeciesStore)
-        _battlePetSpeciesByCreatureId[battlePetSpeciesEntry->CreatureID] = battlePetSpeciesEntry;
 
     for (CharacterFacialHairStylesEntry const* characterFacialStyle : sCharacterFacialHairStylesStore)
         _characterFacialHairStyles.emplace(characterFacialStyle->RaceID, characterFacialStyle->SexID, characterFacialStyle->VariationID);
@@ -1378,15 +1401,6 @@ ArtifactPowerRankEntry const* DB2Manager::GetArtifactPowerRank(uint32 artifactPo
 {
     auto itr = _artifactPowerRanks.find({ artifactPowerId, rank });
     if (itr != _artifactPowerRanks.end())
-        return itr->second;
-
-    return nullptr;
-}
-
-BattlePetSpeciesEntry const* DB2Manager::GetBattlePetSpeciesByCreatureID(uint32 CreatureID) const
-{
-    auto itr = _battlePetSpeciesByCreatureId.find(CreatureID);
-    if (itr != _battlePetSpeciesByCreatureId.end())
         return itr->second;
 
     return nullptr;
@@ -2035,6 +2049,30 @@ DB2Manager::MountTypeXCapabilitySet const* DB2Manager::GetMountCapabilities(uint
         return &itr->second;
 
     return nullptr;
+}
+
+bool DB2Manager::HasBattlePetSpeciesFlag(uint16 species, uint16 flag)
+{
+    if (species >= _battlePetSpeciesContainer.size())
+        return false;
+
+    if (auto const& speciesEntry = _battlePetSpeciesContainer[species])
+        return (speciesEntry->Flags & flag) != 0;
+
+    return false;
+}
+
+BattlePetSpeciesEntry const* DB2Manager::GetSpeciesBySpell(uint32 SpellID) const
+{
+    return Trinity::Containers::MapGetValuePtr(_spellToSpeciesContainer, SpellID);
+}
+
+BattlePetSpeciesEntry const* DB2Manager::GetSpeciesByCreatureID(uint32 CreatureID) const
+{
+    if (CreatureID >= _creatureToSpeciesContainer.size())
+        return nullptr;
+
+    return _creatureToSpeciesContainer[CreatureID];
 }
 
 DB2Manager::MountXDisplayContainer const* DB2Manager::GetMountDisplays(uint32 mountId) const

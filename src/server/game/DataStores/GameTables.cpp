@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -39,6 +39,8 @@ GameTable<GtNpcManaCostScalerEntry>             sNpcManaCostScalerGameTable;
 GameTable<GtNpcTotalHpEntry>                    sNpcTotalHpGameTable[MAX_EXPANSIONS];
 GameTable<GtSpellScalingEntry>                  sSpellScalingGameTable;
 GameTable<GtXpEntry>                            sXpGameTable;
+GameTable<GtBattlePetXPEntry>                   sBattlePetXPTable;
+GameTable<GtBattlePetTypeDamageModEntry>        sBattlePetTypeDamageModTable;
 
 template<class T>
 inline uint32 LoadGameTable(std::vector<std::string>& errors, GameTable<T>& storage, boost::filesystem::path const& path)
@@ -141,6 +143,8 @@ void LoadGameTables(std::string const& dataPath)
     LOAD_GT(sNpcTotalHpGameTable[6], "NpcTotalHpExp6.txt");
     LOAD_GT(sSpellScalingGameTable, "SpellScaling.txt");
     LOAD_GT(sXpGameTable, "xp.txt");
+    LOAD_GT(sBattlePetXPTable, "BattlePetXP.txt");
+    LOAD_GT(sBattlePetTypeDamageModTable, "BattlePetTypeDamageMod.txt");
 
 #undef LOAD_GT
 

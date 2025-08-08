@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,6 +20,7 @@
 
 #include "Packet.h"
 #include "Object.h"
+#include "BattlePetPackets.h"
 
 namespace WorldPackets
 {
@@ -79,6 +80,52 @@ namespace WorldPackets
             void Read() override;
 
             uint32 SceneInstanceID = 0;
+        };
+
+        //< SMSG_SCENE_OBJECT_PET_BATTLE_FIRST_ROUND
+//< SMSG_SCENE_OBJECT_PET_BATTLE_ROUND_RESULT
+//< SMSG_SCENE_OBJECT_PET_BATTLE_REPLACEMENTS_MADE
+        class PetBattleRound final : public ServerPacket
+        {
+        public:
+            PetBattleRound(OpcodeServer opcode) : ServerPacket(opcode) { }
+
+            WorldPacket const* Write() override;
+
+            ObjectGuid SceneObjectGUID;
+            BattlePet::RoundResult MsgData;
+        };
+
+        class SceneObjectFinalRound final : public ServerPacket
+        {
+        public:
+            SceneObjectFinalRound() : ServerPacket(SMSG_SCENE_OBJECT_PET_BATTLE_FINAL_ROUND) { }
+
+            WorldPacket const* Write() override;
+
+            ObjectGuid SceneObjectGUID;
+            BattlePet::FinalRound MsgData;
+        };
+
+        class PetBattleFinished final : public ServerPacket
+        {
+        public:
+            PetBattleFinished() : ServerPacket(SMSG_SCENE_OBJECT_PET_BATTLE_FINISHED, 16) { }
+
+            WorldPacket const* Write() override;
+
+            ObjectGuid SceneObjectGUID;
+        };
+
+        class SceneObjectPetBattleInitialUpdate final : public ServerPacket
+        {
+        public:
+            SceneObjectPetBattleInitialUpdate() : ServerPacket(SMSG_SCENE_OBJECT_PET_BATTLE_INITIAL_UPDATE) { }
+
+            WorldPacket const* Write() override;
+
+            ObjectGuid SceneObjectGUID;
+            BattlePet::PetBattleFullUpdate MsgData;
         };
     }
 }

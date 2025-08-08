@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -29,13 +28,13 @@
 
 #include <list>
 
+class BattlePetInstance;
 class CreatureAI;
 class CreatureGroup;
 class Group;
 class Quest;
 class Player;
 class SpellInfo;
-class WildBattlePet;
 class WorldSession;
 enum MovementGeneratorType : uint8;
 
@@ -185,6 +184,9 @@ class TC_GAME_API Creature : public Unit, public GridObject<Creature>, public Ma
         std::string GetScriptName() const;
         uint32 GetScriptId() const;
         ScriptParam GetScriptParam(uint8 index) const;
+
+        ObjectGuid replacementFromGUID;
+        std::shared_ptr<BattlePetInstance> m_battlePetInstance;
 
         // override WorldObject function for proper name localization
         std::string const& GetNameForLocaleIdx(LocaleConstant locale_idx) const override;
@@ -357,8 +359,6 @@ class TC_GAME_API Creature : public Unit, public GridObject<Creature>, public Ma
 
         void ForcedDespawn(uint32 timeMSToDespawn = 0, Seconds const& forceRespawnTimer = Seconds(0));
 
-        WildBattlePet* GetWildBattlePet() { return m_wildBattlePet; }
-
         void DisableHealthRegen() { m_disableHealthRegen = true; }
         void ReenableHealthRegen() { m_disableHealthRegen = false; }
         bool HealthRegenDisabled() const { return m_disableHealthRegen; }
@@ -439,8 +439,6 @@ class TC_GAME_API Creature : public Unit, public GridObject<Creature>, public Ma
         float m_suppressedOrientation; // Stores the creature's "real" orientation while casting
 
         CreatureTextRepeatGroup m_textRepeat;
-
-        WildBattlePet* m_wildBattlePet;
 
         bool m_disableHealthRegen;
 };

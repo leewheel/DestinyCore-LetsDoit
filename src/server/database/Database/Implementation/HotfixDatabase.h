@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -96,12 +96,26 @@ enum HotfixDatabaseStatements : uint32
 
     HOTFIX_SEL_BATTLE_PET_BREED_STATE,
 
+    HOTFIX_SEL_BATTLE_PET_DISPLAY_OVERRIDE,
+
+    HOTFIX_SEL_BATTLE_PET_EFFECT_PROPERTIES,
+    HOTFIX_SEL_BATTLE_PET_EFFECT_PROPERTIES_LOCALE,
+
+    HOTFIX_SEL_BATTLE_PET_N_P_C_TEAM_MEMBER,
+    HOTFIX_SEL_BATTLE_PET_N_P_C_TEAM_MEMBER_LOCALE,
+
     HOTFIX_SEL_BATTLE_PET_SPECIES,
     HOTFIX_SEL_BATTLE_PET_SPECIES_LOCALE,
 
     HOTFIX_SEL_BATTLE_PET_SPECIES_STATE,
 
     HOTFIX_SEL_BATTLE_PET_SPECIES_X_ABILITY,
+
+    HOTFIX_SEL_BATTLE_PET_STATE,
+    HOTFIX_SEL_BATTLE_PET_STATE_LOCALE,
+
+    HOTFIX_SEL_BATTLE_PET_VISUAL,
+    HOTFIX_SEL_BATTLE_PET_VISUAL_LOCALE,
 
     HOTFIX_SEL_BATTLEMASTER_LIST,
     HOTFIX_SEL_BATTLEMASTER_LIST_LOCALE,

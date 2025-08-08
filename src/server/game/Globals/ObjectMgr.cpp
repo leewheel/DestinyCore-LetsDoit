@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -4497,7 +4496,7 @@ void ObjectMgr::LoadQuests()
                     case QUEST_OBJECTIVE_TALKTO:
                     case QUEST_OBJECTIVE_PLAYERKILLS:
                     case QUEST_OBJECTIVE_AREATRIGGER:
-                    case QUEST_OBJECTIVE_WINPETBATTLEAGAINSTNPC:
+                    case QUEST_OBJECTIVE_PET_TRAINER_DEFEAT:
                     case QUEST_OBJECTIVE_OBTAIN_CURRENCY:
                         TC_LOG_ERROR("sql.sql", "Quest %u objective %u has invalid StorageIndex = %d for objective type %u", qinfo->GetQuestId(), obj.ID, obj.StorageIndex, obj.Type);
                         break;
@@ -4552,14 +4551,10 @@ void ObjectMgr::LoadQuests()
                     if (!sSpellMgr->GetSpellInfo(obj.ObjectID))
                         TC_LOG_ERROR("sql.sql", "Quest %u objective %u has non existing spell id %d", qinfo->GetQuestId(), obj.ID, obj.ObjectID);
                     break;
-                case QUEST_OBJECTIVE_WINPETBATTLEAGAINSTNPC:
+                case QUEST_OBJECTIVE_PET_TRAINER_DEFEAT:
                     if (obj.ObjectID && !sObjectMgr->GetCreatureTemplate(obj.ObjectID))
                         TC_LOG_ERROR("sql.sql", "Quest %u objective %u has non existing creature entry %u, quest can't be done.",
                             qinfo->GetQuestId(), obj.ID, uint32(obj.ObjectID));
-                    break;
-                case QUEST_OBJECTIVE_DEFEATBATTLEPET:
-                    if (!sBattlePetSpeciesStore.LookupEntry(obj.ObjectID))
-                        TC_LOG_ERROR("sql.sql", "Quest %u objective %u has non existing battlepet species id %d", qinfo->GetQuestId(), obj.ID, obj.ObjectID);
                     break;
                 case QUEST_OBJECTIVE_CRITERIA_TREE:
                     if (!sCriteriaTreeStore.LookupEntry(obj.ObjectID))
@@ -4570,7 +4565,7 @@ void ObjectMgr::LoadQuests()
                         TC_LOG_ERROR("sql.sql", "Quest %u objective %u has non existing areatrigger id %d", qinfo->GetQuestId(), obj.ID, obj.ObjectID);
                     break;
                 case QUEST_OBJECTIVE_MONEY:
-                case QUEST_OBJECTIVE_WINPVPPETBATTLES:
+                case QUEST_OBJECTIVE_PET_BATTLE_VICTORIES:
                 case QUEST_OBJECTIVE_PROGRESS_BAR:
                     break;
                 default:

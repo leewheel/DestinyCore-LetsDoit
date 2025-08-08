@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -48,6 +47,8 @@ namespace FactorySelector
         // select by NPC flags
         if (!ai_factory)
         {
+            if (creature->isMinion())
+                ai_factory = sCreatureAIRegistry->GetRegistryItem("BattlePetAI");
             if (creature->IsVehicle())
                 ai_factory = sCreatureAIRegistry->GetRegistryItem("VehicleAI");
             else if (creature->HasUnitTypeMask(UNIT_MASK_CONTROLABLE_GUARDIAN) && ((Guardian*)creature)->GetOwner()->GetTypeId() == TYPEID_PLAYER)

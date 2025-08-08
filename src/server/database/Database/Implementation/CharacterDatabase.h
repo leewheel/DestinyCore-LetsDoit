@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -57,6 +57,12 @@ enum CharacterDatabaseStatements : uint32
     CHAR_SEL_CHAR_ZONE,
     CHAR_SEL_CHAR_POSITION_XYZ,
     CHAR_SEL_CHAR_POSITION,
+
+    CHAR_SEL_PETBATTLE_ACCOUNT,
+    CHAR_REP_PETBATTLE,
+    CHAR_UPD_PETBATTLE,
+    CHAR_INS_PETBATTLE,
+    CHAR_DEL_PETBATTLE,
 
     CHAR_DEL_BATTLEGROUND_RANDOM_ALL,
     CHAR_DEL_BATTLEGROUND_RANDOM,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -32,6 +32,37 @@ WorldPacket const* WorldPackets::Scenes::PlayScene::Write()
 WorldPacket const* WorldPackets::Scenes::CancelScene::Write()
 {
     _worldPacket << int32(SceneInstanceID);
+
+    return &_worldPacket;
+}
+
+WorldPacket const* WorldPackets::Scenes::PetBattleRound::Write()
+{
+    _worldPacket << SceneObjectGUID;
+    _worldPacket << MsgData;
+
+    return &_worldPacket;
+}
+
+WorldPacket const* WorldPackets::Scenes::SceneObjectFinalRound::Write()
+{
+    _worldPacket << SceneObjectGUID;
+    _worldPacket << MsgData;
+
+    return &_worldPacket;
+}
+
+WorldPacket const* WorldPackets::Scenes::PetBattleFinished::Write()
+{
+    _worldPacket << SceneObjectGUID;
+
+    return &_worldPacket;
+}
+
+WorldPacket const* WorldPackets::Scenes::SceneObjectPetBattleInitialUpdate::Write()
+{
+    _worldPacket << SceneObjectGUID;
+    _worldPacket << MsgData;
 
     return &_worldPacket;
 }

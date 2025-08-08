@@ -160,6 +160,7 @@ GUID_TRAIT_GLOBAL(HighGuid::PVPQueueGroup)
 GUID_TRAIT_GLOBAL(HighGuid::UserClient)
 GUID_TRAIT_GLOBAL(HighGuid::UniqUserClient)
 GUID_TRAIT_GLOBAL(HighGuid::BattlePet)
+GUID_TRAIT_GLOBAL(HighGuid::PetBattle)
 GUID_TRAIT_GLOBAL(HighGuid::CommerceObj)
 GUID_TRAIT_GLOBAL(HighGuid::ClientSession)
 GUID_TRAIT_REALM_SPECIFIC(HighGuid::Player)
@@ -291,6 +292,7 @@ class TC_GAME_API ObjectGuid
 
         TypeID GetTypeId() const { return GetTypeId(GetHigh()); }
 
+        operator bool() const { return !IsEmpty(); }
         bool operator!() const { return IsEmpty(); }
         bool operator== (ObjectGuid const& guid) const { return _low == guid._low && _high == guid._high; }
         bool operator!= (ObjectGuid const& guid) const { return !(*this == guid); }

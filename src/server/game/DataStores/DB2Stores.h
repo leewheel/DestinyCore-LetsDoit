@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -54,13 +54,16 @@ TC_GAME_API extern DB2Storage<BannedAddonsEntry>                    sBannedAddon
 TC_GAME_API extern DB2Storage<BarberShopStyleEntry>                 sBarberShopStyleStore;
 TC_GAME_API extern DB2Storage<BattlePetAbilityEntry>                sBattlePetAbilityStore;
 TC_GAME_API extern DB2Storage<BattlePetAbilityEffectEntry>          sBattlePetAbilityEffectStore;
+TC_GAME_API extern DB2Storage<BattlePetAbilityEntry>                sBattlePetAbilityStore;
 TC_GAME_API extern DB2Storage<BattlePetAbilityStateEntry>           sBattlePetAbilityStateStore;
 TC_GAME_API extern DB2Storage<BattlePetAbilityTurnEntry>            sBattlePetAbilityTurnStore;
 TC_GAME_API extern DB2Storage<BattlePetBreedQualityEntry>           sBattlePetBreedQualityStore;
 TC_GAME_API extern DB2Storage<BattlePetBreedStateEntry>             sBattlePetBreedStateStore;
+TC_GAME_API extern DB2Storage<BattlePetEffectPropertiesEntry>       sBattlePetEffectPropertiesStore;
 TC_GAME_API extern DB2Storage<BattlePetSpeciesEntry>                sBattlePetSpeciesStore;
 TC_GAME_API extern DB2Storage<BattlePetSpeciesStateEntry>           sBattlePetSpeciesStateStore;
-TC_GAME_API extern DB2Storage<BattlePetSpeciesXAbilityEntry>        sBattlePetSpeciesXAbilityEntry;
+TC_GAME_API extern DB2Storage<BattlePetSpeciesXAbilityEntry>        sBattlePetSpeciesXAbilityStore;
+TC_GAME_API extern DB2Storage<BattlePetStateEntry>                  sBattlePetStateStore;
 TC_GAME_API extern DB2Storage<BattlemasterListEntry>                sBattlemasterListStore;
 TC_GAME_API extern DB2Storage<BroadcastTextEntry>                   sBroadcastTextStore;
 TC_GAME_API extern DB2Storage<CharStartOutfitEntry>                 sCharStartOutfitStore;
@@ -288,7 +291,6 @@ public:
     std::vector<ArtifactPowerEntry const*> GetArtifactPowers(uint8 artifactId) const;
     std::unordered_set<uint32> const* GetArtifactPowerLinks(uint32 artifactPowerId) const;
     ArtifactPowerRankEntry const* GetArtifactPowerRank(uint32 artifactPowerId, uint8 rank) const;
-    BattlePetSpeciesEntry const* GetBattlePetSpeciesByCreatureID(uint32 CreatureID) const;
     static char const* GetBroadcastTextValue(BroadcastTextEntry const* broadcastText, LocaleConstant locale = DEFAULT_LOCALE, uint8 gender = GENDER_MALE, bool forceGender = false);
     bool HasCharacterFacialHairStyle(uint8 race, uint8 gender, uint8 variationId) const;
     bool HasCharSections(uint8 race, uint8 gender, CharBaseSectionVariation variation) const;
@@ -368,6 +370,9 @@ public:
     void Zone2MapCoordinates(uint32 areaId, float& x, float& y) const;
     void Map2ZoneCoordinates(uint32 areaId, float& x, float& y) const;
     static void DeterminaAlternateMapPosition(uint32 mapId, float x, float y, float z, uint32* newMapId = nullptr, DBCPosition2D* newPos = nullptr);
+    BattlePetSpeciesEntry const* GetSpeciesBySpell(uint32 SpellID) const;
+    BattlePetSpeciesEntry const* GetSpeciesByCreatureID(uint32 CreatureID) const;
+    static bool HasBattlePetSpeciesFlag(uint16 species, uint16 flag);
 	bool HasItemBonusTree(uint32 itemId) const;
 
 private:

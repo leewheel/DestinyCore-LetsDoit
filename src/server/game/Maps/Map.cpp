@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -51,6 +50,7 @@
 #include "WeatherMgr.h"
 #include "World.h"
 #include "WorldSession.h"
+#include "WildBattlePet.h"
 
 u_map_magic MapMagic        = { {'M','A','P','S'} };
 u_map_magic MapVersionMagic = { {'v','1','.','9'} };
@@ -675,6 +675,9 @@ bool Map::AddToMap(T* obj)
     if (obj->isActiveObject())
         AddToActive(obj);
 
+    if (Creature* creature = obj->ToCreature())
+        AddBattlePet(creature);
+
     //something, such as vehicle, needs to be update immediately
     //also, trigger needs to cast spell, if not update, cannot see visual
     obj->UpdateObjectVisibilityOnCreate();
@@ -989,6 +992,9 @@ void Map::RemoveFromMap(T *obj, bool remove)
     obj->RemoveFromGrid();
 
     obj->ResetMap();
+
+    if (Creature* creature = obj->ToCreature())
+        RemoveBattlePet(creature);
 
     if (remove)
     {
@@ -2579,6 +2585,48 @@ float Map::GetWaterOrGroundLevel(PhaseShift const& phaseShift, float x, float y,
     return VMAP_INVALID_HEIGHT_VALUE;
 }
 
+float Map::GetHeight(float x, float y, float z, bool checkVMap /*= true*/, float maxSearchDist /*= DEFAULT_HEIGHT_SEARCH*/) const
+{
+    // find raw .map surface under Z coordinates
+    float mapHeight = VMAP_INVALID_HEIGHT_VALUE;
+    if (GridMap* gmap = const_cast<Map*>(this)->GetGrid(x, y))
+    {
+        float gridHeight = gmap->getHeight(x, y);
+        // look from a bit higher pos to find the floor, ignore under surface case
+        if (z + 2.0f > gridHeight)
+            mapHeight = gridHeight;
+    }
+
+    float vmapHeight = VMAP_INVALID_HEIGHT_VALUE;
+    if (checkVMap)
+    {
+        VMAP::IVMapManager* vmgr = VMAP::VMapFactory::createOrGetVMapManager();
+        if (vmgr->isHeightCalcEnabled())
+            vmapHeight = vmgr->getHeight(GetId(), x, y, z + 2.0f, maxSearchDist);   // look from a bit higher pos to find the floor
+    }
+
+    // mapHeight set for any above raw ground Z or <= INVALID_HEIGHT
+    // vmapheight set for any under Z value or <= INVALID_HEIGHT
+    if (vmapHeight > INVALID_HEIGHT)
+    {
+        if (mapHeight > INVALID_HEIGHT)
+        {
+            // we have mapheight and vmapheight and must select more appropriate
+
+            // we are already under the surface or vmap height above map heigt
+            // or if the distance of the vmap height is less the land height distance
+            if (vmapHeight > mapHeight || std::fabs(mapHeight - z) > std::fabs(vmapHeight - z))
+                return vmapHeight;
+            return mapHeight;
+            // better use .map surface height
+        }
+        return vmapHeight;
+        // we have only vmapHeight (if have)
+    }
+
+    return mapHeight;                               // explicitly use map data
+}
+
 float Map::GetStaticHeight(PhaseShift const& phaseShift, float x, float y, float z, bool checkVMap /*= true*/, float maxSearchDist /*= DEFAULT_HEIGHT_SEARCH*/) const
 {
     // find raw .map surface under Z coordinates
@@ -3648,6 +3696,28 @@ bool InstanceMap::Reset(uint8 method)
     }
 
     return m_mapRefManager.isEmpty();
+}
+
+void Map::AddBattlePet(Creature* creature)
+{
+    if (sWildBattlePetMgr->IsBattlePet(creature->GetEntry()))
+        m_wildBattlePetPool[creature->GetZoneId()][creature->GetEntry()].ToBeReplaced.insert(creature);
+    else if (creature->isWildBattlePet())
+        sWildBattlePetMgr->EnableWildBattle(creature);
+}
+
+void Map::RemoveBattlePet(Creature* creature)
+{
+    if (sWildBattlePetMgr->IsBattlePet(creature->GetEntry()))
+        m_wildBattlePetPool[creature->GetZoneId()][creature->GetEntry()].ToBeReplaced.erase(creature);
+}
+
+WildBattlePetPool* Map::GetWildBattlePetPool(Creature* creature)
+{
+    if (!creature)
+        return nullptr;
+
+    return &m_wildBattlePetPool[creature->GetZoneId()][creature->GetEntry()];
 }
 
 std::string const& InstanceMap::GetScriptName() const

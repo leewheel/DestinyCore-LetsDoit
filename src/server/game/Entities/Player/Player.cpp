@@ -31,9 +31,10 @@
 #include "BattlegroundMgr.h"
 #include "BattlegroundPackets.h"
 #include "BattlegroundScore.h"
-#include "BattlePet.h"
+#include "PetBattleSystem.h"
+#include "WildBattlePet.h"
+#include "PetBattle.h"
 #include "BattlePetDataStore.h"
-#include "BattlePetMgr.h"
 #include "CellImpl.h"
 #include "Channel.h"
 #include "ChannelMgr.h"
@@ -142,6 +143,11 @@ uint64 const MAX_MONEY_AMOUNT = 99999999999ULL;
 
 Player::Player(WorldSession* session) : Unit(true), m_sceneMgr(this), m_archaeologyPlayerMgr(this)
 {
+    _lastSummonedBattlePet = 0;
+
+    for (size_t i = 0; i < MAX_PETBATTLE_SLOTS; ++i)
+        _battlePetCombatTeam[i] = std::shared_ptr<BattlePet>();
+
     m_speakTime = 0;
     m_speakCount = 0;
 
@@ -423,6 +429,9 @@ Player::~Player()
 
     for (uint8 i = 0; i < PlayerPetDataStore.size(); i++)
         delete PlayerPetDataStore[i];
+
+    _battlePets.clear();
+    _oldPetBattleSpellToMerge.clear();
 
     sWorld->DecreasePlayerCount();
 }
@@ -1908,6 +1917,36 @@ void Player::ProcessDelayedOperations()
             g->SendUpdateToPlayer(GetGUID());
     }
 
+    if (m_DelayedOperations & DELAYED_PET_BATTLE_INITIAL)
+    {
+        if (PetBattle* battle = sPetBattleSystem->GetBattle(_petBattleId))
+        {
+            uint8 teamID = battle->Teams[PETBATTLE_TEAM_1]->OwnerGuid == GetGUID() ? PETBATTLE_TEAM_1 : PETBATTLE_TEAM_2;
+
+            PetBattleRequest request;
+            memcpy(&request, &battle->PvPMatchMakingRequest, sizeof(PetBattleRequest)); //@TODO check that
+
+            auto& matchMakingRequest = battle->PvPMatchMakingRequest;
+
+            if (teamID == PETBATTLE_TEAM_2)
+                std::swap(request.TeamPosition[PETBATTLE_TEAM_1], request.TeamPosition[PETBATTLE_TEAM_2]);
+
+            matchMakingRequest.PetBattleCenterPosition.m_positionZ = GetMap()->GetHeight(matchMakingRequest.PetBattleCenterPosition.GetPositionX(), matchMakingRequest.PetBattleCenterPosition.GetPositionZ(), MAX_HEIGHT);
+
+            GetSession()->SendPetBattleFinalizeLocation(&request);
+
+            SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED | UNIT_FLAG_IMMUNE_TO_NPC);
+            SetFacingTo(GetAngle(matchMakingRequest.TeamPosition[!teamID].GetPositionX(), matchMakingRequest.TeamPosition[!teamID].GetPositionY()));
+            SetRooted(true);
+
+            if (!matchMakingRequest.IsPvPReady[teamID])
+                matchMakingRequest.IsPvPReady[teamID] = true;
+
+            if (matchMakingRequest.IsPvPReady[PETBATTLE_TEAM_1] == true && matchMakingRequest.IsPvPReady[PETBATTLE_TEAM_2] == true)
+                battle->Begin();
+        }
+    }
+
     //we have executed ALL delayed ops, so clear the flag
     m_DelayedOperations = 0;
 }
@@ -3075,7 +3114,7 @@ void Player::RemoveTalent(TalentEntry const* talent)
         plrTalent->second = PLAYERSPELL_REMOVED;
 }
 
-bool Player::AddSpell(uint32 spellId, bool active, bool learning, bool dependent, bool disabled, bool loading /*= false*/, int32 fromSkill /*= 0*/)
+bool Player::AddSpell(uint32 spellId, bool active, bool learning, bool dependent, bool disabled, bool loading /*= false*/, int32 fromSkill /*= 0*/, bool battlePet /*= false*/)
 {
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
     if (!spellInfo)
@@ -3310,6 +3349,9 @@ bool Player::AddSpell(uint32 spellId, bool active, bool learning, bool dependent
             SetFreePrimaryProfessions(freeProfs - 1);
     }
 
+    if (learning && !dependent)
+        AddBattlePet(spellId);
+
     SkillLineAbilityMapBounds skill_bounds = sSpellMgr->GetSkillLineAbilityMapBounds(spellId);
 
     if (SpellLearnSkillNode const* spellLearnSkill = sSpellMgr->GetSpellLearnSkill(spellId))
@@ -3382,17 +3424,6 @@ bool Player::AddSpell(uint32 spellId, bool active, bool learning, bool dependent
     // needs to be when spell is already learned, to prevent infinite recursion crashes
     if (sDB2Manager.GetMount(spellId))
         GetSession()->GetCollectionMgr()->AddMount(spellId, MOUNT_STATUS_NONE, false, IsInWorld() ? false : true);
-
-    // need to add Battle pets automatically into pet journal
-    for (BattlePetSpeciesEntry const* entry : sBattlePetSpeciesStore)
-    {
-        if (entry->SummonSpellID == int32(spellId) && GetSession()->GetBattlePetMgr()->GetPetCount(entry->ID) == 0)
-        {
-            GetSession()->GetBattlePetMgr()->AddPet(entry->ID, entry->CreatureID, sBattlePetDataStore->RollPetBreed(entry->ID), sBattlePetDataStore->GetDefaultPetQuality(entry->ID));
-            UpdateCriteria(CRITERIA_TYPE_OWN_BATTLE_PET_COUNT);
-            break;
-        }
-    }
 
     // return true (for send learn packet) only if spell active (in case ranked spells) and not replace old spell
     return active && !disabled && !superceded_old;
@@ -14744,10 +14775,6 @@ void Player::SendNewItem(Item* item, uint32 quantity, bool pushed, bool created,
     packet.Quantity = quantity;
     packet.QuantityInInventory = GetItemCount(item->GetEntry());
     //packet.DungeonEncounterID;
-    packet.BattlePetSpeciesID = item->GetModifier(ITEM_MODIFIER_BATTLE_PET_SPECIES_ID);
-    packet.BattlePetBreedID = item->GetModifier(ITEM_MODIFIER_BATTLE_PET_BREED_DATA) & 0xFFFFFF;
-    packet.BattlePetBreedQuality = (item->GetModifier(ITEM_MODIFIER_BATTLE_PET_BREED_DATA) >> 24) & 0xFF;
-    packet.BattlePetLevel = item->GetModifier(ITEM_MODIFIER_BATTLE_PET_LEVEL);
 
     packet.ItemGUID = item->GetGUID();
 
@@ -17706,7 +17733,6 @@ bool Player::IsQuestObjectiveComplete(QuestObjective const& objective) const
         case QUEST_OBJECTIVE_GAMEOBJECT:
         case QUEST_OBJECTIVE_PLAYERKILLS:
         case QUEST_OBJECTIVE_TALKTO:
-        case QUEST_OBJECTIVE_WINPVPPETBATTLES:
         case QUEST_OBJECTIVE_HAVE_CURRENCY:
         case QUEST_OBJECTIVE_OBTAIN_CURRENCY:
             if (GetQuestObjectiveData(quest, objective.StorageIndex) < objective.Amount)
@@ -18257,6 +18283,8 @@ bool Player::LoadFromDB(ObjectGuid guid, SQLQueryHolder *holder)
 
     Object::_Create(guid);
 
+    _lastSummonedBattlePet = 0/*fields[70].GetUInt32()*/;
+
     m_name = fields[2].GetString();
 
     // check name limitations
@@ -18798,6 +18826,7 @@ bool Player::LoadFromDB(ObjectGuid guid, SQLQueryHolder *holder)
     _LoadSeasonalQuestStatus(holder->GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_SEASONAL_QUEST_STATUS));
     _LoadMonthlyQuestStatus(holder->GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_MONTHLY_QUEST_STATUS));
     _LoadRandomBGStatus(holder->GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_RANDOM_BG));
+    _LoadPetBattles(holder->GetPreparedResult(PLAYER_LOGIN_QUERY_BATTLE_PETS));
 
     // after spell and quest load
     InitTalentForLevel();
@@ -19872,6 +19901,39 @@ Optional<uint8> Player::GetFirstUnusedPetSlot()
         return *unusedSlot.begin();
 
     return Optional<uint8>{};
+}
+
+void Player::QuestObjectiveSatisfy(uint32 objectId, uint32 amount, QuestObjectiveType type /*= QUEST_OBJECTIVE_MONSTER*/, ObjectGuid guid /*= ObjectGuid::Empty*/)
+{
+    for (uint8 i = 0; i < MAX_QUEST_LOG_SIZE; ++i)
+    {
+        uint32 questID = GetQuestSlotQuestId(i);
+        if (!questID)
+            continue;
+
+        QuestStatus q_status = GetQuestStatus(questID);
+
+        if (q_status != QUEST_STATUS_INCOMPLETE)
+            continue;
+
+        Quest const* quest = sObjectMgr->GetQuestTemplate(questID);
+        if (!quest)
+            continue;
+
+        for (QuestObjective const& obj : quest->GetObjectives())
+        {
+            if (obj.Type == type && (uint32)obj.ObjectID == objectId)
+            {
+                SetQuestObjectiveData(obj, std::min<uint32>(GetQuestObjectiveData(quest, obj.StorageIndex) + amount, obj.Amount));
+
+                SendQuestUpdateAddCredit(quest, guid, obj, amount);
+
+                if (CanCompleteQuest(questID))
+                    CompleteQuest(questID);
+                break;
+            }
+        }
+    }
 }
 
 void Player::DeleteFromPlayerPetDataStore(uint32 petNumber)
@@ -21078,6 +21140,7 @@ void Player::SaveToDB(bool create /*=false*/)
     _SaveInstanceTimeRestrictions(trans);
     _SaveCurrency(trans);
     _SaveCUFProfiles(trans);
+    SaveBattlePets(trans);
 
     GetArchaeologyMgr().SaveArchaeologyDigSites(trans);
     GetArchaeologyMgr().SaveArchaeologyBranchs(trans);
@@ -21097,7 +21160,6 @@ void Player::SaveToDB(bool create /*=false*/)
     // TODO: Move this out
     trans = LoginDatabase.BeginTransaction();
     GetSession()->GetCollectionMgr()->SaveAccountToys(trans);
-    GetSession()->GetBattlePetMgr()->SaveToDB(trans);
     GetSession()->GetCollectionMgr()->SaveAccountHeirlooms(trans);
     GetSession()->GetCollectionMgr()->SaveAccountMounts(trans);
     GetSession()->GetCollectionMgr()->SaveAccountItemAppearances(trans);
@@ -24730,6 +24792,7 @@ void Player::SendInitialPacketsAfterAddToMap()
     PhasingHandler::OnMapChange(this);
 
     SendGarrisonRemoteInfo();
+    GetSession()->SendBattlePetJournal();
 
     UpdateItemLevelAreaBasedScaling();
 }
@@ -25139,6 +25202,289 @@ void Player::SetSeasonalQuestStatus(uint32 quest_id)
 
     m_seasonalquests[sGameEventMgr->GetEventIdForQuest(quest)].insert(quest_id);
     m_SeasonalQuestChanged = true;
+}
+
+uint32 Player::GetUnlockedPetBattleSlot()
+{
+    if (m_achievementMgr->HasAchieved(6566))
+        return 3;
+
+    if (m_achievementMgr->HasAchieved(7433))
+        return 2;
+
+    if (HasBattlePetTraining())
+        return 1;
+
+    return 0;
+}
+
+void Player::UnsummonCurrentBattlePetIfAny(bool p_Unvolontary)
+{
+    if (!_battlePetSummon)
+        return;
+
+    if (!p_Unvolontary)
+        _lastSummonedBattlePet = 0;
+
+    if (Creature* pet = GetSummonedBattlePet())
+    {
+        pet->DespawnOrUnsummon();
+        pet->AddObjectToRemoveList();
+    }
+
+    _battlePetSummon.Clear();
+
+    SetGuidValue(PLAYER_FIELD_SUMMONED_BATTLE_PET_GUID, ObjectGuid::Empty);
+    SetUInt32Value(UNIT_FIELD_WILD_BATTLE_PET_LEVEL, 0);
+}
+
+void Player::SummonBattlePet(ObjectGuid journalID)
+{
+    if (!IsInWorld())
+        return;
+
+    BattlePetMap::iterator iter = _battlePets.find(journalID);
+    if (iter == _battlePets.end())
+        return;
+
+    if (Creature* pet = GetSummonedBattlePet())
+    {
+        pet->DespawnOrUnsummon();
+        pet->AddObjectToRemoveList();
+    }
+
+    std::shared_ptr<BattlePet> battlePet = iter->second;
+
+    if (battlePet->Health <= 0)
+    {
+        UnsummonCurrentBattlePetIfAny(false);
+        return;
+    }
+
+    BattlePetSpeciesEntry const* speciesEntry = sBattlePetSpeciesStore.LookupEntry(battlePet->Species);
+    if (!speciesEntry)
+        return;
+
+    CastSpell(this, speciesEntry->SummonSpellID ? speciesEntry->SummonSpellID : uint32(118301));
+}
+
+Creature* Player::GetSummonedBattlePet()
+{
+    Unit* pet = ObjectAccessor::FindCreature(_battlePetSummon);
+    return pet ? pet->ToCreature() : nullptr;
+}
+
+uint32 Player::GetBattlePetCombatSize()
+{
+    uint32 count = 0;
+
+    for (size_t i = 0; i < MAX_PETBATTLE_SLOTS; ++i)
+        if (_battlePetCombatTeam[i])
+            count++;
+
+    return count;
+}
+
+void Player::SummonLastSummonedBattlePet()
+{
+    SummonBattlePet(ObjectGuid::Create<HighGuid::BattlePet>(_lastSummonedBattlePet));
+}
+
+BattlePetMap* Player::GetBattlePets()
+{
+    return &_battlePets;
+}
+
+std::shared_ptr<BattlePet> Player::GetBattlePet(ObjectGuid journalID)
+{
+    BattlePetMap::iterator iter = _battlePets.find(journalID);
+    if (iter == _battlePets.end())
+        return std::shared_ptr<BattlePet>();
+
+    return iter->second;
+}
+
+std::shared_ptr<BattlePet>* Player::GetBattlePetCombatTeam()
+{
+    return _battlePetCombatTeam;
+}
+
+void Player::SaveBattlePets(SQLTransaction& trans)
+{
+    for (BattlePetMap::iterator itr = _battlePets.begin(); itr != _battlePets.end(); ++itr)
+        if (std::shared_ptr<BattlePet> pet = itr->second)
+            pet->Save(trans);
+}
+
+void Player::PetBattleCountBattleSpecies()
+{
+    PetBattle* battle = sPetBattleSystem->GetBattle(_petBattleId);
+    if (!battle)
+        return;
+
+    uint32 thisTeamID = battle->Teams[PETBATTLE_TEAM_1]->PlayerGuid == GetGUID() ? PETBATTLE_TEAM_1 : PETBATTLE_TEAM_2;
+
+    for (BattlePetMap::iterator itr = _battlePets.begin(); itr != _battlePets.end(); ++itr)
+        if (std::shared_ptr<BattlePet> petBattle = itr->second)
+        {
+            if (battle->Teams[thisTeamID]->CapturedSpeciesCount.find(petBattle->Species) == battle->Teams[thisTeamID]->CapturedSpeciesCount.end())
+                battle->Teams[thisTeamID]->CapturedSpeciesCount[petBattle->Species] = 0;
+
+            battle->Teams[thisTeamID]->CapturedSpeciesCount[petBattle->Species]++;
+        }
+}
+
+bool Player::HasBattlePetTraining()
+{
+    return HasSpell(119467);
+}
+
+uint32 Player::GetBattlePetTrapLevel()
+{
+    if (m_achievementMgr->HasAchieved(6581))
+        return 3;
+
+    if (m_achievementMgr->HasAchieved(6556))
+        return 2;
+
+    return 1;
+}
+
+uint8 Player::GetBattlePetCountForSpecies(uint32 speciesID)
+{
+    return std::count_if(_battlePets.begin(), _battlePets.end(), [&](decltype(_battlePets)::value_type pair)
+        {
+            return pair.second && pair.second->Species == speciesID;
+        });
+}
+
+void Player::UpdateBattlePetCombatTeam()
+{
+    for (auto& i : _battlePetCombatTeam)
+        i = std::shared_ptr<BattlePet>();
+
+    auto unlockedSlotCount = GetUnlockedPetBattleSlot();
+
+    for (auto itr = _battlePets.begin(); itr != _battlePets.end(); ++itr)
+        if (auto battlePet = itr->second)
+            if (battlePet->Slot >= 0 && battlePet->Slot < static_cast<int32>(unlockedSlotCount))
+                _battlePetCombatTeam[battlePet->Slot] = battlePet;
+}
+
+bool Player::AddBattlePetWithSpeciesId(BattlePetSpeciesEntry const* entry, uint16 flags /*= 0*/, bool sendUpdate /*= true*/, bool sendDiliveryUpdate /*= false*/)
+{
+    if (!entry)
+        return false;
+
+    auto pet = std::make_shared<BattlePet>();
+    pet->Slot = PETBATTLE_NULL_SLOT;
+    pet->NameTimeStamp = 0;
+    pet->Species = entry->ID;
+    pet->DisplayModelID = 0;
+    pet->Flags = flags;
+    pet->Level = 1;
+    pet->XP = 0;
+
+    if (auto temp = sBattlePetDataStore->GetBattlePetTemplate(entry->ID))
+    {
+        pet->Breed = sBattlePetDataStore->GetRandomBreedID(temp->BreedIDs);
+        pet->Quality = temp->MinQuality;
+    }
+    else
+    {
+        pet->Breed = 3;
+        pet->Quality = BATTLEPET_QUALITY_COMMON;
+    }
+
+    pet->UpdateStats();
+    pet->Health = pet->InfoMaxHealth;
+    auto guidlow = pet->AddToPlayer(this);
+    _battlePets.emplace(pet->JournalID, pet);
+
+    if (sendUpdate)
+    {
+        GetSession()->SendBattlePetUpdates();
+        UpdateCriteria(CRITERIA_TYPE_ADD_BATTLE_PET_JOURNAL, entry->CreatureID);
+    }
+
+
+
+    return true;
+}
+
+bool Player::AddBattlePetByCreatureId(uint32 creatureId, bool sendUpdate /*= true*/, bool sendDiliveryUpdate /*= false*/)
+{
+    return AddBattlePetWithSpeciesId(sDB2Manager.GetSpeciesByCreatureID(creatureId), 0, sendUpdate, sendDiliveryUpdate);
+}
+
+bool Player::AddBattlePet(uint32 spellID, uint16 flags, bool sendUpdate /*= true*/)
+{
+    return AddBattlePetWithSpeciesId(sDB2Manager.GetSpeciesBySpell(spellID), flags, sendUpdate);
+}
+
+////////////////////////////////
+////////////////////////////////
+
+bool Player::_LoadPetBattles(PreparedQueryResult result)
+{
+    _battlePets.clear();
+
+    if (!result)
+    {
+        auto add = false;
+
+        for (const auto& itr : _oldPetBattleSpellToMerge)
+            if (AddBattlePet(itr.first, 0, false))
+                add = true;
+
+        _oldPetBattleSpellToMerge.clear();
+
+        if (add)
+        {
+            GetSession()->SendBattlePetUpdates();
+            return true;
+        }
+    }
+
+    for (auto i = 0; i < MAX_PETBATTLE_SLOTS; ++i)
+        _battlePetCombatTeam[i] = std::shared_ptr<BattlePet>();
+
+    auto unlockedSlotCount = GetUnlockedPetBattleSlot();
+    if (unlockedSlotCount > 0)
+        SetFlag(PLAYER_FLAGS, PLAYER_FLAGS_PET_BATTLES_UNLOCKED);
+
+    std::vector<uint32> alreadyKnownPet;
+
+    if (result)
+    {
+        do
+        {
+            auto BattlePetPtr = std::make_shared<BattlePet>();
+            BattlePetPtr->Load(result->Fetch());
+            _battlePets.emplace(BattlePetPtr->JournalID, BattlePetPtr);
+
+            if (BattlePetPtr->Slot >= 0 && BattlePetPtr->Slot < static_cast<int32>(unlockedSlotCount))
+                _battlePetCombatTeam[BattlePetPtr->Slot] = BattlePetPtr;
+
+            alreadyKnownPet.push_back(BattlePetPtr->Species);
+
+        } while (result->NextRow());
+    }
+
+    for (auto itr = _oldPetBattleSpellToMerge.begin(); itr != _oldPetBattleSpellToMerge.end(); ++itr)
+    {
+        if (std::find(alreadyKnownPet.begin(), alreadyKnownPet.end(), itr->second) != alreadyKnownPet.end())
+            continue;
+
+        AddBattlePet(itr->first, 0, false);
+    }
+
+    _oldPetBattleSpellToMerge.clear();
+
+    GetSession()->SendBattlePetJournal();
+    UpdateCriteria(CRITERIA_TYPE_COLLECT_BATTLEPET, 1);
+
+    return true;
 }
 
 void Player::SetMonthlyQuestStatus(uint32 quest_id)

@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -234,9 +233,9 @@ enum QuestObjectiveType
     QUEST_OBJECTIVE_MONEY                   = 8,
     QUEST_OBJECTIVE_PLAYERKILLS             = 9,
     QUEST_OBJECTIVE_AREATRIGGER             = 10,
-    QUEST_OBJECTIVE_WINPETBATTLEAGAINSTNPC  = 11,
+    QUEST_OBJECTIVE_PET_TRAINER_DEFEAT      = 11,
     QUEST_OBJECTIVE_DEFEATBATTLEPET         = 12,
-    QUEST_OBJECTIVE_WINPVPPETBATTLES        = 13,
+    QUEST_OBJECTIVE_PET_BATTLE_VICTORIES    = 13,
     QUEST_OBJECTIVE_CRITERIA_TREE           = 14,
     QUEST_OBJECTIVE_PROGRESS_BAR            = 15,
     QUEST_OBJECTIVE_HAVE_CURRENCY           = 16,   // requires the player to have X currency when turning in but does not consume it
@@ -317,7 +316,7 @@ struct QuestObjective
         switch (Type)
         {
             case QUEST_OBJECTIVE_AREATRIGGER:
-            case QUEST_OBJECTIVE_WINPETBATTLEAGAINSTNPC:
+            case QUEST_OBJECTIVE_PET_TRAINER_DEFEAT:
             case QUEST_OBJECTIVE_DEFEATBATTLEPET:
             case QUEST_OBJECTIVE_CRITERIA_TREE:
                 return true;

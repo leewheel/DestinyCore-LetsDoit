@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1033,6 +1032,7 @@ class TC_GAME_API Unit : public WorldObject
         bool IsHunterPet() const{ return (m_unitTypeMask & UNIT_MASK_HUNTER_PET) != 0; }
         bool IsTotem() const    { return (m_unitTypeMask & UNIT_MASK_TOTEM) != 0; }
         bool IsVehicle() const  { return (m_unitTypeMask & UNIT_MASK_VEHICLE) != 0; }
+        bool isMinion() const { return (m_unitTypeMask & UNIT_MASK_MINION) != 0; }
 
         uint8 getLevel() const { return uint8(GetUInt32Value(UNIT_FIELD_LEVEL)); }
         uint8 GetEffectiveLevel() const { return uint8(GetUInt32Value(UNIT_FIELD_EFFECTIVE_LEVEL) != 0 ? GetUInt32Value(UNIT_FIELD_EFFECTIVE_LEVEL) : GetUInt32Value(UNIT_FIELD_LEVEL)); }
@@ -1242,7 +1242,7 @@ class TC_GAME_API Unit : public WorldObject
         bool IsServiceProvider() const;
         bool IsSpiritService() const { return HasFlag64(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPIRITHEALER | UNIT_NPC_FLAG_SPIRITGUIDE); }
         bool IsCritter() const { return GetCreatureType() == CREATURE_TYPE_CRITTER; }
-        bool IsWildBattlePet() const { return GetCreatureType() == CREATURE_TYPE_WILD_PET; }
+        bool isWildBattlePet() const;
 
         bool IsInFlight()  const { return HasUnitState(UNIT_STATE_IN_FLIGHT); }
 
@@ -2000,10 +2000,7 @@ class TC_GAME_API Unit : public WorldObject
 
         void EmoteWithDelay(uint32 Delay, uint8 Id);
 
-        // Pet Battle
-        void SetCurrentPetBattle(uint32 petBattleId) { m_currentPetBattleId = petBattleId; }
-        uint32 GetCurrentPetBattle() const { return m_currentPetBattleId; }
-        bool IsInPetBattle() const { return GetCurrentPetBattle() != 0; }
+        ObjectGuid _petBattleId;
 
     protected:
         explicit Unit (bool isWorldObject);

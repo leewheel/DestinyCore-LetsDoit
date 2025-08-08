@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -329,4 +328,40 @@ void VehicleAI::CheckConditions(uint32 diff)
     }
     else
         m_ConditionsTimer -= diff;
+}
+
+int BattlePetAI::Permissible(const Creature* creature)
+{
+    return PERMIT_BASE_NO;
+}
+
+void BattlePetAI::InitializeAI()
+{
+}
+
+void BattlePetAI::UpdateAI(uint32 diff)
+{
+    if (!me->IsInWorld() || !me->IsAlive())
+        return;
+
+    Unit* owner = me->GetCharmerOrOwner();
+    if (owner && !me->HasUnitState(UNIT_STATE_FOLLOW))
+        me->GetMotionMaster()->MoveFollow(owner, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
+}
+
+void BattlePetAI::MovementInform(uint32 moveType, uint32 data)
+{
+    switch (moveType)
+    {
+    case POINT_MOTION_TYPE:
+    {
+        me->GetMotionMaster()->Clear();
+        me->GetMotionMaster()->MoveIdle();
+        if (me->GetCharmerOrOwner())
+            me->GetMotionMaster()->MoveFollow(me->GetCharmerOrOwner(), PET_FOLLOW_DIST, PET_FOLLOW_ANGLE);
+        break;
+    }
+    default:
+        break;
+    }
 }

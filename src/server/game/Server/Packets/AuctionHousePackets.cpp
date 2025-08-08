@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -232,10 +232,7 @@ void WorldPackets::AuctionHouse::AuctionListItems::Read()
     _worldPacket >> MaxLevel;
     _worldPacket >> Quality;
     _worldPacket >> SortCount;
-    KnownPets.resize(_worldPacket.read<uint32>());
     _worldPacket >> MaxPetLevel;
-    for (std::size_t i = 0; i < KnownPets.size(); ++i)
-        _worldPacket >> KnownPets[i];
 
     Name = _worldPacket.ReadString(_worldPacket.ReadBits(8));
     ClassFilters.resize(_worldPacket.ReadBits(3));

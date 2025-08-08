@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -393,8 +392,6 @@ Unit::Unit(bool isWorldObject) :
     _isWalkingBeforeCharm = false;
 
     memset(&_lastUpdatePower, 0, sizeof(uint32));
-
-    m_currentPetBattleId = 0;
 }
 
 ////////////////////////////////////////////////////////////
@@ -4584,6 +4581,11 @@ bool Unit::HasAuraTypeWithAffectMask(AuraType auratype, SpellInfo const* affecte
     return false;
 }
 
+bool Unit::isWildBattlePet() const
+{
+    return HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_WILD_BATTLE_PET);
+}
+
 bool Unit::HasAuraTypeWithValue(AuraType auratype, int32 value) const
 {
     AuraEffectList const& mTotalAuraList = GetAuraEffectsByType(auratype);
@@ -6155,13 +6157,6 @@ void Unit::SetMinion(Minion *minion, bool apply)
             if (AddGuidValue(UNIT_FIELD_SUMMON, minion->GetGUID()))
             {
             }
-        }
-
-        if (minion->m_Properties && minion->m_Properties->Title == SUMMON_TYPE_MINIPET)
-        {
-            SetCritterGUID(minion->GetGUID());
-            if (GetTypeId() == TYPEID_PLAYER)
-                minion->SetGuidValue(UNIT_FIELD_BATTLE_PET_COMPANION_GUID, GetGuidValue(PLAYER_FIELD_SUMMONED_BATTLE_PET_ID));
         }
 
         // PvP, FFAPvP
@@ -7861,6 +7856,7 @@ void Unit::Mount(uint32 mount, uint32 VehicleId, uint32 creatureEntry)
             if (charm->GetTypeId() == TYPEID_UNIT)
                 charm->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED);
 
+        player->UnsummonCurrentBattlePetIfAny(true);
         player->SendMovementSetCollisionHeight(player->GetCollisionHeight(true));
     }
 
@@ -7902,7 +7898,10 @@ void Unit::Dismount()
                 pPet->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED);
         }
         else
+        {
             player->ResummonPetTemporaryUnSummonedIfAny();
+            player->SummonLastSummonedBattlePet();
+        }
 
         // if we have charmed npc, remove stun also
         if (Unit* charm = player->GetCharm())
@@ -8745,8 +8744,12 @@ void Unit::SetSpeedRate(UnitMoveType mtype, float rate)
         ++ToPlayer()->m_forced_speed_changes[mtype];
 
         if (!IsInCombat())
+        {
             if (Pet* pet = ToPlayer()->GetPet())
                 pet->SetSpeedRate(mtype, m_speed_rate[mtype]);
+            if (Creature* battlePet = ToPlayer()->GetSummonedBattlePet())
+                battlePet->SetSpeed(mtype, CalculatePct(m_speed_rate[mtype], 114.0f));
+        }
     }
 
     if (Player* playerMover = GetPlayerBeingMoved()) // unit controlled by a player.
@@ -13334,7 +13337,10 @@ void Unit::_ExitVehicle(Position const* exitPosition)
     init.Launch();
 
     if (player)
+    {
+        player->SummonLastSummonedBattlePet();
         player->ResummonPetTemporaryUnSummonedIfAny();
+    }
 
     if (vehicle->GetBase()->HasUnitTypeMask(UNIT_MASK_MINION) && vehicle->GetBase()->GetTypeId() == TYPEID_UNIT)
         if (((Minion*)vehicle->GetBase())->GetOwner() == this)

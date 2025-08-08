@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -325,14 +325,14 @@ struct BattlePetAbilityEffectEntry
     uint16 BattlePetVisualID;
     uint16 AuraBattlePetAbilityID;
     uint16 BattlePetEffectPropertiesID;
-    int16 Param[6];
+    uint16 Param[6];
     uint8 OrderIndex;
-    uint32 ID;
+    int32 ID;
 };
 
 struct BattlePetAbilityStateEntry
 {
-    uint32 ID;
+    int32 ID;
     int32 Value;
     uint8 BattlePetStateID;
     uint16 BattlePetAbilityID;
@@ -344,23 +344,46 @@ struct BattlePetAbilityTurnEntry
     uint16 BattlePetVisualID;
     uint8 OrderIndex;
     uint8 TurnTypeEnum;
-    int8 EventTypeEnum;
-    uint32 ID;
+    uint8 EventTypeEnum;
+    int32 ID;
 };
 
 struct BattlePetBreedQualityEntry
 {
-    uint32 ID;
+    int32 ID;
     float StateMultiplier;
     uint8 QualityEnum;
 };
 
 struct BattlePetBreedStateEntry
 {
-    uint32 ID;
+    int32 ID;
     uint16 Value;
     uint8 BattlePetStateID;
     uint8 BattlePetBreedID;
+};
+
+struct BattlePetDisplayOverrideEntry
+{
+    int32       ID;
+    int32       BattlePetSpeciesID;
+    int32       PlayerConditionID;
+    int32       CreatureDisplayInfoID;
+    uint8       PriorityCategory;
+};
+
+struct BattlePetEffectPropertiesEntry
+{
+    int32       ID;
+    LocalizedString* ParamLabel[6];
+    uint16      BattlePetVisualID;
+    uint8       ParamTypeEnum[6];
+};
+
+struct BattlePetNPCTeamMemberEntry
+{
+    int32       ID;
+    LocalizedString* Name;
 };
 
 struct BattlePetSpeciesEntry
@@ -372,27 +395,47 @@ struct BattlePetSpeciesEntry
     int32 SummonSpellID;
     uint16 Flags;
     uint8 PetTypeEnum;
-    int8 SourceTypeEnum;
-    uint32 ID;
+    uint8 SourceTypeEnum;
+    int32 ID;
     int32 CardUIModelSceneID;
     int32 LoadoutUIModelSceneID;
 };
 
 struct BattlePetSpeciesStateEntry
 {
-    uint32 ID;
-    int32 Value;
+    int32 ID;
+    uint32 Value;
     uint8 BattlePetStateID;
     uint16 BattlePetSpeciesID;
 };
 
 struct BattlePetSpeciesXAbilityEntry
 {
-    uint32 ID;
+    int32 ID;
     uint16 BattlePetAbilityID;
     uint8 RequiredLevel;
     int8 SlotEnum;
     uint16 BattlePetSpeciesID;
+};
+
+struct BattlePetStateEntry
+{
+    int32       ID;
+    LocalizedString* LuaName;
+    uint16      BattlePetVisualID;
+    uint16      Flags;
+};
+
+struct BattlePetVisualEntry
+{
+    int32       ID;
+    LocalizedString* SceneScriptFunction;
+    int32       SpellVisualID;
+    uint16      CastMilliSeconds;
+    uint16      ImpactMilliSeconds;
+    uint16      SceneScriptPackageID;
+    uint8       RangeTypeEnum;
+    uint8       Flags;
 };
 
 struct BattlemasterListEntry

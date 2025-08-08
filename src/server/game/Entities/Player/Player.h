@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -93,6 +92,7 @@ class ReputationMgr;
 class RestMgr;
 class SpellCastTargets;
 class TradeData;
+class BattlePet;
 
 enum GroupCategory : uint8;
 enum InventoryType : uint8;
@@ -114,6 +114,7 @@ namespace WorldPackets
     }
 }
 
+typedef std::map<ObjectGuid, std::shared_ptr<BattlePet>> BattlePetMap;
 typedef std::deque<Mail*> PlayerMails;
 
 #define PLAYER_MAX_SKILLS                       128
@@ -856,6 +857,7 @@ enum PlayerLoginQueryIndex
     PLAYER_LOGIN_QUERY_LOAD_ARCHAEOLOGY_DIGSITES,
     PLAYER_LOGIN_QUERY_LOAD_ARCHAEOLOGY_BRANCHS,
     PLAYER_LOGIN_QUERY_LOAD_ARCHAEOLOGY_HISTORY,
+    PLAYER_LOGIN_QUERY_BATTLE_PETS,
     MAX_PLAYER_LOGIN_QUERY
 };
 
@@ -867,6 +869,7 @@ enum PlayerDelayedOperations
     DELAYED_BG_MOUNT_RESTORE    = 0x08,                     ///< Flag to restore mount state after teleport from BG
     DELAYED_BG_TAXI_RESTORE     = 0x10,                     ///< Flag to restore taxi state after teleport from BG
     DELAYED_BG_GROUP_RESTORE    = 0x20,                     ///< Flag to restore group state after teleport from BG
+    DELAYED_PET_BATTLE_INITIAL  = 0x080,
     DELAYED_END
 };
 
@@ -1711,7 +1714,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
 
         void SendProficiency(ItemClass itemClass, uint32 itemSubclassMask) const;
         void SendKnownSpells();
-        bool AddSpell(uint32 spellId, bool active, bool learning, bool dependent, bool disabled, bool loading = false, int32 fromSkill = 0);
+        bool AddSpell(uint32 spellId, bool active, bool learning, bool dependent, bool disabled, bool loading = false, int32 fromSkill = 0, bool battlePet = false);
         void LearnSpell(uint32 spell_id, bool dependent, int32 fromSkill = 0);
         void RemoveSpell(uint32 spell_id, bool disabled = false, bool learn_low_rank = true);
         void ResetSpells(bool myClassOnly = false);
@@ -1851,6 +1854,27 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         void UpdateContestedPvP(uint32 currTime);
         void SetContestedPvPTimer(uint32 newTime) {m_contestedPvPTimer = newTime;}
         void ResetContestedPvP();
+
+        uint32 GetBattlePetTrapLevel();
+        void SaveBattlePets(SQLTransaction& trans);
+        void UnsummonCurrentBattlePetIfAny(bool p_Unvolontary);
+        void PetBattleCountBattleSpecies();
+        uint8 GetBattlePetCountForSpecies(uint32 speciesID);
+        bool HasBattlePetTraining();
+        uint32 GetUnlockedPetBattleSlot();
+        void SummonBattlePet(ObjectGuid journalID);
+        Creature* GetSummonedBattlePet();
+        void SummonLastSummonedBattlePet();
+        BattlePetMap* GetBattlePets();
+        std::shared_ptr<BattlePet> GetBattlePet(ObjectGuid journalID);
+        std::shared_ptr<BattlePet>* GetBattlePetCombatTeam();
+        uint32 GetBattlePetCombatSize();
+        void UpdateBattlePetCombatTeam();
+        BattlePetMap _battlePets;
+        bool AddBattlePetWithSpeciesId(BattlePetSpeciesEntry const* entry, uint16 flags = 0, bool sendUpdate = true, bool sendDiliveryUpdate = false);
+        bool AddBattlePet(uint32 spellID, uint16 flags = 0, bool sendUpdate = true);
+        bool AddBattlePetByCreatureId(uint32 creatureId, bool sendUpdate = true, bool sendDiliveryUpdate = false);
+
 
         /// @todo: maybe move UpdateDuelFlag+DuelComplete to independent DuelHandler
         DuelInfo* duel;
@@ -2582,6 +2606,9 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         // Send custom message with system message (addon, custom interfaces ...etc)
         void SendCustomMessage(std::string const& opcode, std::string const& data = "");
         void SendCustomMessage(std::string const& opcode, std::vector<std::string> const& data);
+        void ScheduleDelayedOperation(uint32 operation) { if (operation < DELAYED_END) m_DelayedOperations |= operation; }
+        WorldLocation m_recall_location;
+        void QuestObjectiveSatisfy(uint32 objectId, uint32 amount, QuestObjectiveType type = QUEST_OBJECTIVE_MONSTER, ObjectGuid guid = ObjectGuid::Empty);
 
 		/* delay teleport */
         void AddDelayedTeleport(uint32 delay, uint32 mapID, float x, float y, float z, float o)
@@ -2638,6 +2665,12 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         float m_powerFraction[MAX_POWERS_PER_CLASS];
         uint32 m_contestedPvPTimer;
         uint32 m_areaQuestTimer;
+
+        bool _LoadPetBattles(PreparedQueryResult result);
+        ObjectGuid _battlePetSummon;
+        uint64 _lastSummonedBattlePet;
+        std::shared_ptr<BattlePet> _battlePetCombatTeam[3];
+        std::set<std::pair<uint32, uint32>> _oldPetBattleSpellToMerge;
 
         /*********************************************************/
         /***               BATTLEGROUND SYSTEM                 ***/
@@ -2750,6 +2783,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         /***                  HONOR SYSTEM                     ***/
         /*********************************************************/
         time_t m_lastHonorUpdateTime;
+        //void ScheduleDelayedOperation(uint32 operation) { if (operation < DELAYED_END) m_DelayedOperations |= operation; }
 
         void outDebugValues() const;
 
@@ -2881,7 +2915,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         WorldLocation m_summon_location;
 
         // Recall position
-        WorldLocation m_recall_location;
+        //WorldLocation m_recall_location;
 
         DeclinedName *m_declinedname;
         Runes *m_runes;
@@ -2918,7 +2952,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         void SetCanDelayTeleport(bool setting) { m_bCanDelayTeleport = setting; }
         bool IsHasDelayedTeleport() const { return m_bHasDelayedTeleport; }
         void SetDelayedTeleportFlag(bool setting) { m_bHasDelayedTeleport = setting; }
-        void ScheduleDelayedOperation(uint32 operation) { if (operation < DELAYED_END) m_DelayedOperations |= operation; }
+        //void ScheduleDelayedOperation(uint32 operation) { if (operation < DELAYED_END) m_DelayedOperations |= operation; }
 
         bool IsInstanceLoginGameMasterException() const;
 

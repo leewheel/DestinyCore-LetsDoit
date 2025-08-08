@@ -1,6 +1,5 @@
- /*
- * Copyright (C) 2008-2019 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+/*
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -78,6 +77,8 @@ enum AchievementFaction
     ACHIEVEMENT_FACTION_ALLIANCE        = 1,
     ACHIEVEMENT_FACTION_ANY             = -1
 };
+
+static const uint16 BATTLE_PET_SPECIES_MAX_ID = 2164;
 
 enum AchievementFlags
 {
@@ -171,24 +172,6 @@ enum ArtifactPowerFlag : uint8
 
 #define MAX_ARTIFACT_TIER 1
 
-#define BATTLE_PET_SPECIES_MAX_ID 2164
-
-enum BattlePetSpeciesFlags
-{
-    BATTLE_PET_SPECIES_FLAG_NOT_CAPTURABLE  = 0x400
-};
-
-enum BattlePetSpeciesSourceType
-{
-    BATTLE_PET_SPECIES_SOURCE_LOOT          = 0,
-    BATTLE_PET_SPECIES_SOURCE_QUEST         = 1,
-    BATTLE_PET_SPECIES_SOURCE_VENDOR        = 2,
-    BATTLE_PET_SPECIES_SOURCE_PROFESSION    = 3,
-    BATTLE_PET_SPECIES_SOURCE_WILD_PET      = 4,
-    BATTLE_PET_SPECIES_SOURCE_ACHIEVEMENT   = 5,
-    BATTLE_PET_SPECIES_SOURCE_WORLD_EVENT   = 6,
-};
-
 enum ChrSpecializationFlag
 {
     CHR_SPECIALIZATION_FLAG_CASTER                  = 0x01,
@@ -211,6 +194,7 @@ enum CriteriaCondition
     CRITERIA_CONDITION_UNK8            = 8,
     CRITERIA_CONDITION_NO_SPELL_HIT    = 9,     // requires the player not to be hit by specific spell
     CRITERIA_CONDITION_NOT_IN_GROUP    = 10,    // requires the player not to be in group
+    CRITERIA_CONDITION_NO_LOSE_PET_BATTLE = 11, // only used in "Win 10 consecutive pet battles."
     CRITERIA_CONDITION_UNK13           = 13     // unk
 };
 
@@ -293,10 +277,10 @@ enum CriteriaAdditionalCondition
     CRITERIA_ADDITIONAL_CONDITION_THE_TILLERS_REPUTATION        = 75,
     CRITERIA_ADDITIONAL_CONDITION_PET_BATTLE_ACHIEVEMENT_POINTS = 76, // NYI
     //CRITERIA_ADDITIONAL_CONDITION_UNK_77                      = 77, // NYI
-    CRITERIA_ADDITIONAL_CONDITION_BATTLE_PET_FAMILY             = 78, // NYI
-    CRITERIA_ADDITIONAL_CONDITION_BATTLE_PET_HEALTH_PCT         = 79, // NYI
+    CRITERIA_ADDITIONAL_CONDITION_BATTLEPET_FEMALY = 78, // NYI
+    CRITERIA_ADDITIONAL_CONDITION_BATTLEPET_HP_LOW_THAT = 79, // NYI
     CRITERIA_ADDITIONAL_CONDITION_GUILD_GROUP_MEMBERS           = 80, // NYI
-    CRITERIA_ADDITIONAL_CONDITION_BATTLE_PET_ENTRY              = 81, // NYI
+    CRITERIA_ADDITIONAL_CONDITION_BATTLEPET_MASTER_PET_TAMER = 81, // NYI
     CRITERIA_ADDITIONAL_CONDITION_SCENARIO_STEP_INDEX           = 82,
     CRITERIA_ADDITIONAL_CONDITION_CHALLENGE_MODE_MEDAL          = 83, // NYI
     CRITERIA_ADDITIONAL_CONDITION_IS_ON_QUEST                   = 84,
@@ -304,9 +288,9 @@ enum CriteriaAdditionalCondition
     CRITERIA_ADDITIONAL_CONDITION_HAS_ACHIEVEMENT               = 86,
     CRITERIA_ADDITIONAL_CONDITION_HAS_ACHIEVEMENT_ON_CHARACTER  = 87, // NYI
     CRITERIA_ADDITIONAL_CONDITION_CLOUD_SERPENT_REPUTATION      = 88,
-    CRITERIA_ADDITIONAL_CONDITION_BATTLE_PET_BREED_QUALITY_ID   = 89, // NYI
-    CRITERIA_ADDITIONAL_CONDITION_PET_BATTLE_IS_PVP             = 90, // NYI
-    CRITERIA_ADDITIONAL_CONDITION_BATTLE_PET_SPECIES            = 91,
+    CRITERIA_ADDITIONAL_CONDITION_BATTLEPET_QUALITY             = 89,
+    CRITERIA_ADDITIONAL_CONDITION_BATTLEPET_WIN_IN_PVP          = 90,
+    CRITERIA_ADDITIONAL_CONDITION_BATTLEPET_SPECIES             = 91,
     CRITERIA_ADDITIONAL_CONDITION_ACTIVE_EXPANSION              = 92,
     //CRITERIA_ADDITIONAL_CONDITION_UNK_93                      = 93, // NYI
     CRITERIA_ADDITIONAL_CONDITION_FRIENDSHIP_REP_REACTION       = 94, // NYI
@@ -366,8 +350,8 @@ enum CriteriaAdditionalCondition
     //CRITERIA_ADDITIONAL_CONDITION_UNK_148                     = 148, // NYI
     CRITERIA_ADDITIONAL_CONDITION_GARRISON_BUILDING_LEVEL       = 149, // NYI
     //CRITERIA_ADDITIONAL_CONDITION_UNK_150                     = 150, // NYI
-    CRITERIA_ADDITIONAL_CONDITION_BATTLE_PET_SPECIES_IN_TEAM    = 151, // asset: count, secondaryAsset: battlePetSpeciesId
-    CRITERIA_ADDITIONAL_CONDITION_BATTLE_PET_FAMILY_IN_TEAM     = 152, // asset: count, secondaryAsset: battlePetFamily
+    CRITERIA_ADDITIONAL_CONDITION_BATTLEPET_SPECIES_IN_SLOT     = 151, // NYI battlepet count
+    CRITERIA_ADDITIONAL_CONDITION_BATTLEPET_TYPE_IN_SLOT        = 152, // NYI battlepet count of type
     //CRITERIA_ADDITIONAL_CONDITION_UNK_153                     = 153, // NYI
     //CRITERIA_ADDITIONAL_CONDITION_UNK_154                     = 154, // NYI
     //CRITERIA_ADDITIONAL_CONDITION_UNK_155                     = 155, // NYI
@@ -522,6 +506,7 @@ enum CriteriaTimedTypes : uint8
     CRITERIA_TIMED_TYPE_CREATURE        = 7,    // Timer is started by killing creature with entry in timerStartEvent
     CRITERIA_TIMED_TYPE_ITEM            = 9,    // Timer is started by using item with entry in timerStartEvent
     CRITERIA_TIMED_TYPE_UNK             = 10,   // Unknown
+    CRITERIA_TIMED_TYPE_BATTLEPET       = 11,   // Timer is started by win in battlepet to first lose
     CRITERIA_TIMED_TYPE_UNK_2           = 13,   // Unknown
     CRITERIA_TIMED_TYPE_SCENARIO_STAGE  = 14,   // Timer is started by changing stages in a scenario
 
@@ -611,7 +596,7 @@ enum CriteriaTypes : uint8
     CRITERIA_TYPE_KILL_CREATURE_TYPE                    = 78,
     CRITERIA_TYPE_COOK_RECIPES_GUILD                    = 79,
     CRITERIA_TYPE_GOLD_EARNED_BY_AUCTIONS               = 80,
-    CRITERIA_TYPE_EARN_PET_BATTLE_ACHIEVEMENT_POINTS    = 81,
+    CRITERIA_TYPE_BATTLEPET_ACHIEVEMENT_POINTS          = 81,
     CRITERIA_TYPE_CREATE_AUCTION                        = 82,
     CRITERIA_TYPE_HIGHEST_AUCTION_BID                   = 83,
     CRITERIA_TYPE_WON_AUCTIONS                          = 84,
@@ -626,7 +611,7 @@ enum CriteriaTypes : uint8
     CRITERIA_TYPE_ROLL_NEED                             = 93,
     CRITERIA_TYPE_ROLL_GREED                            = 94,
     CRITERIA_TYPE_RELEASE_SPIRIT                        = 95,
-    CRITERIA_TYPE_OWN_PET                               = 96,
+    CRITERIA_TYPE_ADD_BATTLE_PET_JOURNAL                = 96,
     CRITERIA_TYPE_GARRISON_COMPLETE_DUNGEON_ENCOUNTER   = 97,
     // 98 - unused (Legion - 23420)
     // 99 - unused (Legion - 23420)
@@ -685,13 +670,13 @@ enum CriteriaTypes : uint8
     CRITERIA_TYPE_COMPLETE_SCENARIO                     = 152,
     CRITERIA_TYPE_REACH_AREATRIGGER_WITH_ACTIONSET      = 153,
     // 154 - unused (Legion - 23420)
-    CRITERIA_TYPE_OWN_BATTLE_PET                        = 155,
-    CRITERIA_TYPE_OWN_BATTLE_PET_COUNT                  = 156,
-    CRITERIA_TYPE_CAPTURE_BATTLE_PET                    = 157,
-    CRITERIA_TYPE_WIN_PET_BATTLE                        = 158,
+    CRITERIA_TYPE_CAPTURE_SPECIFIC_BATTLEPET            = 155,
+    CRITERIA_TYPE_COLLECT_BATTLEPET                     = 156,
+    CRITERIA_TYPE_CAPTURE_PET_IN_BATTLE                 = 157,
+    CRITERIA_TYPE_BATTLEPET_WIN                         = 158,
     // 159 - 2 criterias (22312,22314), unused (Legion - 23420)
-    CRITERIA_TYPE_LEVEL_BATTLE_PET                      = 160,
-    CRITERIA_TYPE_CAPTURE_BATTLE_PET_CREDIT             = 161, // triggers a quest credit
+    CRITERIA_TYPE_BATTLEPET_LEVEL_UP                    = 160,
+    CRITERIA_TYPE_CAPTURE_BATTLE_PET_CREDIT             = 161,
     CRITERIA_TYPE_LEVEL_BATTLE_PET_CREDIT               = 162, // triggers a quest credit
     CRITERIA_TYPE_ENTER_AREA                            = 163, // triggers a quest credit
     CRITERIA_TYPE_LEAVE_AREA                            = 164, // triggers a quest credit
@@ -1428,6 +1413,19 @@ enum VehicleSeatFlagsB
     VEHICLE_SEAT_FLAG_B_USABLE_FORCED_4          = 0x02000000,
     VEHICLE_SEAT_FLAG_B_CAN_SWITCH               = 0x04000000,
     VEHICLE_SEAT_FLAG_B_VEHICLE_PLAYERFRAME_UI   = 0x80000000            // Lua_UnitHasVehiclePlayerFrameUI - actually checked for flagsb &~ 0x80000000
+};
+
+enum BattlePetSpeciesFlags
+{
+    BATTLEPET_SPECIES_FLAG_LIMITED_ABILITIES     = 0x0001, // battle pets with less than 6 abilites have this flag
+    BATTLEPET_SPECIES_FLAG_CONDITIONAL           = 0x0002,
+    BATTLEPET_SPECIES_FLAG_NOT_ACCOUNT_BOUND     = 0x0004,
+    BATTLEPET_SPECIES_FLAG_RELEASABLE            = 0x0008,
+    BATTLEPET_SPECIES_FLAG_CAGEABLE              = 0x0010,
+    BATTLEPET_SPECIES_FLAG_UNTAMEABLE            = 0x0020,
+    BATTLEPET_SPECIES_FLAG_UNIQUE                = 0x0040,
+    BATTLEPET_SPECIES_FLAG_COMPANION             = 0x0080,
+    BATTLEPET_SPECIES_FLAG_ELITE                 = 0x0400,
 };
 
 // CurrencyTypes.dbc

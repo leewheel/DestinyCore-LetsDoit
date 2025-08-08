@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -64,6 +63,7 @@ struct ScriptAction;
 struct ScriptInfo;
 struct SummonPropertiesEntry;
 class Transport;
+struct WildBattlePetPool;
 enum Difficulty : uint8;
 enum WeatherState : uint32;
 
@@ -342,6 +342,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
 
         // some calls like isInWater should not use vmaps due to processor power
         // can return INVALID_HEIGHT if under z+2 z coord not found height
+        float GetHeight(float x, float y, float z, bool checkVMap = true, float maxSearchDist = DEFAULT_HEIGHT_SEARCH) const;
         float GetStaticHeight(PhaseShift const& phaseShift, float x, float y, float z, bool checkVMap = true, float maxSearchDist = DEFAULT_HEIGHT_SEARCH) const;
         float GetMinHeight(float x, float y) const;
 
@@ -583,6 +584,10 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
             _updateObjects.erase(obj);
         }
 
+        void AddBattlePet(Creature* creature);
+        void RemoveBattlePet(Creature* creature);
+        WildBattlePetPool* GetWildBattlePetPool(Creature* creature);
+
     private:
         void LoadMapAndVMap(int gx, int gy);
         void LoadVMap(int gx, int gy);
@@ -593,6 +598,10 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         void LoadMMap(int gx, int gy);
         GridMap* GetGrid(float x, float y);
         GridMap* GetGrid(uint32 mapId, float x, float y);
+
+        void PopulateBattlePet(uint32 diff);
+        void DepopulateBattlePet();
+        std::map<uint16, std::map<uint32, WildBattlePetPool>> m_wildBattlePetPool;
 
         void SetTimer(uint32 t) { i_gridExpiry = t < MIN_GRID_DELAY ? MIN_GRID_DELAY : t; }
 

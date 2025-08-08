@@ -21,6 +21,8 @@
 */
 
 #include "World.h"
+#include "BattlePetDataStore.h"
+#include "WildBattlePet.h"
 #include "AccountMgr.h"
 #include "AchievementMgr.h"
 #include "ArchaeologyMgr.h"
@@ -95,6 +97,7 @@
 #include "WorldQuestMgr.h"
 #include "WorldSession.h"
 #include "WorldSocket.h"
+#include "PetBattleSystem.h"
 
 #include <boost/algorithm/string.hpp>
 
@@ -1638,6 +1641,9 @@ void World::SetInitialWorldSettings()
     TC_LOG_INFO("server.loading", "Loading Instance Template...");
     sObjectMgr->LoadInstanceTemplate();
 
+    sBattlePetDataStore->Initialize();
+    sWildBattlePetMgr->Load();
+
     // Must be called before `creature_respawn`/`gameobject_respawn` tables
     TC_LOG_INFO("server.loading", "Loading instances...");
     sInstanceSaveMgr->LoadInstances();
@@ -2223,9 +2229,6 @@ void World::SetInitialWorldSettings()
     TC_LOG_INFO("server.loading", "Loading realm names...");
     sObjectMgr->LoadRealmNames();
 
-    TC_LOG_INFO("server.loading", "Loading battle pets info...");
-    sBattlePetDataStore->Initialize();
-
     TC_LOG_INFO("server.loading", "Loading scenarios");
     sScenarioMgr->LoadDB2Data();
     sScenarioMgr->LoadDBData();
@@ -2504,6 +2507,8 @@ void World::Update(uint32 diff)
 
     sGroupMgr->Update(diff);
     RecordTimeDiff("GroupMgr");
+
+    sPetBattleSystem->Update(diff);
 
     // execute callbacks from sql queries that were queued recently
     ProcessQueryCallbacks();

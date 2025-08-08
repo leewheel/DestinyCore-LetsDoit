@@ -80,7 +80,11 @@ bool LoginQueryHolder::Initialize()
     bool res = true;
     ObjectGuid::LowType lowGuid = m_guid.GetCounter();
 
-    PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER);
+    PreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_PETBATTLE_ACCOUNT);
+    stmt->setUInt32(0, m_accountId);
+    res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_BATTLE_PETS, stmt);
+
+    stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHARACTER);
     stmt->setUInt64(0, lowGuid);
     res &= SetPreparedQuery(PLAYER_LOGIN_QUERY_LOAD_FROM, stmt);
 
@@ -953,9 +957,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder* holder)
         pCurrChar->SetGuildLevel(0);
     }
 
-    // TODO: Move this to BattlePetMgr::SendJournalLock() just to have all packets in one file
-    WorldPackets::BattlePet::BattlePetJournalLockAcquired lock;
-    SendPacket(lock.Write());
+    pCurrChar->SendInitialPacketsBeforeAddToMap();
 
     WorldPackets::Artifact::ArtifactKnowledge artifactKnowledge;
     artifactKnowledge.ArtifactCategoryID = ARTIFACT_CATEGORY_PRIMARY;

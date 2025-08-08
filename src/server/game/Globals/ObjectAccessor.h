@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -84,6 +83,7 @@ namespace ObjectAccessor
 
     // these functions return objects if found in whole world
     // ACCESS LIKE THAT IS NOT THREAD SAFE
+    TC_GAME_API Creature* FindCreature(ObjectGuid const&);
     TC_GAME_API Player* FindPlayer(ObjectGuid const&);
     TC_GAME_API Player* FindPlayerByName(std::string const& name);
 
