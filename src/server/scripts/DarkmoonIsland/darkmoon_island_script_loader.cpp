@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2019 MagicStorm.
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -26,7 +26,6 @@ void AddSC_darkmoon_teleport();
 void AddSC_darkmoon_selina();
 void AddSC_darkmoon_shot_gallery();
 void AddSC_darkmoon_spells();
-void AddSC_darkmoon_items();
 
 // The name of this function should match:
 // void Add${NameOfDirectory}Scripts()
@@ -42,5 +41,4 @@ void AddDarkmoonIslandScripts()
 	AddSC_darkmoon_selina();
 	AddSC_darkmoon_shot_gallery();
 	AddSC_darkmoon_spells();
-	AddSC_darkmoon_items();
 }

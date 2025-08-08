@@ -16,7 +16,7 @@
  */
 
 #include "ScriptMgr.h"
-#include "DarkmoonIsland.h"
+#include "darkmoon_island.h"
 #include "Cell.h"
 #include "CellImpl.h"
 #include "GridNotifiers.h"
