@@ -46,7 +46,7 @@ struct VisibleAchievementCheck
     }
 };
 
-AchievementMgr::AchievementMgr() : _achievementPoints(0) { }
+AchievementMgr::AchievementMgr() : _achievementPoints(0), _achievementBattlePetPoints(0) { }
 
 AchievementMgr::~AchievementMgr() { }
 
@@ -89,7 +89,7 @@ bool AchievementMgr::CanUpdateCriteriaTree(Criteria const* criteria, CriteriaTre
             return false;
         }
 
-        if ((achievement->Faction == ACHIEVEMENT_FACTION_HORDE    && referencePlayer->GetTeam() != HORDE) ||
+        if ((achievement->Faction == ACHIEVEMENT_FACTION_HORDE && referencePlayer->GetTeam() != HORDE) ||
             (achievement->Faction == ACHIEVEMENT_FACTION_ALLIANCE && referencePlayer->GetTeam() != ALLIANCE))
         {
             TC_LOG_TRACE("criteria.achievement", "AchievementMgr::CanUpdateCriteriaTree: (Id: %u Type %s Achievement %u) Wrong faction",
@@ -123,6 +123,8 @@ bool AchievementMgr::CanCompleteCriteriaTree(CriteriaTree const* tree)
 
 void AchievementMgr::CompletedCriteriaTree(CriteriaTree const* tree, Player* referencePlayer)
 {
+    CriteriaHandler::CompletedCriteriaTree(tree, referencePlayer);
+
     AchievementEntry const* achievement = tree->Achievement;
     if (!achievement)
         return;
@@ -135,7 +137,7 @@ void AchievementMgr::CompletedCriteriaTree(CriteriaTree const* tree, Player* ref
     if (HasAchieved(achievement->ID))
         return;
 
-    if (IsCompletedAchievement(achievement))
+    if (IsCompletedAchievement(achievement, referencePlayer))
         CompletedAchievement(achievement, referencePlayer);
 }
 
@@ -148,16 +150,16 @@ void AchievementMgr::AfterCriteriaTreeUpdate(CriteriaTree const* tree, Player* r
     // check again the completeness for SUMM and REQ COUNT achievements,
     // as they don't depend on the completed criteria but on the sum of the progress of each individual criteria
     if (achievement->Flags & ACHIEVEMENT_FLAG_SUMM)
-        if (IsCompletedAchievement(achievement))
+        if (IsCompletedAchievement(achievement, referencePlayer))
             CompletedAchievement(achievement, referencePlayer);
 
     if (std::vector<AchievementEntry const*> const* achRefList = sAchievementMgr->GetAchievementByReferencedId(achievement->ID))
         for (AchievementEntry const* refAchievement : *achRefList)
-            if (IsCompletedAchievement(refAchievement))
+            if (IsCompletedAchievement(refAchievement, referencePlayer))
                 CompletedAchievement(refAchievement, referencePlayer);
 }
 
-bool AchievementMgr::IsCompletedAchievement(AchievementEntry const* entry)
+bool AchievementMgr::IsCompletedAchievement(AchievementEntry const* entry, Player* referencePlayer)
 {
     // counter can never complete
     if (entry->Flags & ACHIEVEMENT_FLAG_COUNTER)
@@ -173,15 +175,15 @@ bool AchievementMgr::IsCompletedAchievement(AchievementEntry const* entry)
     {
         int64 progress = 0;
         CriteriaMgr::WalkCriteriaTree(tree, [this, &progress](CriteriaTree const* criteriaTree)
-        {
-            if (criteriaTree->Criteria)
-                if (CriteriaProgress const* criteriaProgress = this->GetCriteriaProgress(criteriaTree->Criteria))
-                    progress += criteriaProgress->Counter;
-        });
+            {
+                if (criteriaTree->Criteria)
+                    if (CriteriaProgress const* criteriaProgress = this->GetCriteriaProgress(criteriaTree->Criteria))
+                        progress += criteriaProgress->Counter;
+            });
         return progress >= tree->Entry->Amount;
     }
 
-    return IsCompletedCriteriaTree(tree);
+    return CheckCompletedCriteriaTree(tree, referencePlayer);
 }
 
 bool AchievementMgr::RequiredAchievementSatisfied(uint32 achievementId) const
@@ -363,7 +365,7 @@ void PlayerAchievementMgr::ResetCriteria(CriteriaTypes type, uint64 miscValue1, 
                 continue;
 
             // don't update already completed criteria if not forced or achievement already complete
-            if (!(IsCompletedCriteriaTree(tree) && !evenIfCriteriaComplete) || !HasAchieved(tree->Achievement->ID))
+            if (!(CheckCompletedCriteriaTree(tree, _owner) && !evenIfCriteriaComplete) || !HasAchieved(tree->Achievement->ID))
             {
                 allComplete = false;
                 break;
@@ -479,7 +481,7 @@ void PlayerAchievementMgr::CompletedAchievement(AchievementEntry const* achievem
     if (_owner->IsGameMaster())
         return;
 
-    if ((achievement->Faction == ACHIEVEMENT_FACTION_HORDE    && referencePlayer->GetTeam() != HORDE) ||
+    if ((achievement->Faction == ACHIEVEMENT_FACTION_HORDE && referencePlayer->GetTeam() != HORDE) ||
         (achievement->Faction == ACHIEVEMENT_FACTION_ALLIANCE && referencePlayer->GetTeam() != ALLIANCE))
         return;
 
@@ -509,8 +511,29 @@ void PlayerAchievementMgr::CompletedAchievement(AchievementEntry const* achievem
     if (!(achievement->Flags & ACHIEVEMENT_FLAG_TRACKING_FLAG))
         _achievementPoints += achievement->Points;
 
+    if (achievement->Category == 15117) // BattlePet category
+        _achievementBattlePetPoints += achievement->Points;
+
+    if (achievement->Category == 15117) // BattlePet category
+        UpdateCriteria(CRITERIA_TYPE_BATTLEPET_ACHIEVEMENT_POINTS, achievement->Points, 0, 0, nullptr, referencePlayer);
+
     UpdateCriteria(CRITERIA_TYPE_COMPLETE_ACHIEVEMENT, 0, 0, 0, NULL, referencePlayer);
     UpdateCriteria(CRITERIA_TYPE_EARN_ACHIEVEMENT_POINTS, achievement->Points, 0, 0, NULL, referencePlayer);
+
+    switch (achievement->ID)
+    {
+    case 7433: ///< Newbie
+    case 6566: ///< Just a Pup
+        _owner->GetSession()->SendPetBattleSlotUpdates(true);
+        _owner->GetSession()->SendBattlePetLicenseChanged();
+        break;
+    case 6556: ///< Going to Need More Traps
+    case 6581: ///< Pro Pet Crew
+        _owner->GetSession()->SendBattlePetTrapLevel();
+        break;
+    default:
+        break;
+    }
 
     // reward items and titles if any
     AchievementReward const* reward = sAchievementMgr->GetAchievementReward(achievement);
@@ -571,10 +594,7 @@ void PlayerAchievementMgr::CompletedAchievement(AchievementEntry const* achievem
 
 bool PlayerAchievementMgr::ModifierTreeSatisfied(uint32 modifierTreeId) const
 {
-    if (ModifierTreeNode const* modifierTree = sCriteriaMgr->GetModifierTree(modifierTreeId))
-        return ModifierTreeSatisfied(modifierTree, 0, 0, nullptr, _owner);
-
-     return false;
+    return AdditionalRequirementsSatisfied(sCriteriaMgr->GetModifierTree(modifierTreeId), 0, 0, nullptr, _owner);
 }
 
 void PlayerAchievementMgr::SendCriteriaUpdate(Criteria const* criteria, CriteriaProgress const* progress, uint32 timeElapsed, bool timedCompleted) const
@@ -835,25 +855,25 @@ void GuildAchievementMgr::SendAchievementInfo(Player* receiver, uint32 achieveme
         if (CriteriaTree const* tree = sCriteriaMgr->GetCriteriaTree(achievement->CriteriaTree))
         {
             CriteriaMgr::WalkCriteriaTree(tree, [this, &guildCriteriaUpdate](CriteriaTree const* node)
-            {
-                if (node->Criteria)
                 {
-                    auto progress = this->_criteriaProgress.find(node->Criteria->ID);
-                    if (progress != this->_criteriaProgress.end())
+                    if (node->Criteria)
                     {
-                        WorldPackets::Achievement::GuildCriteriaProgress guildCriteriaProgress;
-                        guildCriteriaProgress.CriteriaID = node->Criteria->ID;
-                        guildCriteriaProgress.DateCreated = 0;
-                        guildCriteriaProgress.DateStarted = 0;
-                        guildCriteriaProgress.DateUpdated = progress->second.Date;
-                        guildCriteriaProgress.Quantity = progress->second.Counter;
-                        guildCriteriaProgress.PlayerGUID = progress->second.PlayerGUID;
-                        guildCriteriaProgress.Flags = 0;
+                        auto progress = this->_criteriaProgress.find(node->Criteria->ID);
+                        if (progress != this->_criteriaProgress.end())
+                        {
+                            WorldPackets::Achievement::GuildCriteriaProgress guildCriteriaProgress;
+                            guildCriteriaProgress.CriteriaID = node->Criteria->ID;
+                            guildCriteriaProgress.DateCreated = 0;
+                            guildCriteriaProgress.DateStarted = 0;
+                            guildCriteriaProgress.DateUpdated = progress->second.Date;
+                            guildCriteriaProgress.Quantity = progress->second.Counter;
+                            guildCriteriaProgress.PlayerGUID = progress->second.PlayerGUID;
+                            guildCriteriaProgress.Flags = 0;
 
-                        guildCriteriaUpdate.Progress.push_back(guildCriteriaProgress);
+                            guildCriteriaUpdate.Progress.push_back(guildCriteriaProgress);
+                        }
                     }
-                }
-            });
+                });
         }
     }
 
@@ -935,6 +955,12 @@ void GuildAchievementMgr::CompletedAchievement(AchievementEntry const* achieveme
 
     if (!(achievement->Flags & ACHIEVEMENT_FLAG_TRACKING_FLAG))
         _achievementPoints += achievement->Points;
+
+    if (achievement->Category == 15117) // BattlePet category
+    {
+        _achievementBattlePetPoints += achievement->Points;
+        UpdateCriteria(CRITERIA_TYPE_BATTLEPET_ACHIEVEMENT_POINTS, achievement->Points, 0, 0, nullptr, referencePlayer);
+    }
 
     UpdateCriteria(CRITERIA_TYPE_COMPLETE_ACHIEVEMENT, 0, 0, 0, NULL, referencePlayer);
     UpdateCriteria(CRITERIA_TYPE_EARN_ACHIEVEMENT_POINTS, achievement->Points, 0, 0, NULL, referencePlayer);
@@ -1083,9 +1109,9 @@ void AchievementGlobalMgr::LoadAchievementReferenceList()
     // Once Bitten, Twice Shy (10 player) - Icecrown Citadel
     // Correct map requirement (currently has Ulduar); 6.0.3 note - it STILL has ulduar requirement
     hotfixes.ApplyHotfix(4539, [](AchievementEntry* achievement)
-    {
-        achievement->InstanceID = 631;
-    });
+        {
+            achievement->InstanceID = 631;
+        });
 
     TC_LOG_INFO("server.loading", ">> Loaded %u achievement references in %u ms.", count, GetMSTimeDiffToNow(oldMSTime));
 }
@@ -1128,8 +1154,7 @@ void AchievementGlobalMgr::LoadCompletedAchievements()
         }
         else if (achievement->Flags & (ACHIEVEMENT_FLAG_REALM_FIRST_REACH | ACHIEVEMENT_FLAG_REALM_FIRST_KILL))
             _allCompletedAchievements[achievementId] = std::chrono::system_clock::time_point::max();
-    }
-    while (result->NextRow());
+    } while (result->NextRow());
 
     TC_LOG_INFO("server.loading", ">> Loaded %lu realm first completed achievements in %u ms.", (unsigned long)_allCompletedAchievements.size(), GetMSTimeDiffToNow(oldMSTime));
 }
@@ -1161,13 +1186,13 @@ void AchievementGlobalMgr::LoadRewards()
         }
 
         AchievementReward reward;
-        reward.TitleId[0]       = fields[1].GetUInt32();
-        reward.TitleId[1]       = fields[2].GetUInt32();
-        reward.ItemId           = fields[3].GetUInt32();
+        reward.TitleId[0] = fields[1].GetUInt32();
+        reward.TitleId[1] = fields[2].GetUInt32();
+        reward.ItemId = fields[3].GetUInt32();
         reward.SenderCreatureId = fields[4].GetUInt32();
-        reward.Subject          = fields[5].GetString();
-        reward.Body             = fields[6].GetString();
-        reward.MailTemplateId   = fields[7].GetUInt32();
+        reward.Subject = fields[5].GetString();
+        reward.Body = fields[6].GetString();
+        reward.MailTemplateId = fields[7].GetUInt32();
 
         // must be title or mail at least
         if (!reward.TitleId[0] && !reward.TitleId[1] && !reward.SenderCreatureId)
@@ -1268,8 +1293,8 @@ void AchievementGlobalMgr::LoadRewardLocales()
     {
         Field* fields = result->Fetch();
 
-        uint32 id               = fields[0].GetUInt32();
-        std::string localeName  = fields[1].GetString();
+        uint32 id = fields[0].GetUInt32();
+        std::string localeName = fields[1].GetString();
 
         if (_achievementRewards.find(id) == _achievementRewards.end())
         {
@@ -1278,7 +1303,7 @@ void AchievementGlobalMgr::LoadRewardLocales()
         }
 
         AchievementRewardLocale& data = _achievementRewardLocales[id];
-        LocaleConstant locale         = GetLocaleByName(localeName);
+        LocaleConstant locale = GetLocaleByName(localeName);
         if (locale == LOCALE_enUS)
             continue;
 

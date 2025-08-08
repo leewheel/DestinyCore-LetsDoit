@@ -45,11 +45,11 @@ struct ModifierTreeNode
 
 enum CriteriaFlagsCu
 {
-    CRITERIA_FLAG_CU_PLAYER             = 0x1,
-    CRITERIA_FLAG_CU_ACCOUNT            = 0x2,
-    CRITERIA_FLAG_CU_GUILD              = 0x4,
-    CRITERIA_FLAG_CU_SCENARIO           = 0x8,
-    CRITERIA_FLAG_CU_QUEST_OBJECTIVE    = 0x10
+    CRITERIA_FLAG_CU_PLAYER = 0x1,
+    CRITERIA_FLAG_CU_ACCOUNT = 0x2,
+    CRITERIA_FLAG_CU_GUILD = 0x4,
+    CRITERIA_FLAG_CU_SCENARIO = 0x8,
+    CRITERIA_FLAG_CU_QUEST_OBJECTIVE = 0x10
 };
 
 struct Criteria
@@ -85,30 +85,30 @@ struct CriteriaProgress
 
 enum CriteriaDataType
 {                                                 // value1         value2        comment
-    CRITERIA_DATA_TYPE_NONE                 = 0,  // 0              0
-    CRITERIA_DATA_TYPE_T_CREATURE           = 1,  // CreatureId     0
-    CRITERIA_DATA_TYPE_T_PLAYER_CLASS_RACE  = 2,  // ClassId        RaceId
+    CRITERIA_DATA_TYPE_NONE = 0,  // 0              0
+    CRITERIA_DATA_TYPE_T_CREATURE = 1,  // CreatureId     0
+    CRITERIA_DATA_TYPE_T_PLAYER_CLASS_RACE = 2,  // ClassId        RaceId
     CRITERIA_DATA_TYPE_T_PLAYER_LESS_HEALTH = 3,  // HealthPercent 0
-    CRITERIA_DATA_TYPE_S_AURA               = 5,  // SpellId        EffectIndex
-    CRITERIA_DATA_TYPE_T_AURA               = 7,  // SpellId        EffectIndex
-    CRITERIA_DATA_TYPE_VALUE                = 8,  // Minvalue                     value provided with  update must be not less that limit
-    CRITERIA_DATA_TYPE_T_LEVEL              = 9,  // Minlevel                     minlevel of target
-    CRITERIA_DATA_TYPE_T_GENDER             = 10, // Gender                       0=male; 1=female
-    CRITERIA_DATA_TYPE_SCRIPT               = 11, // Scripted requirement
-    CRITERIA_DATA_TYPE_MAP_DIFFICULTY       = 12, // used on 3.3.5a branch
-    CRITERIA_DATA_TYPE_MAP_PLAYER_COUNT     = 13, // Count                        "with less than %u people in the zone"
-    CRITERIA_DATA_TYPE_T_TEAM               = 14, // Team                         HORDE(67), ALLIANCE(469)
-    CRITERIA_DATA_TYPE_S_DRUNK              = 15, // DrunkenState   0             (enum DrunkenState) of player
-    CRITERIA_DATA_TYPE_HOLIDAY              = 16, // HolidayId      0             event in holiday time
-    CRITERIA_DATA_TYPE_BG_LOSS_TEAM_SCORE   = 17, // MinScore       MaxScore      player's team win bg and opposition team have team score in range
-    CRITERIA_DATA_TYPE_INSTANCE_SCRIPT      = 18, // 0              0             maker instance script call for check current criteria requirements fit
-    CRITERIA_DATA_TYPE_S_EQUIPPED_ITEM      = 19, // ItemLevel      Quality       for equipped item in slot to check item level and quality
-    CRITERIA_DATA_TYPE_MAP_ID               = 20, // MapId          0             player must be on map with id in map_id
-    CRITERIA_DATA_TYPE_S_PLAYER_CLASS_RACE  = 21, // Class          Race
-    CRITERIA_DATA_TYPE_NTH_BIRTHDAY         = 22, // used on 3.3.5a branch
-    CRITERIA_DATA_TYPE_S_KNOWN_TITLE        = 23, // TitleId                      known (pvp) title, values from dbc
-    CRITERIA_DATA_TYPE_GAME_EVENT           = 24, // GameEventId    0
-    CRITERIA_DATA_TYPE_S_ITEM_QUALITY       = 25, // ItemQuality    0
+    CRITERIA_DATA_TYPE_S_AURA = 5,  // SpellId        EffectIndex
+    CRITERIA_DATA_TYPE_T_AURA = 7,  // SpellId        EffectIndex
+    CRITERIA_DATA_TYPE_VALUE = 8,  // Minvalue                     value provided with  update must be not less that limit
+    CRITERIA_DATA_TYPE_T_LEVEL = 9,  // Minlevel                     minlevel of target
+    CRITERIA_DATA_TYPE_T_GENDER = 10, // Gender                       0=male; 1=female
+    CRITERIA_DATA_TYPE_SCRIPT = 11, // Scripted requirement
+    CRITERIA_DATA_TYPE_MAP_DIFFICULTY = 12, // used on 3.3.5a branch
+    CRITERIA_DATA_TYPE_MAP_PLAYER_COUNT = 13, // Count                        "with less than %u people in the zone"
+    CRITERIA_DATA_TYPE_T_TEAM = 14, // Team                         HORDE(67), ALLIANCE(469)
+    CRITERIA_DATA_TYPE_S_DRUNK = 15, // DrunkenState   0             (enum DrunkenState) of player
+    CRITERIA_DATA_TYPE_HOLIDAY = 16, // HolidayId      0             event in holiday time
+    CRITERIA_DATA_TYPE_BG_LOSS_TEAM_SCORE = 17, // MinScore       MaxScore      player's team win bg and opposition team have team score in range
+    CRITERIA_DATA_TYPE_INSTANCE_SCRIPT = 18, // 0              0             maker instance script call for check current criteria requirements fit
+    CRITERIA_DATA_TYPE_S_EQUIPPED_ITEM = 19, // ItemLevel      Quality       for equipped item in slot to check item level and quality
+    CRITERIA_DATA_TYPE_MAP_ID = 20, // MapId          0             player must be on map with id in map_id
+    CRITERIA_DATA_TYPE_S_PLAYER_CLASS_RACE = 21, // Class          Race
+    CRITERIA_DATA_TYPE_NTH_BIRTHDAY = 22, // used on 3.3.5a branch
+    CRITERIA_DATA_TYPE_S_KNOWN_TITLE = 23, // TitleId                      known (pvp) title, values from dbc
+    CRITERIA_DATA_TYPE_GAME_EVENT = 24, // GameEventId    0
+    CRITERIA_DATA_TYPE_S_ITEM_QUALITY = 25, // ItemQuality    0
 
     MAX_CRITERIA_DATA_TYPE
 };
@@ -280,7 +280,8 @@ public:
     void RemoveCriteriaTimer(CriteriaTimedTypes type, uint32 entry);   // used for quest and scripted timed s
 
     bool IsCompletedCriteria(Criteria const* criteria, uint64 requiredAmount);
-    bool IsCompletedCriteriaTree(CriteriaTree const* tree);
+    bool CheckCompletedCriteriaTree(CriteriaTree const* tree, Player* referencePlayer);
+    bool CheckCompletedCriteriaTree(uint32 criteriaTreeId, Player* referencePlayer);
 
 protected:
     virtual void SendCriteriaUpdate(Criteria const* criteria, CriteriaProgress const* progress, uint32 timeElapsed, bool timedCompleted) const = 0;
@@ -292,7 +293,7 @@ protected:
 
     virtual bool CanUpdateCriteriaTree(Criteria const* criteria, CriteriaTree const* tree, Player* referencePlayer) const;
     virtual bool CanCompleteCriteriaTree(CriteriaTree const* tree);
-    virtual void CompletedCriteriaTree(CriteriaTree const* tree, Player* referencePlayer) = 0;
+    virtual void CompletedCriteriaTree(CriteriaTree const* tree, Player* referencePlayer);
     virtual void AfterCriteriaTreeUpdate(CriteriaTree const* /*tree*/, Player* /*referencePlayer*/) { }
 
     bool CanUpdateCriteria(Criteria const* criteria, CriteriaTreeList const* trees, uint64 miscValue1, uint64 miscValue2, uint64 miscValue3, Unit const* unit, Player* referencePlayer);
@@ -302,13 +303,14 @@ protected:
     bool ConditionsSatisfied(Criteria const* criteria, Player* referencePlayer) const;
     bool RequirementsSatisfied(Criteria const* criteria, uint64 miscValue1, uint64 miscValue2, uint64 miscValue3, Unit const* unit, Player* referencePlayer) const;
     virtual bool RequiredAchievementSatisfied(uint32 /*achievementId*/) const { return false; }
-    bool ModifierTreeSatisfied(ModifierTreeNode const* parent, uint64 miscValue1, uint64 miscValue2, Unit const* unit, Player* referencePlayer) const;
-    bool ModifierSatisfied(ModifierTreeEntry const* modifier, uint64 miscValue1, uint64 miscValue2, Unit const* unit, Player* referencePlayer) const;
+    bool AdditionalRequirementsSatisfied(ModifierTreeNode const* parent, uint64 miscValue1, uint64 miscValue2, Unit const* unit, Player* referencePlayer) const;
+    bool AdditionalRequirementsConditionSatisfied(ModifierTreeNode const* parent, uint64 miscValue1, uint64 miscValue2, Unit const* unit, Player* referencePlayer) const;
 
     virtual std::string GetOwnerInfo() const = 0;
     virtual CriteriaList const& GetCriteriaByType(CriteriaTypes type) const = 0;
 
     CriteriaProgressMap _criteriaProgress;
+    std::set<uint32> _completedCriteriaTree;
     std::map<uint32, uint32 /*ms time left*/> _timeCriteriaTrees;
 };
 
@@ -364,15 +366,15 @@ public:
     {
         switch (type)
         {
-            case CRITERIA_TYPE_KILL_CREATURE:
-            case CRITERIA_TYPE_WIN_BG:
-            case CRITERIA_TYPE_BE_SPELL_TARGET:         // NYI
-            case CRITERIA_TYPE_WIN_RATED_ARENA:
-            case CRITERIA_TYPE_BE_SPELL_TARGET2:        // NYI
-            case CRITERIA_TYPE_WIN_RATED_BATTLEGROUND:  // NYI
-                return true;
-            default:
-                break;
+        case CRITERIA_TYPE_KILL_CREATURE:
+        case CRITERIA_TYPE_WIN_BG:
+        case CRITERIA_TYPE_BE_SPELL_TARGET:         // NYI
+        case CRITERIA_TYPE_WIN_RATED_ARENA:
+        case CRITERIA_TYPE_BE_SPELL_TARGET2:        // NYI
+        case CRITERIA_TYPE_WIN_RATED_BATTLEGROUND:  // NYI
+            return true;
+        default:
+            break;
         }
 
         return false;

@@ -18,14 +18,6 @@
 #include "CriteriaHandler.h"
 #include "Battleground.h"
 #include "DatabaseEnv.h"
-#include "AchievementMgr.h"
-#include "CollectionMgr.h"
-#include "Creature.h"
-#include "Garrison.h"
-#include "PhasingHandler.h"
-#include "RealmList.h"
-#include "Scenario.h"
-#include "BattlefieldMgr.h"
 #include "DB2Stores.h"
 #include "DisableMgr.h"
 #include "GameEventMgr.h"
@@ -36,7 +28,6 @@
 #include "Log.h"
 #include "MapManager.h"
 #include "ObjectMgr.h"
-#include "PetBattle.h"
 #include "Player.h"
 #include "ReputationMgr.h"
 #include "ScriptMgr.h"
@@ -54,239 +45,239 @@ bool CriteriaData::IsValid(Criteria const* criteria)
 
     switch (criteria->Entry->Type)
     {
-        case CRITERIA_TYPE_KILL_CREATURE:
-        case CRITERIA_TYPE_KILL_CREATURE_TYPE:
-        case CRITERIA_TYPE_WIN_BG:
-        case CRITERIA_TYPE_FALL_WITHOUT_DYING:
-        case CRITERIA_TYPE_COMPLETE_QUEST:          // only hardcoded list
-        case CRITERIA_TYPE_CAST_SPELL:
-        case CRITERIA_TYPE_WIN_RATED_ARENA:
-        case CRITERIA_TYPE_DO_EMOTE:
-        case CRITERIA_TYPE_SPECIAL_PVP_KILL:
-        case CRITERIA_TYPE_WIN_DUEL:
-        case CRITERIA_TYPE_LOOT_TYPE:
-        case CRITERIA_TYPE_CAST_SPELL2:
-        case CRITERIA_TYPE_BE_SPELL_TARGET:
-        case CRITERIA_TYPE_BE_SPELL_TARGET2:
-        case CRITERIA_TYPE_EQUIP_EPIC_ITEM:
-        case CRITERIA_TYPE_ROLL_NEED_ON_LOOT:
-        case CRITERIA_TYPE_ROLL_GREED_ON_LOOT:
-        case CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE:
-        case CRITERIA_TYPE_HONORABLE_KILL:
-        case CRITERIA_TYPE_COMPLETE_DAILY_QUEST:    // only Children's Week achievements
-        case CRITERIA_TYPE_USE_ITEM:                // only Children's Week achievements
-        case CRITERIA_TYPE_GET_KILLING_BLOWS:
-        case CRITERIA_TYPE_REACH_LEVEL:
-        case CRITERIA_TYPE_ON_LOGIN:
-        case CRITERIA_TYPE_LOOT_EPIC_ITEM:
-        case CRITERIA_TYPE_RECEIVE_EPIC_ITEM:
-            break;
-        default:
-            if (DataType != CRITERIA_DATA_TYPE_SCRIPT)
-            {
-                TC_LOG_ERROR("sql.sql", "Table `criteria_data` contains data for a non-supported criteria type (Entry: %u Type: %u), ignored.", criteria->ID, criteria->Entry->Type);
-                return false;
-            }
-            break;
+    case CRITERIA_TYPE_KILL_CREATURE:
+    case CRITERIA_TYPE_KILL_CREATURE_TYPE:
+    case CRITERIA_TYPE_WIN_BG:
+    case CRITERIA_TYPE_FALL_WITHOUT_DYING:
+    case CRITERIA_TYPE_COMPLETE_QUEST:          // only hardcoded list
+    case CRITERIA_TYPE_CAST_SPELL:
+    case CRITERIA_TYPE_WIN_RATED_ARENA:
+    case CRITERIA_TYPE_DO_EMOTE:
+    case CRITERIA_TYPE_SPECIAL_PVP_KILL:
+    case CRITERIA_TYPE_WIN_DUEL:
+    case CRITERIA_TYPE_LOOT_TYPE:
+    case CRITERIA_TYPE_CAST_SPELL2:
+    case CRITERIA_TYPE_BE_SPELL_TARGET:
+    case CRITERIA_TYPE_BE_SPELL_TARGET2:
+    case CRITERIA_TYPE_EQUIP_EPIC_ITEM:
+    case CRITERIA_TYPE_ROLL_NEED_ON_LOOT:
+    case CRITERIA_TYPE_ROLL_GREED_ON_LOOT:
+    case CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE:
+    case CRITERIA_TYPE_HONORABLE_KILL:
+    case CRITERIA_TYPE_COMPLETE_DAILY_QUEST:    // only Children's Week achievements
+    case CRITERIA_TYPE_USE_ITEM:                // only Children's Week achievements
+    case CRITERIA_TYPE_GET_KILLING_BLOWS:
+    case CRITERIA_TYPE_REACH_LEVEL:
+    case CRITERIA_TYPE_ON_LOGIN:
+    case CRITERIA_TYPE_LOOT_EPIC_ITEM:
+    case CRITERIA_TYPE_RECEIVE_EPIC_ITEM:
+        break;
+    default:
+        if (DataType != CRITERIA_DATA_TYPE_SCRIPT)
+        {
+            TC_LOG_ERROR("sql.sql", "Table `criteria_data` contains data for a non-supported criteria type (Entry: %u Type: %u), ignored.", criteria->ID, criteria->Entry->Type);
+            return false;
+        }
+        break;
     }
 
     switch (DataType)
     {
-        case CRITERIA_DATA_TYPE_NONE:
-        case CRITERIA_DATA_TYPE_INSTANCE_SCRIPT:
-            return true;
-        case CRITERIA_DATA_TYPE_T_CREATURE:
-            if (!Creature.Id || !sObjectMgr->GetCreatureTemplate(Creature.Id))
-            {
-                TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_CREATURE (%u) contains a non-existing creature id in value1 (%u), ignored.",
-                    criteria->ID, criteria->Entry->Type, DataType, Creature.Id);
-                return false;
-            }
-            return true;
-        case CRITERIA_DATA_TYPE_T_PLAYER_CLASS_RACE:
-            if (!ClassRace.Class && !ClassRace.Race)
-            {
-                TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_T_PLAYER_CLASS_RACE (%u) must not have 0 in either value field, ignored.",
-                    criteria->ID, criteria->Entry->Type, DataType);
-                return false;
-            }
-            if (ClassRace.Class && ((1 << (ClassRace.Class-1)) & CLASSMASK_ALL_PLAYABLE) == 0)
-            {
-                TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_T_PLAYER_CLASS_RACE (%u) contains a non-existing class in value1 (%u), ignored.",
-                    criteria->ID, criteria->Entry->Type, DataType, ClassRace.Class);
-                return false;
-            }
-            if (ClassRace.Race && ((1 << (ClassRace.Race-1)) & RACEMASK_ALL_PLAYABLE) == 0)
-            {
-                TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_T_PLAYER_CLASS_RACE (%u) contains a non-existing race in value2 (%u), ignored.",
-                    criteria->ID, criteria->Entry->Type, DataType, ClassRace.Race);
-                return false;
-            }
-            return true;
-        case CRITERIA_DATA_TYPE_T_PLAYER_LESS_HEALTH:
-            if (Health.Percent < 1 || Health.Percent > 100)
-            {
-                TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_PLAYER_LESS_HEALTH (%u) contains a wrong percent value in value1 (%u), ignored.",
-                    criteria->ID, criteria->Entry->Type, DataType, Health.Percent);
-                return false;
-            }
-            return true;
-        case CRITERIA_DATA_TYPE_S_AURA:
-        case CRITERIA_DATA_TYPE_T_AURA:
+    case CRITERIA_DATA_TYPE_NONE:
+    case CRITERIA_DATA_TYPE_INSTANCE_SCRIPT:
+        return true;
+    case CRITERIA_DATA_TYPE_T_CREATURE:
+        if (!Creature.Id || !sObjectMgr->GetCreatureTemplate(Creature.Id))
         {
-            SpellInfo const* spellEntry = sSpellMgr->GetSpellInfo(Aura.SpellId);
-            if (!spellEntry)
-            {
-                TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type %s (%u) contains a wrong spell id in value1 (%u), ignored.",
-                    criteria->ID, criteria->Entry->Type, (DataType == CRITERIA_DATA_TYPE_S_AURA ? "CRITERIA_DATA_TYPE_S_AURA" : "CRITERIA_DATA_TYPE_T_AURA"), DataType, Aura.SpellId);
-                return false;
-            }
-            SpellEffectInfo const* effect = spellEntry->GetEffect(DIFFICULTY_NONE, Aura.EffectIndex);
-            if (!effect)
-            {
-                TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type %s (%u) contains a wrong spell effect index in value2 (%u), ignored.",
-                    criteria->ID, criteria->Entry->Type, (DataType == CRITERIA_DATA_TYPE_S_AURA ? "CRITERIA_DATA_TYPE_S_AURA" : "CRITERIA_DATA_TYPE_T_AURA"), DataType, Aura.EffectIndex);
-                return false;
-            }
-            if (!effect->ApplyAuraName)
-            {
-                TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type %s (%u) contains a non-aura spell effect (ID: %u Effect: %u), ignored.",
-                    criteria->ID, criteria->Entry->Type, (DataType == CRITERIA_DATA_TYPE_S_AURA ? "CRITERIA_DATA_TYPE_S_AURA" : "CRITERIA_DATA_TYPE_T_AURA"), DataType, Aura.SpellId, Aura.EffectIndex);
-                return false;
-            }
-            return true;
-        }
-        case CRITERIA_DATA_TYPE_VALUE:
-            if (Value.ComparisonType >= COMP_TYPE_MAX)
-            {
-                TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_VALUE (%u) contains a wrong ComparisionType in value2 (%u), ignored.",
-                    criteria->ID, criteria->Entry->Type, DataType, Value.ComparisonType);
-                return false;
-            }
-            return true;
-        case CRITERIA_DATA_TYPE_T_LEVEL:
-            if (Level.Min > STRONG_MAX_LEVEL)
-            {
-                TC_LOG_ERROR("sql.sql", "Table `CRITERIA_DATA` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_T_LEVEL (%u) contains a wrong minlevel in value1 (%u), ignored.",
-                    criteria->ID, criteria->Entry->Type, DataType, Level.Min);
-                return false;
-            }
-            return true;
-        case CRITERIA_DATA_TYPE_T_GENDER:
-            if (Gender.Gender > GENDER_NONE)
-            {
-                TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_T_GENDER (%u) contains a wrong gender value in value1 (%u), ignored.",
-                    criteria->ID, criteria->Entry->Type, DataType, Gender.Gender);
-                return false;
-            }
-            return true;
-        case CRITERIA_DATA_TYPE_SCRIPT:
-            if (!ScriptId)
-            {
-                TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_SCRIPT (%u) does not have a ScriptName set, ignored.",
-                    criteria->ID, criteria->Entry->Type, DataType);
-                return false;
-            }
-            return true;
-        case CRITERIA_DATA_TYPE_MAP_PLAYER_COUNT:
-            if (MapPlayers.MaxCount <= 0)
-            {
-                TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_MAP_PLAYER_COUNT (%u) contains a wrong max players count in value1 (%u), ignored.",
-                    criteria->ID, criteria->Entry->Type, DataType, MapPlayers.MaxCount);
-                return false;
-            }
-            return true;
-        case CRITERIA_DATA_TYPE_T_TEAM:
-            if (Team.Team != ALLIANCE && Team.Team != HORDE)
-            {
-                TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_T_TEAM (%u) contains an unknown team value in value1 (%u), ignored.",
-                    criteria->ID, criteria->Entry->Type, DataType, Team.Team);
-                return false;
-            }
-            return true;
-        case CRITERIA_DATA_TYPE_S_DRUNK:
-            if (Drunk.State >= MAX_DRUNKEN)
-            {
-                TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_S_DRUNK (%u) contains an unknown drunken state value in value1 (%u), ignored.",
-                    criteria->ID, criteria->Entry->Type, DataType, Drunk.State);
-                return false;
-            }
-            return true;
-        case CRITERIA_DATA_TYPE_HOLIDAY:
-            if (!sHolidaysStore.LookupEntry(Holiday.Id))
-            {
-                TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_HOLIDAY (%u) contains an unknown holiday entry in value1 (%u), ignored.",
-                    criteria->ID, criteria->Entry->Type, DataType, Holiday.Id);
-                return false;
-            }
-            return true;
-        case CRITERIA_DATA_TYPE_GAME_EVENT:
-        {
-            GameEventMgr::GameEventDataMap const& events = sGameEventMgr->GetEventMap();
-            if (GameEvent.Id < 1 || GameEvent.Id >= events.size())
-            {
-                TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_GAME_EVENT (%u) has unknown game_event in value1 (%u), ignored.",
-                    criteria->ID, criteria->Entry->Type, DataType, GameEvent.Id);
-                return false;
-            }
-            return true;
-        }
-        case CRITERIA_DATA_TYPE_BG_LOSS_TEAM_SCORE:
-            return true;                                    // not check correctness node indexes
-        case CRITERIA_DATA_TYPE_S_EQUIPPED_ITEM:
-            if (EquippedItem.Quality >= MAX_ITEM_QUALITY)
-            {
-                TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_S_EQUIPPED_ITEM (%u) contains an unknown quality state value in value2 (%u), ignored.",
-                    criteria->ID, criteria->Entry->Type, DataType, EquippedItem.Quality);
-                return false;
-            }
-            return true;
-        case CRITERIA_DATA_TYPE_MAP_ID:
-            if (!sMapStore.LookupEntry(Map.Id))
-            {
-                TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_MAP_ID (%u) contains an unknown map entry in value1 (%u), ignored.",
-                    criteria->ID, criteria->Entry->Type, DataType, Map.Id);
-            }
-            return true;
-        case CRITERIA_DATA_TYPE_S_PLAYER_CLASS_RACE:
-            if (!ClassRace.Class && !ClassRace.Race)
-            {
-                TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_S_PLAYER_CLASS_RACE (%u) should not have 0 in either value field. Ignored.",
-                    criteria->ID, criteria->Entry->Type, DataType);
-                return false;
-            }
-            if (ClassRace.Class && ((1 << (ClassRace.Class-1)) & CLASSMASK_ALL_PLAYABLE) == 0)
-            {
-                TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_S_PLAYER_CLASS_RACE (%u) contains a non-existing class entry in value1 (%u), ignored.",
-                    criteria->ID, criteria->Entry->Type, DataType, ClassRace.Class);
-                return false;
-            }
-            if (ClassRace.Race && ((1 << (ClassRace.Race-1)) & RACEMASK_ALL_PLAYABLE) == 0)
-            {
-                TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_S_PLAYER_CLASS_RACE (%u) contains a non-existing race entry in value2 (%u), ignored.",
-                    criteria->ID, criteria->Entry->Type, DataType, ClassRace.Race);
-                return false;
-            }
-            return true;
-        case CRITERIA_DATA_TYPE_S_KNOWN_TITLE:
-            if (!sCharTitlesStore.LookupEntry(KnownTitle.Id))
-            {
-                TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_S_KNOWN_TITLE (%u) contains an unknown title_id in value1 (%u), ignore.",
-                    criteria->ID, criteria->Entry->Type, DataType, KnownTitle.Id);
-                return false;
-            }
-            return true;
-        case CRITERIA_DATA_TYPE_S_ITEM_QUALITY:
-            if (ItemQuality.Quality >= MAX_ITEM_QUALITY)
-            {
-                TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_S_ITEM_QUALITY (%u) contains an unknown quality state value in value1 (%u), ignored.",
-                    criteria->ID, criteria->Entry->Type, DataType, ItemQuality.Quality);
-                return false;
-            }
-            return true;
-        default:
-            TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) contains data of a non-supported data type (%u), ignored.", criteria->ID, criteria->Entry->Type, DataType);
+            TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_CREATURE (%u) contains a non-existing creature id in value1 (%u), ignored.",
+                criteria->ID, criteria->Entry->Type, DataType, Creature.Id);
             return false;
+        }
+        return true;
+    case CRITERIA_DATA_TYPE_T_PLAYER_CLASS_RACE:
+        if (!ClassRace.Class && !ClassRace.Race)
+        {
+            TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_T_PLAYER_CLASS_RACE (%u) must not have 0 in either value field, ignored.",
+                criteria->ID, criteria->Entry->Type, DataType);
+            return false;
+        }
+        if (ClassRace.Class && ((1 << (ClassRace.Class - 1)) & CLASSMASK_ALL_PLAYABLE) == 0)
+        {
+            TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_T_PLAYER_CLASS_RACE (%u) contains a non-existing class in value1 (%u), ignored.",
+                criteria->ID, criteria->Entry->Type, DataType, ClassRace.Class);
+            return false;
+        }
+        if (ClassRace.Race && ((1 << (ClassRace.Race - 1)) & RACEMASK_ALL_PLAYABLE) == 0)
+        {
+            TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_T_PLAYER_CLASS_RACE (%u) contains a non-existing race in value2 (%u), ignored.",
+                criteria->ID, criteria->Entry->Type, DataType, ClassRace.Race);
+            return false;
+        }
+        return true;
+    case CRITERIA_DATA_TYPE_T_PLAYER_LESS_HEALTH:
+        if (Health.Percent < 1 || Health.Percent > 100)
+        {
+            TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_PLAYER_LESS_HEALTH (%u) contains a wrong percent value in value1 (%u), ignored.",
+                criteria->ID, criteria->Entry->Type, DataType, Health.Percent);
+            return false;
+        }
+        return true;
+    case CRITERIA_DATA_TYPE_S_AURA:
+    case CRITERIA_DATA_TYPE_T_AURA:
+    {
+        SpellInfo const* spellEntry = sSpellMgr->GetSpellInfo(Aura.SpellId);
+        if (!spellEntry)
+        {
+            TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type %s (%u) contains a wrong spell id in value1 (%u), ignored.",
+                criteria->ID, criteria->Entry->Type, (DataType == CRITERIA_DATA_TYPE_S_AURA ? "CRITERIA_DATA_TYPE_S_AURA" : "CRITERIA_DATA_TYPE_T_AURA"), DataType, Aura.SpellId);
+            return false;
+        }
+        SpellEffectInfo const* effect = spellEntry->GetEffect(DIFFICULTY_NONE, Aura.EffectIndex);
+        if (!effect)
+        {
+            TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type %s (%u) contains a wrong spell effect index in value2 (%u), ignored.",
+                criteria->ID, criteria->Entry->Type, (DataType == CRITERIA_DATA_TYPE_S_AURA ? "CRITERIA_DATA_TYPE_S_AURA" : "CRITERIA_DATA_TYPE_T_AURA"), DataType, Aura.EffectIndex);
+            return false;
+        }
+        if (!effect->ApplyAuraName)
+        {
+            TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type %s (%u) contains a non-aura spell effect (ID: %u Effect: %u), ignored.",
+                criteria->ID, criteria->Entry->Type, (DataType == CRITERIA_DATA_TYPE_S_AURA ? "CRITERIA_DATA_TYPE_S_AURA" : "CRITERIA_DATA_TYPE_T_AURA"), DataType, Aura.SpellId, Aura.EffectIndex);
+            return false;
+        }
+        return true;
+    }
+    case CRITERIA_DATA_TYPE_VALUE:
+        if (Value.ComparisonType >= COMP_TYPE_MAX)
+        {
+            TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_VALUE (%u) contains a wrong ComparisionType in value2 (%u), ignored.",
+                criteria->ID, criteria->Entry->Type, DataType, Value.ComparisonType);
+            return false;
+        }
+        return true;
+    case CRITERIA_DATA_TYPE_T_LEVEL:
+        if (Level.Min > STRONG_MAX_LEVEL)
+        {
+            TC_LOG_ERROR("sql.sql", "Table `CRITERIA_DATA` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_T_LEVEL (%u) contains a wrong minlevel in value1 (%u), ignored.",
+                criteria->ID, criteria->Entry->Type, DataType, Level.Min);
+            return false;
+        }
+        return true;
+    case CRITERIA_DATA_TYPE_T_GENDER:
+        if (Gender.Gender > GENDER_NONE)
+        {
+            TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_T_GENDER (%u) contains a wrong gender value in value1 (%u), ignored.",
+                criteria->ID, criteria->Entry->Type, DataType, Gender.Gender);
+            return false;
+        }
+        return true;
+    case CRITERIA_DATA_TYPE_SCRIPT:
+        if (!ScriptId)
+        {
+            TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_SCRIPT (%u) does not have a ScriptName set, ignored.",
+                criteria->ID, criteria->Entry->Type, DataType);
+            return false;
+        }
+        return true;
+    case CRITERIA_DATA_TYPE_MAP_PLAYER_COUNT:
+        if (MapPlayers.MaxCount <= 0)
+        {
+            TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_MAP_PLAYER_COUNT (%u) contains a wrong max players count in value1 (%u), ignored.",
+                criteria->ID, criteria->Entry->Type, DataType, MapPlayers.MaxCount);
+            return false;
+        }
+        return true;
+    case CRITERIA_DATA_TYPE_T_TEAM:
+        if (Team.Team != ALLIANCE && Team.Team != HORDE)
+        {
+            TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_T_TEAM (%u) contains an unknown team value in value1 (%u), ignored.",
+                criteria->ID, criteria->Entry->Type, DataType, Team.Team);
+            return false;
+        }
+        return true;
+    case CRITERIA_DATA_TYPE_S_DRUNK:
+        if (Drunk.State >= MAX_DRUNKEN)
+        {
+            TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_S_DRUNK (%u) contains an unknown drunken state value in value1 (%u), ignored.",
+                criteria->ID, criteria->Entry->Type, DataType, Drunk.State);
+            return false;
+        }
+        return true;
+    case CRITERIA_DATA_TYPE_HOLIDAY:
+        if (!sHolidaysStore.LookupEntry(Holiday.Id))
+        {
+            TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_HOLIDAY (%u) contains an unknown holiday entry in value1 (%u), ignored.",
+                criteria->ID, criteria->Entry->Type, DataType, Holiday.Id);
+            return false;
+        }
+        return true;
+    case CRITERIA_DATA_TYPE_GAME_EVENT:
+    {
+        GameEventMgr::GameEventDataMap const& events = sGameEventMgr->GetEventMap();
+        if (GameEvent.Id < 1 || GameEvent.Id >= events.size())
+        {
+            TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_GAME_EVENT (%u) has unknown game_event in value1 (%u), ignored.",
+                criteria->ID, criteria->Entry->Type, DataType, GameEvent.Id);
+            return false;
+        }
+        return true;
+    }
+    case CRITERIA_DATA_TYPE_BG_LOSS_TEAM_SCORE:
+        return true;                                    // not check correctness node indexes
+    case CRITERIA_DATA_TYPE_S_EQUIPPED_ITEM:
+        if (EquippedItem.Quality >= MAX_ITEM_QUALITY)
+        {
+            TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_S_EQUIPPED_ITEM (%u) contains an unknown quality state value in value2 (%u), ignored.",
+                criteria->ID, criteria->Entry->Type, DataType, EquippedItem.Quality);
+            return false;
+        }
+        return true;
+    case CRITERIA_DATA_TYPE_MAP_ID:
+        if (!sMapStore.LookupEntry(Map.Id))
+        {
+            TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_MAP_ID (%u) contains an unknown map entry in value1 (%u), ignored.",
+                criteria->ID, criteria->Entry->Type, DataType, Map.Id);
+        }
+        return true;
+    case CRITERIA_DATA_TYPE_S_PLAYER_CLASS_RACE:
+        if (!ClassRace.Class && !ClassRace.Race)
+        {
+            TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_S_PLAYER_CLASS_RACE (%u) should not have 0 in either value field. Ignored.",
+                criteria->ID, criteria->Entry->Type, DataType);
+            return false;
+        }
+        if (ClassRace.Class && ((1 << (ClassRace.Class - 1)) & CLASSMASK_ALL_PLAYABLE) == 0)
+        {
+            TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_S_PLAYER_CLASS_RACE (%u) contains a non-existing class entry in value1 (%u), ignored.",
+                criteria->ID, criteria->Entry->Type, DataType, ClassRace.Class);
+            return false;
+        }
+        if (ClassRace.Race && ((1 << (ClassRace.Race - 1)) & RACEMASK_ALL_PLAYABLE) == 0)
+        {
+            TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_S_PLAYER_CLASS_RACE (%u) contains a non-existing race entry in value2 (%u), ignored.",
+                criteria->ID, criteria->Entry->Type, DataType, ClassRace.Race);
+            return false;
+        }
+        return true;
+    case CRITERIA_DATA_TYPE_S_KNOWN_TITLE:
+        if (!sCharTitlesStore.LookupEntry(KnownTitle.Id))
+        {
+            TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_S_KNOWN_TITLE (%u) contains an unknown title_id in value1 (%u), ignore.",
+                criteria->ID, criteria->Entry->Type, DataType, KnownTitle.Id);
+            return false;
+        }
+        return true;
+    case CRITERIA_DATA_TYPE_S_ITEM_QUALITY:
+        if (ItemQuality.Quality >= MAX_ITEM_QUALITY)
+        {
+            TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) for data type CRITERIA_DATA_TYPE_S_ITEM_QUALITY (%u) contains an unknown quality state value in value1 (%u), ignored.",
+                criteria->ID, criteria->Entry->Type, DataType, ItemQuality.Quality);
+            return false;
+        }
+        return true;
+    default:
+        TC_LOG_ERROR("sql.sql", "Table `criteria_data` (Entry: %u Type: %u) contains data of a non-supported data type (%u), ignored.", criteria->ID, criteria->Entry->Type, DataType);
+        return false;
     }
 }
 
@@ -294,114 +285,114 @@ bool CriteriaData::Meets(uint32 criteriaId, Player const* source, Unit const* ta
 {
     switch (DataType)
     {
-        case CRITERIA_DATA_TYPE_NONE:
-            return true;
-        case CRITERIA_DATA_TYPE_T_CREATURE:
-            if (!target || target->GetTypeId() != TYPEID_UNIT)
-                return false;
-            return target->GetEntry() == Creature.Id;
-        case CRITERIA_DATA_TYPE_T_PLAYER_CLASS_RACE:
-            if (!target || target->GetTypeId() != TYPEID_PLAYER)
-                return false;
-            if (ClassRace.Class && ClassRace.Class != target->ToPlayer()->getClass())
-                return false;
-            if (ClassRace.Race && ClassRace.Race != target->ToPlayer()->getRace())
-                return false;
-            return true;
-        case CRITERIA_DATA_TYPE_S_PLAYER_CLASS_RACE:
-            if (source->GetTypeId() != TYPEID_PLAYER)
-                return false;
-            if (ClassRace.Class && ClassRace.Class != source->ToPlayer()->getClass())
-                return false;
-            if (ClassRace.Race && ClassRace.Race != source->ToPlayer()->getRace())
-                return false;
-            return true;
-        case CRITERIA_DATA_TYPE_T_PLAYER_LESS_HEALTH:
-            if (!target || target->GetTypeId() != TYPEID_PLAYER)
-                return false;
-            return !target->HealthAbovePct(Health.Percent);
-        case CRITERIA_DATA_TYPE_S_AURA:
-            return source->HasAuraEffect(Aura.SpellId, uint8(Aura.EffectIndex));
-        case CRITERIA_DATA_TYPE_T_AURA:
-            return target && target->HasAuraEffect(Aura.SpellId, uint8(Aura.EffectIndex));
-        case CRITERIA_DATA_TYPE_VALUE:
-            return CompareValues(ComparisionType(Value.ComparisonType), miscValue1, Value.Value);
-        case CRITERIA_DATA_TYPE_T_LEVEL:
-            if (!target)
-                return false;
-            return target->GetLevelForTarget(source) >= Level.Min;
-        case CRITERIA_DATA_TYPE_T_GENDER:
-            if (!target)
-                return false;
-            return target->getGender() == Gender.Gender;
-        case CRITERIA_DATA_TYPE_SCRIPT:
-            return sScriptMgr->OnCriteriaCheck(ScriptId, const_cast<Player*>(source), const_cast<Unit*>(target));
-        case CRITERIA_DATA_TYPE_MAP_PLAYER_COUNT:
-            return source->GetMap()->GetPlayersCountExceptGMs() <= MapPlayers.MaxCount;
-        case CRITERIA_DATA_TYPE_T_TEAM:
-            if (!target || target->GetTypeId() != TYPEID_PLAYER)
-                return false;
-            return target->ToPlayer()->GetTeam() == Team.Team;
-        case CRITERIA_DATA_TYPE_S_DRUNK:
-            return Player::GetDrunkenstateByValue(source->GetDrunkValue()) >= DrunkenState(Drunk.State);
-        case CRITERIA_DATA_TYPE_HOLIDAY:
-            return IsHolidayActive(HolidayIds(Holiday.Id));
-        case CRITERIA_DATA_TYPE_GAME_EVENT:
-            return IsEventActive(uint16(GameEvent.Id));
-        case CRITERIA_DATA_TYPE_BG_LOSS_TEAM_SCORE:
-        {
-            Battleground* bg = source->GetBattleground();
-            if (!bg)
-                return false;
+    case CRITERIA_DATA_TYPE_NONE:
+        return true;
+    case CRITERIA_DATA_TYPE_T_CREATURE:
+        if (!target || target->GetTypeId() != TYPEID_UNIT)
+            return false;
+        return target->GetEntry() == Creature.Id;
+    case CRITERIA_DATA_TYPE_T_PLAYER_CLASS_RACE:
+        if (!target || target->GetTypeId() != TYPEID_PLAYER)
+            return false;
+        if (ClassRace.Class && ClassRace.Class != target->ToPlayer()->getClass())
+            return false;
+        if (ClassRace.Race && ClassRace.Race != target->ToPlayer()->getRace())
+            return false;
+        return true;
+    case CRITERIA_DATA_TYPE_S_PLAYER_CLASS_RACE:
+        if (source->GetTypeId() != TYPEID_PLAYER)
+            return false;
+        if (ClassRace.Class && ClassRace.Class != source->ToPlayer()->getClass())
+            return false;
+        if (ClassRace.Race && ClassRace.Race != source->ToPlayer()->getRace())
+            return false;
+        return true;
+    case CRITERIA_DATA_TYPE_T_PLAYER_LESS_HEALTH:
+        if (!target || target->GetTypeId() != TYPEID_PLAYER)
+            return false;
+        return !target->HealthAbovePct(Health.Percent);
+    case CRITERIA_DATA_TYPE_S_AURA:
+        return source->HasAuraEffect(Aura.SpellId, uint8(Aura.EffectIndex));
+    case CRITERIA_DATA_TYPE_T_AURA:
+        return target && target->HasAuraEffect(Aura.SpellId, uint8(Aura.EffectIndex));
+    case CRITERIA_DATA_TYPE_VALUE:
+        return CompareValues(ComparisionType(Value.ComparisonType), miscValue1, Value.Value);
+    case CRITERIA_DATA_TYPE_T_LEVEL:
+        if (!target)
+            return false;
+        return target->GetLevelForTarget(source) >= Level.Min;
+    case CRITERIA_DATA_TYPE_T_GENDER:
+        if (!target)
+            return false;
+        return target->getGender() == Gender.Gender;
+    case CRITERIA_DATA_TYPE_SCRIPT:
+        return sScriptMgr->OnCriteriaCheck(ScriptId, const_cast<Player*>(source), const_cast<Unit*>(target));
+    case CRITERIA_DATA_TYPE_MAP_PLAYER_COUNT:
+        return source->GetMap()->GetPlayersCountExceptGMs() <= MapPlayers.MaxCount;
+    case CRITERIA_DATA_TYPE_T_TEAM:
+        if (!target || target->GetTypeId() != TYPEID_PLAYER)
+            return false;
+        return target->ToPlayer()->GetTeam() == Team.Team;
+    case CRITERIA_DATA_TYPE_S_DRUNK:
+        return Player::GetDrunkenstateByValue(source->GetDrunkValue()) >= DrunkenState(Drunk.State);
+    case CRITERIA_DATA_TYPE_HOLIDAY:
+        return IsHolidayActive(HolidayIds(Holiday.Id));
+    case CRITERIA_DATA_TYPE_GAME_EVENT:
+        return IsEventActive(uint16(GameEvent.Id));
+    case CRITERIA_DATA_TYPE_BG_LOSS_TEAM_SCORE:
+    {
+        Battleground* bg = source->GetBattleground();
+        if (!bg)
+            return false;
 
-            uint32 score = bg->GetTeamScore(source->GetTeamId() == TEAM_ALLIANCE ? TEAM_HORDE : TEAM_ALLIANCE);
-            return score >= BattlegroundScore.Min && score <= BattlegroundScore.Max;
-        }
-        case CRITERIA_DATA_TYPE_INSTANCE_SCRIPT:
+        uint32 score = bg->GetTeamScore(source->GetTeamId() == TEAM_ALLIANCE ? TEAM_HORDE : TEAM_ALLIANCE);
+        return score >= BattlegroundScore.Min && score <= BattlegroundScore.Max;
+    }
+    case CRITERIA_DATA_TYPE_INSTANCE_SCRIPT:
+    {
+        if (!source->IsInWorld())
+            return false;
+        class Map* map = source->GetMap();
+        if (!map->IsDungeon())
         {
-            if (!source->IsInWorld())
-                return false;
-            class Map* map = source->GetMap();
-            if (!map->IsDungeon())
-            {
-                TC_LOG_ERROR("criteria", "Criteria system call CRITERIA_DATA_TYPE_INSTANCE_SCRIPT (%u) for criteria %u in a non-dungeon/non-raid map %u",
-                    DataType, criteriaId, map->GetId());
-                return false;
-            }
-            InstanceScript* instance = map->ToInstanceMap()->GetInstanceScript();
-            if (!instance)
-            {
-                TC_LOG_ERROR("criteria", "Criteria system call CRITERIA_DATA_TYPE_INSTANCE_SCRIPT (%u) for criteria %u in map %u, but the map does not have an instance script.",
-                    DataType, criteriaId, map->GetId());
-                return false;
-            }
-            return instance->CheckAchievementCriteriaMeet(criteriaId, source, target, miscValue1);
-        }
-        case CRITERIA_DATA_TYPE_S_EQUIPPED_ITEM:
-        {
-            ItemTemplate const* pProto = sObjectMgr->GetItemTemplate(miscValue1);
-            if (!pProto)
-                return false;
-            return pProto->GetBaseItemLevel() >= EquippedItem.ItemLevel && pProto->GetQuality() >= EquippedItem.Quality;
-        }
-        case CRITERIA_DATA_TYPE_MAP_ID:
-            return source->GetMapId() == Map.Id;
-        case CRITERIA_DATA_TYPE_S_KNOWN_TITLE:
-        {
-            if (CharTitlesEntry const* titleInfo = sCharTitlesStore.LookupEntry(KnownTitle.Id))
-                return source && source->HasTitle(titleInfo->MaskID);
-
+            TC_LOG_ERROR("criteria", "Criteria system call CRITERIA_DATA_TYPE_INSTANCE_SCRIPT (%u) for criteria %u in a non-dungeon/non-raid map %u",
+                DataType, criteriaId, map->GetId());
             return false;
         }
-        case CRITERIA_DATA_TYPE_S_ITEM_QUALITY:
+        InstanceScript* instance = map->ToInstanceMap()->GetInstanceScript();
+        if (!instance)
         {
-            ItemTemplate const* pProto = sObjectMgr->GetItemTemplate(miscValue1);
-            if (!pProto)
-                return false;
-            return pProto->GetQuality() == ItemQuality.Quality;
+            TC_LOG_ERROR("criteria", "Criteria system call CRITERIA_DATA_TYPE_INSTANCE_SCRIPT (%u) for criteria %u in map %u, but the map does not have an instance script.",
+                DataType, criteriaId, map->GetId());
+            return false;
         }
-        default:
-            break;
+        return instance->CheckAchievementCriteriaMeet(criteriaId, source, target, miscValue1);
+    }
+    case CRITERIA_DATA_TYPE_S_EQUIPPED_ITEM:
+    {
+        ItemTemplate const* pProto = sObjectMgr->GetItemTemplate(miscValue1);
+        if (!pProto)
+            return false;
+        return pProto->GetBaseItemLevel() >= EquippedItem.ItemLevel && pProto->GetQuality() >= EquippedItem.Quality;
+    }
+    case CRITERIA_DATA_TYPE_MAP_ID:
+        return source->GetMapId() == Map.Id;
+    case CRITERIA_DATA_TYPE_S_KNOWN_TITLE:
+    {
+        if (CharTitlesEntry const* titleInfo = sCharTitlesStore.LookupEntry(KnownTitle.Id))
+            return source && source->HasTitle(titleInfo->MaskID);
+
+        return false;
+    }
+    case CRITERIA_DATA_TYPE_S_ITEM_QUALITY:
+    {
+        ItemTemplate const* pProto = sObjectMgr->GetItemTemplate(miscValue1);
+        if (!pProto)
+            return false;
+        return pProto->GetQuality() == ItemQuality.Quality;
+    }
+    default:
+        break;
     }
     return false;
 }
@@ -488,10 +479,6 @@ void CriteriaHandler::UpdateCriteria(CriteriaTypes type, uint64 miscValue1 /*= 0
         case CRITERIA_TYPE_KILLED_BY_CREATURE:
         case CRITERIA_TYPE_KILLED_BY_PLAYER:
         case CRITERIA_TYPE_DEATHS_FROM:
-        case CRITERIA_TYPE_BE_SPELL_TARGET:
-        case CRITERIA_TYPE_BE_SPELL_TARGET2:
-        case CRITERIA_TYPE_CAST_SPELL:
-        case CRITERIA_TYPE_CAST_SPELL2:
         case CRITERIA_TYPE_WIN_RATED_ARENA:
         case CRITERIA_TYPE_USE_ITEM:
         case CRITERIA_TYPE_ROLL_NEED_ON_LOOT:
@@ -510,8 +497,20 @@ void CriteriaHandler::UpdateCriteria(CriteriaTypes type, uint64 miscValue1 /*= 0
         case CRITERIA_TYPE_WIN_ARENA: // This also behaves like CRITERIA_TYPE_WIN_RATED_ARENA
         case CRITERIA_TYPE_ON_LOGIN:
         case CRITERIA_TYPE_PLACE_GARRISON_BUILDING:
+        case CRITERIA_TYPE_COLLECT_BATTLEPET:
         case CRITERIA_TYPE_HONOR_LEVEL_REACHED:
         case CRITERIA_TYPE_PRESTIGE_REACHED:
+        case CRITERIA_TYPE_BE_SPELL_TARGET:
+        case CRITERIA_TYPE_BE_SPELL_TARGET2:
+        case CRITERIA_TYPE_COMPLETE_ARCHAEOLOGY_PROJECTS:
+        case CRITERIA_TYPE_COMPLETE_GUILD_CHALLENGE_TYPE:
+        case CRITERIA_TYPE_COMPLETE_GUILD_CHALLENGE:
+            SetCriteriaProgress(criteria, 1, referencePlayer, PROGRESS_ACCUMULATE);
+            break;
+        case CRITERIA_TYPE_CAST_SPELL:
+        case CRITERIA_TYPE_CAST_SPELL2:
+            if (!miscValue1 || miscValue1 != criteria->Entry->Asset.SpellID)
+                continue;
             SetCriteriaProgress(criteria, 1, referencePlayer, PROGRESS_ACCUMULATE);
             break;
             // std case: increment at miscValue1
@@ -595,25 +594,18 @@ void CriteriaHandler::UpdateCriteria(CriteriaTypes type, uint64 miscValue1 /*= 0
         }
         case CRITERIA_TYPE_COMPLETE_QUESTS_IN_ZONE:
         {
-            if (miscValue1)
-            {
-                SetCriteriaProgress(criteria, 1, referencePlayer, PROGRESS_ACCUMULATE);
-            }
-            else // login case
-            {
-                uint32 counter = 0;
+            uint32 counter = 0;
 
-                const RewardedQuestSet& rewQuests = referencePlayer->getRewardedQuests();
-                for (RewardedQuestSet::const_iterator itr = rewQuests.begin(); itr != rewQuests.end(); ++itr)
-                {
-                    Quest const* quest = sObjectMgr->GetQuestTemplate(*itr);
-                    if (quest && quest->GetZoneOrSort() >= 0 && quest->GetZoneOrSort() == criteria->Entry->Asset.ZoneID)
-
-                        ++counter;
-                }
-                SetCriteriaProgress(criteria, counter, referencePlayer, PROGRESS_HIGHEST);
-                break;
+            const RewardedQuestSet& rewQuests = referencePlayer->getRewardedQuests();
+            for (RewardedQuestSet::const_iterator itr = rewQuests.begin(); itr != rewQuests.end(); ++itr)
+            {
+                Quest const* quest = sObjectMgr->GetQuestTemplate(*itr);
+                if (quest && quest->GetZoneOrSort() >= 0 && uint32(quest->GetZoneOrSort()) == criteria->Entry->Asset.ZoneID)
+                    ++counter;
             }
+            SetCriteriaProgress(criteria, counter, referencePlayer);
+            break;
+        }
         case CRITERIA_TYPE_FALL_WITHOUT_DYING:
             // miscValue1 is the ingame fallheight*100 as stored in dbc
             SetCriteriaProgress(criteria, miscValue1, referencePlayer);
@@ -626,6 +618,7 @@ void CriteriaHandler::UpdateCriteria(CriteriaTypes type, uint64 miscValue1 /*= 0
         case CRITERIA_TYPE_EQUIP_ITEM:
         case CRITERIA_TYPE_COMPLETE_ACHIEVEMENT:
         case CRITERIA_TYPE_RECRUIT_GARRISON_FOLLOWER:
+        case CRITERIA_TYPE_CAPTURE_SPECIFIC_BATTLEPET:
             SetCriteriaProgress(criteria, 1, referencePlayer);
             break;
         case CRITERIA_TYPE_BUY_BANK_SLOT:
@@ -653,7 +646,11 @@ void CriteriaHandler::UpdateCriteria(CriteriaTypes type, uint64 miscValue1 /*= 0
                 for (SkillLineAbilityMap::const_iterator skillIter = bounds.first; skillIter != bounds.second; ++skillIter)
                 {
                     if (skillIter->second->SkillLine == int32(criteria->Entry->Asset.SkillID))
-                        spellCount++;
+                    {
+                        // do not add couter twice if by any chance skill is listed twice in dbc (eg. skill 777 and spell 22717)
+                        ++spellCount;
+                        break;
+                    }
                 }
             }
             SetCriteriaProgress(criteria, spellCount, referencePlayer);
@@ -718,7 +715,26 @@ void CriteriaHandler::UpdateCriteria(CriteriaTypes type, uint64 miscValue1 /*= 0
         case CRITERIA_TYPE_SEND_EVENT_SCENARIO:
             if (miscValue1 != criteria->Entry->Asset.ScenarioEventID)
                 continue;
-            SetCriteriaProgress(criteria, 1, referencePlayer);
+            SetCriteriaProgress(criteria, 1, referencePlayer, PROGRESS_ACCUMULATE);
+            break;
+        case CRITERIA_TYPE_SEND_EVENT:
+            if (miscValue1 != criteria->Entry->Asset.EventID)
+                continue;
+            SetCriteriaProgress(criteria, 1, referencePlayer, PROGRESS_ACCUMULATE);
+            break;
+        case CRITERIA_TYPE_RECRUIT_GARRISON_FOLLOWER_COUNT:
+        case CRITERIA_TYPE_LEVEL_BATTLE_PET_CREDIT:
+            SetCriteriaProgress(criteria, miscValue2, referencePlayer, PROGRESS_SET);
+            break;
+        case CRITERIA_TYPE_REACH_AREATRIGGER_WITH_ACTIONSET:
+            if (miscValue1 != criteria->Entry->Asset.AreaTriggerID)
+                continue;
+            SetCriteriaProgress(criteria, 1, referencePlayer, PROGRESS_ACCUMULATE);
+            break;
+        case CRITERIA_TYPE_COMPLETE_SCENARIO:
+            if (miscValue1 != criteria->Entry->Asset.ScenarioID)
+                continue;
+            SetCriteriaProgress(criteria, 1, referencePlayer, PROGRESS_ACCUMULATE);
             break;
             // FIXME: not triggered in code as result, need to implement
         case CRITERIA_TYPE_COMPLETE_RAID:
@@ -736,9 +752,6 @@ void CriteriaHandler::UpdateCriteria(CriteriaTypes type, uint64 miscValue1 /*= 0
         case CRITERIA_TYPE_COMPLETE_QUESTS_GUILD:
         case CRITERIA_TYPE_HONORABLE_KILLS_GUILD:
         case CRITERIA_TYPE_KILL_CREATURE_TYPE_GUILD:
-        case CRITERIA_TYPE_COMPLETE_ARCHAEOLOGY_PROJECTS:
-        case CRITERIA_TYPE_COMPLETE_GUILD_CHALLENGE_TYPE:
-        case CRITERIA_TYPE_COMPLETE_GUILD_CHALLENGE:
         case CRITERIA_TYPE_LFR_DUNGEONS_COMPLETED:
         case CRITERIA_TYPE_LFR_LEAVES:
         case CRITERIA_TYPE_LFR_VOTE_KICKS_INITIATED_BY_PLAYER:
@@ -746,7 +759,10 @@ void CriteriaHandler::UpdateCriteria(CriteriaTypes type, uint64 miscValue1 /*= 0
         case CRITERIA_TYPE_BE_KICKED_FROM_LFR:
         case CRITERIA_TYPE_COUNT_OF_LFR_QUEUE_BOOSTS_BY_TANK:
         case CRITERIA_TYPE_COMPLETE_SCENARIO_COUNT:
-        case CRITERIA_TYPE_COMPLETE_SCENARIO:
+        case CRITERIA_TYPE_CAPTURE_PET_IN_BATTLE:
+        case CRITERIA_TYPE_BATTLEPET_WIN:
+        case CRITERIA_TYPE_BATTLEPET_LEVEL_UP:
+        case CRITERIA_TYPE_CAPTURE_BATTLE_PET_CREDIT:
         case CRITERIA_TYPE_ENTER_AREA:
         case CRITERIA_TYPE_LEAVE_AREA:
         case CRITERIA_TYPE_UPGRADE_GARRISON_BUILDING:
@@ -755,7 +771,6 @@ void CriteriaHandler::UpdateCriteria(CriteriaTypes type, uint64 miscValue1 /*= 0
         case CRITERIA_TYPE_START_GARRISON_MISSION:
         case CRITERIA_TYPE_COMPLETE_GARRISON_MISSION_COUNT:
         case CRITERIA_TYPE_COMPLETE_GARRISON_MISSION:
-        case CRITERIA_TYPE_RECRUIT_GARRISON_FOLLOWER_COUNT:
         case CRITERIA_TYPE_LEARN_GARRISON_BLUEPRINT_COUNT:
         case CRITERIA_TYPE_COMPLETE_GARRISON_SHIPMENT:
         case CRITERIA_TYPE_RAISE_GARRISON_FOLLOWER_ITEM_LEVEL:
@@ -769,7 +784,6 @@ void CriteriaHandler::UpdateCriteria(CriteriaTypes type, uint64 miscValue1 /*= 0
         case CRITERIA_TYPE_COMPLETE_CHALLENGE_MODE_GUILD:
         case CRITERIA_TYPE_DEFEAT_CREATURE_GROUP:
         case CRITERIA_TYPE_COMPLETE_CHALLENGE_MODE:
-        case CRITERIA_TYPE_SEND_EVENT:
         case CRITERIA_TYPE_COOK_RECIPES_GUILD:
         case CRITERIA_TYPE_RELEASE_SPIRIT:
         case CRITERIA_TYPE_GARRISON_COMPLETE_DUNGEON_ENCOUNTER:
@@ -779,7 +793,6 @@ void CriteriaHandler::UpdateCriteria(CriteriaTypes type, uint64 miscValue1 /*= 0
         case CRITERIA_TYPE_BE_KICKED_FROM_LFG:
         case CRITERIA_TYPE_LFG_LEAVES:
         case CRITERIA_TYPE_COUNT_OF_LFG_QUEUE_BOOSTS_BY_TANK:
-        case CRITERIA_TYPE_REACH_AREATRIGGER_WITH_ACTIONSET:
         case CRITERIA_TYPE_START_ORDER_HALL_MISSION:
         case CRITERIA_TYPE_RECRUIT_GARRISON_FOLLOWER_WITH_QUALITY:
         case CRITERIA_TYPE_ARTIFACT_POWER_EARNED:
@@ -795,11 +808,9 @@ void CriteriaHandler::UpdateCriteria(CriteriaTypes type, uint64 miscValue1 /*= 0
 
         for (CriteriaTree const* tree : *trees)
         {
-            if (IsCompletedCriteriaTree(tree))
-                CompletedCriteriaTree(tree, referencePlayer);
 
+            CheckCompletedCriteriaTree(tree, referencePlayer);
             AfterCriteriaTreeUpdate(tree, referencePlayer);
-        }
         }
     }
 }
@@ -840,7 +851,7 @@ void CriteriaHandler::StartCriteriaTimer(CriteriaTimedTypes type, uint32 entry, 
         bool canStart = false;
         for (CriteriaTree const* tree : *trees)
         {
-            if (_timeCriteriaTrees.find(tree->ID) == _timeCriteriaTrees.end() && !IsCompletedCriteriaTree(tree))
+            if (_timeCriteriaTrees.find(tree->ID) == _timeCriteriaTrees.end() && !CheckCompletedCriteriaTree(tree, nullptr))
             {
                 // Start the timer
                 if (criteria->Entry->StartTimer * uint32(IN_MILLISECONDS) > timeLost)
@@ -929,19 +940,19 @@ void CriteriaHandler::SetCriteriaProgress(Criteria const* criteria, uint64 chang
         uint64 newValue = 0;
         switch (progressType)
         {
-            case PROGRESS_SET:
-                newValue = changeValue;
-                break;
-            case PROGRESS_ACCUMULATE:
-            {
-                // avoid overflow
-                uint64 max_value = std::numeric_limits<uint64>::max();
-                newValue = max_value - progress->Counter > changeValue ? progress->Counter + changeValue : max_value;
-                break;
-            }
-            case PROGRESS_HIGHEST:
-                newValue = progress->Counter < changeValue ? changeValue : progress->Counter;
-                break;
+        case PROGRESS_SET:
+            newValue = changeValue;
+            break;
+        case PROGRESS_ACCUMULATE:
+        {
+            // avoid overflow
+            uint64 max_value = std::numeric_limits<uint64>::max();
+            newValue = max_value - progress->Counter > changeValue ? progress->Counter + changeValue : max_value;
+            break;
+        }
+        case PROGRESS_HIGHEST:
+            newValue = progress->Counter < changeValue ? changeValue : progress->Counter;
+            break;
         }
 
         // not update (not mark as changed) if counter will have same value
@@ -970,7 +981,7 @@ void CriteriaHandler::SetCriteriaProgress(Criteria const* criteria, uint64 chang
                 timeElapsed = criteria->Entry->StartTimer - (timedIter->second / IN_MILLISECONDS);
 
                 // Remove the timer, we wont need it anymore
-                if (IsCompletedCriteriaTree(tree))
+                if (CheckCompletedCriteriaTree(tree, referencePlayer))
                     _timeCriteriaTrees.erase(timedIter);
             }
         }
@@ -993,84 +1004,117 @@ void CriteriaHandler::RemoveCriteriaProgress(Criteria const* criteria)
     _criteriaProgress.erase(criteriaProgress);
 }
 
-bool CriteriaHandler::IsCompletedCriteriaTree(CriteriaTree const* tree)
+bool CriteriaHandler::CheckCompletedCriteriaTree(CriteriaTree const* tree, Player* referencePlayer)
 {
+    if (_completedCriteriaTree.find(tree->ID) != _completedCriteriaTree.end())
+        return true;
+
     if (!CanCompleteCriteriaTree(tree))
         return false;
 
     uint64 requiredCount = tree->Entry->Amount;
     switch (tree->Entry->Operator)
     {
-        case CRITERIA_TREE_OPERATOR_SINGLE:
-            return tree->Criteria && IsCompletedCriteria(tree->Criteria, requiredCount);
-        case CRITERIA_TREE_OPERATOR_SINGLE_NOT_COMPLETED:
-            return !tree->Criteria || !IsCompletedCriteria(tree->Criteria, requiredCount);
-        case CRITERIA_TREE_OPERATOR_ALL:
-            for (CriteriaTree const* node : tree->Children)
-                if (!IsCompletedCriteriaTree(node))
-                    return false;
-            return true;
-        case CRITERIA_TREE_OPERAROR_SUM_CHILDREN:
-        {
-            uint64 progress = 0;
-            CriteriaMgr::WalkCriteriaTree(tree, [this, &progress](CriteriaTree const* criteriaTree)
+    case CRITERIA_TREE_OPERATOR_SINGLE:
+        if (!tree->Criteria || !IsCompletedCriteria(tree->Criteria, requiredCount))
+            return false;
+        break;
+    case CRITERIA_TREE_OPERATOR_SINGLE_NOT_COMPLETED:
+        if (tree->Criteria && IsCompletedCriteria(tree->Criteria, requiredCount))
+            return false;
+        break;
+    case CRITERIA_TREE_OPERATOR_ALL:
+        for (CriteriaTree const* node : tree->Children)
+            if (!CheckCompletedCriteriaTree(node, referencePlayer))
+                return false;
+        break;
+    case CRITERIA_TREE_OPERAROR_SUM_CHILDREN:
+    {
+        uint64 progress = 0;
+        CriteriaMgr::WalkCriteriaTree(tree, [this, &progress](CriteriaTree const* criteriaTree)
             {
                 if (criteriaTree->Criteria)
                     if (CriteriaProgress const* criteriaProgress = GetCriteriaProgress(criteriaTree->Criteria))
                         progress += criteriaProgress->Counter;
             });
-            return progress >= requiredCount;
-        }
-        case CRITERIA_TREE_OPERATOR_MAX_CHILD:
-        {
-            uint64 progress = 0;
-            CriteriaMgr::WalkCriteriaTree(tree, [this, &progress](CriteriaTree const* criteriaTree)
+        if (progress < requiredCount)
+            return false;
+        break;
+    }
+    case CRITERIA_TREE_OPERATOR_MAX_CHILD:
+    {
+        uint64 progress = 0;
+        CriteriaMgr::WalkCriteriaTree(tree, [this, &progress](CriteriaTree const* criteriaTree)
             {
                 if (criteriaTree->Criteria)
                     if (CriteriaProgress const* criteriaProgress = GetCriteriaProgress(criteriaTree->Criteria))
                         if (criteriaProgress->Counter > progress)
                             progress = criteriaProgress->Counter;
             });
-            return progress >= requiredCount;
-        }
-        case CRITERIA_TREE_OPERATOR_COUNT_DIRECT_CHILDREN:
-        {
-            uint64 progress = 0;
-            for (CriteriaTree const* node : tree->Children)
-                if (node->Criteria)
-                    if (CriteriaProgress const* criteriaProgress = GetCriteriaProgress(node->Criteria))
-                        if (criteriaProgress->Counter >= 1)
-                            if (++progress >= requiredCount)
-                                return true;
-
+        if (progress < requiredCount)
             return false;
-        }
-        case CRITERIA_TREE_OPERATOR_ANY:
-        {
-            uint64 progress = 0;
-            for (CriteriaTree const* node : tree->Children)
-                if (IsCompletedCriteriaTree(node))
-                    if (++progress >= requiredCount)
-                        return true;
+        break;
+    }
+    case CRITERIA_TREE_OPERATOR_COUNT_DIRECT_CHILDREN:
+    {
+        uint64 progress = 0;
+        bool progressDone = false;
+        for (CriteriaTree const* node : tree->Children)
+            if (node->Criteria)
+                if (CriteriaProgress const* criteriaProgress = GetCriteriaProgress(node->Criteria))
+                    if (criteriaProgress->Counter >= 1)
+                        if (++progress >= requiredCount)
+                        {
+                            progressDone = true;
+                            break;
+                        }
 
+        if (!progressDone)
             return false;
-        }
-        case CRITERIA_TREE_OPERATOR_SUM_CHILDREN_WEIGHT:
-        {
-            uint64 progress = 0;
-            CriteriaMgr::WalkCriteriaTree(tree, [this, &progress](CriteriaTree const* criteriaTree)
+        break;
+    }
+    case CRITERIA_TREE_OPERATOR_ANY:
+    {
+        bool progressDone = false;
+        uint64 progress = 0;
+        for (CriteriaTree const* node : tree->Children)
+            if (CheckCompletedCriteriaTree(node, referencePlayer))
+                if (++progress >= requiredCount)
+                {
+                    progressDone = true;
+                    break;
+                }
+
+        if (!progressDone)
+            return false;
+        break;
+    }
+    case CRITERIA_TREE_OPERATOR_SUM_CHILDREN_WEIGHT:
+    {
+        uint64 progress = 0;
+        CriteriaMgr::WalkCriteriaTree(tree, [this, &progress](CriteriaTree const* criteriaTree)
             {
                 if (criteriaTree->Criteria)
                     if (CriteriaProgress const* criteriaProgress = GetCriteriaProgress(criteriaTree->Criteria))
                         progress += criteriaProgress->Counter * criteriaTree->Entry->Amount;
             });
-            return progress >= requiredCount;
-        }
-        default:
-            break;
+        if (progress < requiredCount)
+            return false;
+        break;
+    }
+    default:
+        break;
     }
 
-    return false;
+    if (_completedCriteriaTree.find(tree->ID) == _completedCriteriaTree.end())
+        CompletedCriteriaTree(tree, referencePlayer);
+
+    return true;
+}
+
+bool CriteriaHandler::CheckCompletedCriteriaTree(uint32 criteriaTreeId, Player* referencePlayer)
+{
+    return CheckCompletedCriteriaTree(sCriteriaMgr->GetCriteriaTree(criteriaTreeId), referencePlayer);
 }
 
 bool CriteriaHandler::CanUpdateCriteriaTree(Criteria const* criteria, CriteriaTree const* tree, Player* referencePlayer) const
@@ -1091,6 +1135,11 @@ bool CriteriaHandler::CanCompleteCriteriaTree(CriteriaTree const* /*tree*/)
     return true;
 }
 
+void CriteriaHandler::CompletedCriteriaTree(CriteriaTree const* tree, Player* /*referencePlayer*/)
+{
+    _completedCriteriaTree.insert(tree->ID);
+}
+
 bool CriteriaHandler::IsCompletedCriteria(Criteria const* criteria, uint64 requiredAmount)
 {
     CriteriaProgress const* progress = GetCriteriaProgress(criteria);
@@ -1099,113 +1148,117 @@ bool CriteriaHandler::IsCompletedCriteria(Criteria const* criteria, uint64 requi
 
     switch (CriteriaTypes(criteria->Entry->Type))
     {
-        case CRITERIA_TYPE_WIN_BG:
-        case CRITERIA_TYPE_KILL_CREATURE:
-        case CRITERIA_TYPE_REACH_LEVEL:
-        case CRITERIA_TYPE_REACH_GUILD_LEVEL:
-        case CRITERIA_TYPE_REACH_SKILL_LEVEL:
-        case CRITERIA_TYPE_COMPLETE_QUEST_COUNT:
-        case CRITERIA_TYPE_COMPLETE_DAILY_QUEST_DAILY:
-        case CRITERIA_TYPE_COMPLETE_QUESTS_IN_ZONE:
-        case CRITERIA_TYPE_DAMAGE_DONE:
-        case CRITERIA_TYPE_HEALING_DONE:
-        case CRITERIA_TYPE_COMPLETE_DAILY_QUEST:
-        case CRITERIA_TYPE_FALL_WITHOUT_DYING:
-        case CRITERIA_TYPE_BE_SPELL_TARGET:
-        case CRITERIA_TYPE_BE_SPELL_TARGET2:
-        case CRITERIA_TYPE_CAST_SPELL:
-        case CRITERIA_TYPE_CAST_SPELL2:
-        case CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE:
-        case CRITERIA_TYPE_HONORABLE_KILL_AT_AREA:
-        case CRITERIA_TYPE_HONORABLE_KILL:
-        case CRITERIA_TYPE_EARN_HONORABLE_KILL:
-        case CRITERIA_TYPE_OWN_ITEM:
-        case CRITERIA_TYPE_WIN_RATED_ARENA:
-        case CRITERIA_TYPE_HIGHEST_PERSONAL_RATING:
-        case CRITERIA_TYPE_USE_ITEM:
-        case CRITERIA_TYPE_LOOT_ITEM:
-        case CRITERIA_TYPE_BUY_BANK_SLOT:
-        case CRITERIA_TYPE_GAIN_REPUTATION:
-        case CRITERIA_TYPE_GAIN_EXALTED_REPUTATION:
-        case CRITERIA_TYPE_VISIT_BARBER_SHOP:
-        case CRITERIA_TYPE_EQUIP_EPIC_ITEM:
-        case CRITERIA_TYPE_ROLL_NEED_ON_LOOT:
-        case CRITERIA_TYPE_ROLL_GREED_ON_LOOT:
-        case CRITERIA_TYPE_HK_CLASS:
-        case CRITERIA_TYPE_HK_RACE:
-        case CRITERIA_TYPE_DO_EMOTE:
-        case CRITERIA_TYPE_EQUIP_ITEM:
-        case CRITERIA_TYPE_MONEY_FROM_QUEST_REWARD:
-        case CRITERIA_TYPE_LOOT_MONEY:
-        case CRITERIA_TYPE_USE_GAMEOBJECT:
-        case CRITERIA_TYPE_SPECIAL_PVP_KILL:
-        case CRITERIA_TYPE_FISH_IN_GAMEOBJECT:
-        case CRITERIA_TYPE_LEARN_SKILLLINE_SPELLS:
-        case CRITERIA_TYPE_WIN_DUEL:
-        case CRITERIA_TYPE_LOOT_TYPE:
-        case CRITERIA_TYPE_LEARN_SKILL_LINE:
-        case CRITERIA_TYPE_USE_LFD_TO_GROUP_WITH_PLAYERS:
-        case CRITERIA_TYPE_GET_KILLING_BLOWS:
-        case CRITERIA_TYPE_CURRENCY:
-        case CRITERIA_TYPE_PLACE_GARRISON_BUILDING:
-        case CRITERIA_TYPE_APPEARANCE_UNLOCKED_BY_SLOT:
-        case CRITERIA_TYPE_GAIN_PARAGON_REPUTATION:
-        case CRITERIA_TYPE_EARN_HONOR_XP:
-        case CRITERIA_TYPE_RELIC_TALENT_UNLOCKED:
-        case CRITERIA_TYPE_COMPLETE_DUNGEON_ENCOUNTER:
-        case CRITERIA_TYPE_SEND_EVENT_SCENARIO:
-            return progress->Counter >= requiredAmount;
-        case CRITERIA_TYPE_COMPLETE_ACHIEVEMENT:
-        case CRITERIA_TYPE_COMPLETE_QUEST:
-        case CRITERIA_TYPE_LEARN_SPELL:
-        case CRITERIA_TYPE_EXPLORE_AREA:
-        case CRITERIA_TYPE_RECRUIT_GARRISON_FOLLOWER:
-        case CRITERIA_TYPE_HONOR_LEVEL_REACHED:
-        case CRITERIA_TYPE_PRESTIGE_REACHED:
-        case CRITERIA_TYPE_TRANSMOG_SET_UNLOCKED:
-            return progress->Counter >= 1;
-        case CRITERIA_TYPE_LEARN_SKILL_LEVEL:
-            return progress->Counter >= (requiredAmount * 75);
-        case CRITERIA_TYPE_EARN_ACHIEVEMENT_POINTS:
-            return progress->Counter >= 9000;
-        case CRITERIA_TYPE_WIN_ARENA:
-            return requiredAmount && progress->Counter >= requiredAmount;
-        case CRITERIA_TYPE_ON_LOGIN:
-            return true;
+    case CRITERIA_TYPE_WIN_BG:
+    case CRITERIA_TYPE_KILL_CREATURE:
+    case CRITERIA_TYPE_REACH_LEVEL:
+    case CRITERIA_TYPE_REACH_GUILD_LEVEL:
+    case CRITERIA_TYPE_REACH_SKILL_LEVEL:
+    case CRITERIA_TYPE_COMPLETE_QUEST_COUNT:
+    case CRITERIA_TYPE_COMPLETE_DAILY_QUEST_DAILY:
+    case CRITERIA_TYPE_COMPLETE_QUESTS_IN_ZONE:
+    case CRITERIA_TYPE_DAMAGE_DONE:
+    case CRITERIA_TYPE_HEALING_DONE:
+    case CRITERIA_TYPE_COMPLETE_DAILY_QUEST:
+    case CRITERIA_TYPE_FALL_WITHOUT_DYING:
+    case CRITERIA_TYPE_BE_SPELL_TARGET:
+    case CRITERIA_TYPE_BE_SPELL_TARGET2:
+    case CRITERIA_TYPE_CAST_SPELL:
+    case CRITERIA_TYPE_CAST_SPELL2:
+    case CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE:
+    case CRITERIA_TYPE_HONORABLE_KILL_AT_AREA:
+    case CRITERIA_TYPE_HONORABLE_KILL:
+    case CRITERIA_TYPE_EARN_HONORABLE_KILL:
+    case CRITERIA_TYPE_OWN_ITEM:
+    case CRITERIA_TYPE_WIN_RATED_ARENA:
+    case CRITERIA_TYPE_HIGHEST_PERSONAL_RATING:
+    case CRITERIA_TYPE_USE_ITEM:
+    case CRITERIA_TYPE_LOOT_ITEM:
+    case CRITERIA_TYPE_BUY_BANK_SLOT:
+    case CRITERIA_TYPE_GAIN_REPUTATION:
+    case CRITERIA_TYPE_GAIN_EXALTED_REPUTATION:
+    case CRITERIA_TYPE_VISIT_BARBER_SHOP:
+    case CRITERIA_TYPE_EQUIP_EPIC_ITEM:
+    case CRITERIA_TYPE_ROLL_NEED_ON_LOOT:
+    case CRITERIA_TYPE_ROLL_GREED_ON_LOOT:
+    case CRITERIA_TYPE_HK_CLASS:
+    case CRITERIA_TYPE_HK_RACE:
+    case CRITERIA_TYPE_DO_EMOTE:
+    case CRITERIA_TYPE_EQUIP_ITEM:
+    case CRITERIA_TYPE_MONEY_FROM_QUEST_REWARD:
+    case CRITERIA_TYPE_LOOT_MONEY:
+    case CRITERIA_TYPE_USE_GAMEOBJECT:
+    case CRITERIA_TYPE_SPECIAL_PVP_KILL:
+    case CRITERIA_TYPE_FISH_IN_GAMEOBJECT:
+    case CRITERIA_TYPE_LEARN_SKILLLINE_SPELLS:
+    case CRITERIA_TYPE_WIN_DUEL:
+    case CRITERIA_TYPE_LOOT_TYPE:
+    case CRITERIA_TYPE_LEARN_SKILL_LINE:
+    case CRITERIA_TYPE_USE_LFD_TO_GROUP_WITH_PLAYERS:
+    case CRITERIA_TYPE_GET_KILLING_BLOWS:
+    case CRITERIA_TYPE_CURRENCY:
+    case CRITERIA_TYPE_PLACE_GARRISON_BUILDING:
+    case CRITERIA_TYPE_APPEARANCE_UNLOCKED_BY_SLOT:
+    case CRITERIA_TYPE_GAIN_PARAGON_REPUTATION:
+    case CRITERIA_TYPE_EARN_HONOR_XP:
+    case CRITERIA_TYPE_RELIC_TALENT_UNLOCKED:
+    case CRITERIA_TYPE_COMPLETE_DUNGEON_ENCOUNTER:
+    case CRITERIA_TYPE_SEND_EVENT_SCENARIO:
+    case CRITERIA_TYPE_COMPLETE_SCENARIO:
+    case CRITERIA_TYPE_COLLECT_BATTLEPET:
+        return progress->Counter >= requiredAmount;
+    case CRITERIA_TYPE_CAPTURE_SPECIFIC_BATTLEPET:
+    case CRITERIA_TYPE_COMPLETE_ACHIEVEMENT:
+    case CRITERIA_TYPE_COMPLETE_QUEST:
+    case CRITERIA_TYPE_LEARN_SPELL:
+    case CRITERIA_TYPE_EXPLORE_AREA:
+    case CRITERIA_TYPE_RECRUIT_GARRISON_FOLLOWER:
+    case CRITERIA_TYPE_REACH_AREATRIGGER_WITH_ACTIONSET:
+    case CRITERIA_TYPE_HONOR_LEVEL_REACHED:
+    case CRITERIA_TYPE_PRESTIGE_REACHED:
+    case CRITERIA_TYPE_TRANSMOG_SET_UNLOCKED:
+        return progress->Counter >= 1;
+    case CRITERIA_TYPE_LEARN_SKILL_LEVEL:
+        return progress->Counter >= (requiredAmount * 75);
+    case CRITERIA_TYPE_EARN_ACHIEVEMENT_POINTS:
+        return progress->Counter >= 9000;
+    case CRITERIA_TYPE_WIN_ARENA:
+        return requiredAmount && progress->Counter >= requiredAmount;
+    case CRITERIA_TYPE_ON_LOGIN:
+        return true;
         // handle all statistic-only criteria here
-        case CRITERIA_TYPE_COMPLETE_BATTLEGROUND:
-        case CRITERIA_TYPE_DEATH_AT_MAP:
-        case CRITERIA_TYPE_DEATH:
-        case CRITERIA_TYPE_DEATH_IN_DUNGEON:
-        case CRITERIA_TYPE_KILLED_BY_CREATURE:
-        case CRITERIA_TYPE_KILLED_BY_PLAYER:
-        case CRITERIA_TYPE_DEATHS_FROM:
-        case CRITERIA_TYPE_HIGHEST_TEAM_RATING:
-        case CRITERIA_TYPE_MONEY_FROM_VENDORS:
-        case CRITERIA_TYPE_GOLD_SPENT_FOR_TALENTS:
-        case CRITERIA_TYPE_NUMBER_OF_TALENT_RESETS:
-        case CRITERIA_TYPE_GOLD_SPENT_AT_BARBER:
-        case CRITERIA_TYPE_GOLD_SPENT_FOR_MAIL:
-        case CRITERIA_TYPE_LOSE_DUEL:
-        case CRITERIA_TYPE_KILL_CREATURE_TYPE:
-        case CRITERIA_TYPE_GOLD_EARNED_BY_AUCTIONS:
-        case CRITERIA_TYPE_CREATE_AUCTION:
-        case CRITERIA_TYPE_HIGHEST_AUCTION_BID:
-        case CRITERIA_TYPE_HIGHEST_AUCTION_SOLD:
-        case CRITERIA_TYPE_HIGHEST_GOLD_VALUE_OWNED:
-        case CRITERIA_TYPE_WON_AUCTIONS:
-        case CRITERIA_TYPE_GAIN_REVERED_REPUTATION:
-        case CRITERIA_TYPE_GAIN_HONORED_REPUTATION:
-        case CRITERIA_TYPE_KNOWN_FACTIONS:
-        case CRITERIA_TYPE_LOOT_EPIC_ITEM:
-        case CRITERIA_TYPE_RECEIVE_EPIC_ITEM:
-        case CRITERIA_TYPE_ROLL_NEED:
-        case CRITERIA_TYPE_ROLL_GREED:
-        case CRITERIA_TYPE_QUEST_ABANDONED:
-        case CRITERIA_TYPE_FLIGHT_PATHS_TAKEN:
-        case CRITERIA_TYPE_ACCEPTED_SUMMONINGS:
-        default:
-            break;
+    case CRITERIA_TYPE_COMPLETE_BATTLEGROUND:
+    case CRITERIA_TYPE_DEATH_AT_MAP:
+    case CRITERIA_TYPE_DEATH:
+    case CRITERIA_TYPE_DEATH_IN_DUNGEON:
+    case CRITERIA_TYPE_KILLED_BY_CREATURE:
+    case CRITERIA_TYPE_KILLED_BY_PLAYER:
+    case CRITERIA_TYPE_DEATHS_FROM:
+    case CRITERIA_TYPE_HIGHEST_TEAM_RATING:
+    case CRITERIA_TYPE_MONEY_FROM_VENDORS:
+    case CRITERIA_TYPE_GOLD_SPENT_FOR_TALENTS:
+    case CRITERIA_TYPE_NUMBER_OF_TALENT_RESETS:
+    case CRITERIA_TYPE_GOLD_SPENT_AT_BARBER:
+    case CRITERIA_TYPE_GOLD_SPENT_FOR_MAIL:
+    case CRITERIA_TYPE_LOSE_DUEL:
+    case CRITERIA_TYPE_KILL_CREATURE_TYPE:
+    case CRITERIA_TYPE_GOLD_EARNED_BY_AUCTIONS:
+    case CRITERIA_TYPE_CREATE_AUCTION:
+    case CRITERIA_TYPE_HIGHEST_AUCTION_BID:
+    case CRITERIA_TYPE_HIGHEST_AUCTION_SOLD:
+    case CRITERIA_TYPE_HIGHEST_GOLD_VALUE_OWNED:
+    case CRITERIA_TYPE_WON_AUCTIONS:
+    case CRITERIA_TYPE_GAIN_REVERED_REPUTATION:
+    case CRITERIA_TYPE_GAIN_HONORED_REPUTATION:
+    case CRITERIA_TYPE_KNOWN_FACTIONS:
+    case CRITERIA_TYPE_LOOT_EPIC_ITEM:
+    case CRITERIA_TYPE_RECEIVE_EPIC_ITEM:
+    case CRITERIA_TYPE_ROLL_NEED:
+    case CRITERIA_TYPE_ROLL_GREED:
+    case CRITERIA_TYPE_QUEST_ABANDONED:
+    case CRITERIA_TYPE_FLIGHT_PATHS_TAKEN:
+    case CRITERIA_TYPE_ACCEPTED_SUMMONINGS:
+    default:
+        break;
     }
 
     return false;
@@ -1238,7 +1291,7 @@ bool CriteriaHandler::CanUpdateCriteria(Criteria const* criteria, CriteriaTreeLi
         return false;
     }
 
-    if (criteria->Modifier && !ModifierTreeSatisfied(criteria->Modifier, miscValue1, miscValue2, unit, referencePlayer))
+    if (criteria->Modifier && !AdditionalRequirementsSatisfied(criteria->Modifier, miscValue1, miscValue2, unit, referencePlayer))
     {
         TC_LOG_TRACE("criteria", "CriteriaHandler::CanUpdateCriteria: (Id: %u Type %s) Requirements have not been satisfied", criteria->ID, CriteriaMgr::GetCriteriaTypeString(criteria->Entry->Type));
         return false;
@@ -1260,16 +1313,16 @@ bool CriteriaHandler::ConditionsSatisfied(Criteria const* criteria, Player* refe
 
     switch (criteria->Entry->FailEvent)
     {
-        case CRITERIA_CONDITION_BG_MAP:
-            if (!referencePlayer->InBattleground())
-                return false;
-            break;
-        case CRITERIA_CONDITION_NOT_IN_GROUP:
-            if (referencePlayer->GetGroup())
-                return false;
-            break;
-        default:
-            break;
+    case CRITERIA_CONDITION_BG_MAP:
+        if (!referencePlayer->InBattleground())
+            return false;
+        break;
+    case CRITERIA_CONDITION_NOT_IN_GROUP:
+        if (referencePlayer->GetGroup())
+            return false;
+        break;
+    default:
+        break;
     }
 
     return true;
@@ -1279,803 +1332,577 @@ bool CriteriaHandler::RequirementsSatisfied(Criteria const* criteria, uint64 mis
 {
     switch (CriteriaTypes(criteria->Entry->Type))
     {
-        case CRITERIA_TYPE_ACCEPTED_SUMMONINGS:
-        case CRITERIA_TYPE_COMPLETE_DAILY_QUEST:
-        case CRITERIA_TYPE_CREATE_AUCTION:
-        case CRITERIA_TYPE_FALL_WITHOUT_DYING:
-        case CRITERIA_TYPE_FLIGHT_PATHS_TAKEN:
-        case CRITERIA_TYPE_GET_KILLING_BLOWS:
-        case CRITERIA_TYPE_GOLD_EARNED_BY_AUCTIONS:
-        case CRITERIA_TYPE_GOLD_SPENT_AT_BARBER:
-        case CRITERIA_TYPE_GOLD_SPENT_FOR_MAIL:
-        case CRITERIA_TYPE_GOLD_SPENT_FOR_TALENTS:
-        case CRITERIA_TYPE_GOLD_SPENT_FOR_TRAVELLING:
-        case CRITERIA_TYPE_HIGHEST_AUCTION_BID:
-        case CRITERIA_TYPE_HIGHEST_AUCTION_SOLD:
-        case CRITERIA_TYPE_HIGHEST_HEALING_RECEIVED:
-        case CRITERIA_TYPE_HIGHEST_HEAL_CAST:
-        case CRITERIA_TYPE_HIGHEST_HIT_DEALT:
-        case CRITERIA_TYPE_HIGHEST_HIT_RECEIVED:
-        case CRITERIA_TYPE_HONORABLE_KILL:
-        case CRITERIA_TYPE_LOOT_MONEY:
-        case CRITERIA_TYPE_LOSE_DUEL:
-        case CRITERIA_TYPE_MONEY_FROM_QUEST_REWARD:
-        case CRITERIA_TYPE_MONEY_FROM_VENDORS:
-        case CRITERIA_TYPE_NUMBER_OF_TALENT_RESETS:
-        case CRITERIA_TYPE_QUEST_ABANDONED:
-        case CRITERIA_TYPE_REACH_GUILD_LEVEL:
-        case CRITERIA_TYPE_ROLL_GREED:
-        case CRITERIA_TYPE_ROLL_NEED:
-        case CRITERIA_TYPE_SPECIAL_PVP_KILL:
-        case CRITERIA_TYPE_TOTAL_DAMAGE_RECEIVED:
-        case CRITERIA_TYPE_TOTAL_HEALING_RECEIVED:
-        case CRITERIA_TYPE_USE_LFD_TO_GROUP_WITH_PLAYERS:
-        case CRITERIA_TYPE_VISIT_BARBER_SHOP:
-        case CRITERIA_TYPE_WIN_DUEL:
-        case CRITERIA_TYPE_WIN_RATED_ARENA:
-        case CRITERIA_TYPE_WON_AUCTIONS:
-            if (!miscValue1)
-                return false;
-            break;
-        case CRITERIA_TYPE_BUY_BANK_SLOT:
-        case CRITERIA_TYPE_COMPLETE_DAILY_QUEST_DAILY:
-        case CRITERIA_TYPE_COMPLETE_QUEST_COUNT:
-        case CRITERIA_TYPE_EARN_ACHIEVEMENT_POINTS:
-        case CRITERIA_TYPE_GAIN_EXALTED_REPUTATION:
-        case CRITERIA_TYPE_GAIN_HONORED_REPUTATION:
-        case CRITERIA_TYPE_GAIN_REVERED_REPUTATION:
-        case CRITERIA_TYPE_HIGHEST_GOLD_VALUE_OWNED:
-        case CRITERIA_TYPE_HIGHEST_PERSONAL_RATING:
-        case CRITERIA_TYPE_KNOWN_FACTIONS:
-        case CRITERIA_TYPE_REACH_LEVEL:
-        case CRITERIA_TYPE_ON_LOGIN:
-            break;
-        case CRITERIA_TYPE_COMPLETE_ACHIEVEMENT:
-            if (!RequiredAchievementSatisfied(criteria->Entry->Asset.AchievementID))
-                return false;
-            break;
-        case CRITERIA_TYPE_WIN_BG:
-        case CRITERIA_TYPE_COMPLETE_BATTLEGROUND:
-        case CRITERIA_TYPE_DEATH_AT_MAP:
-            if (!miscValue1 || criteria->Entry->Asset.MapID != referencePlayer->GetMapId())
-                return false;
-            break;
-        case CRITERIA_TYPE_KILL_CREATURE:
-        case CRITERIA_TYPE_KILLED_BY_CREATURE:
-            if (!miscValue1 || criteria->Entry->Asset.CreatureID != miscValue1)
-                return false;
-            break;
-        case CRITERIA_TYPE_REACH_SKILL_LEVEL:
-        case CRITERIA_TYPE_LEARN_SKILL_LEVEL:
-            // update at loading or specific skill update
-            if (miscValue1 && miscValue1 != criteria->Entry->Asset.SkillID)
-                return false;
-            break;
-        case CRITERIA_TYPE_COMPLETE_QUESTS_IN_ZONE:
-            if (miscValue1)
-            {
-                Quest const* quest = sObjectMgr->GetQuestTemplate(miscValue1);
-                if (!quest ||  quest->GetZoneOrSort() != criteria->Entry->Asset.ZoneID)
-                return false;
-            }
-            break;
-        case CRITERIA_TYPE_DEATH:
+    case CRITERIA_TYPE_ACCEPTED_SUMMONINGS:
+    case CRITERIA_TYPE_COMPLETE_DAILY_QUEST:
+    case CRITERIA_TYPE_CREATE_AUCTION:
+    case CRITERIA_TYPE_FALL_WITHOUT_DYING:
+    case CRITERIA_TYPE_FLIGHT_PATHS_TAKEN:
+    case CRITERIA_TYPE_GET_KILLING_BLOWS:
+    case CRITERIA_TYPE_GOLD_EARNED_BY_AUCTIONS:
+    case CRITERIA_TYPE_GOLD_SPENT_AT_BARBER:
+    case CRITERIA_TYPE_GOLD_SPENT_FOR_MAIL:
+    case CRITERIA_TYPE_GOLD_SPENT_FOR_TALENTS:
+    case CRITERIA_TYPE_GOLD_SPENT_FOR_TRAVELLING:
+    case CRITERIA_TYPE_HIGHEST_AUCTION_BID:
+    case CRITERIA_TYPE_HIGHEST_AUCTION_SOLD:
+    case CRITERIA_TYPE_HIGHEST_HEALING_RECEIVED:
+    case CRITERIA_TYPE_HIGHEST_HEAL_CAST:
+    case CRITERIA_TYPE_HIGHEST_HIT_DEALT:
+    case CRITERIA_TYPE_HIGHEST_HIT_RECEIVED:
+    case CRITERIA_TYPE_HONORABLE_KILL:
+    case CRITERIA_TYPE_LOOT_MONEY:
+    case CRITERIA_TYPE_LOSE_DUEL:
+    case CRITERIA_TYPE_MONEY_FROM_QUEST_REWARD:
+    case CRITERIA_TYPE_MONEY_FROM_VENDORS:
+    case CRITERIA_TYPE_NUMBER_OF_TALENT_RESETS:
+    case CRITERIA_TYPE_QUEST_ABANDONED:
+    case CRITERIA_TYPE_REACH_GUILD_LEVEL:
+    case CRITERIA_TYPE_ROLL_GREED:
+    case CRITERIA_TYPE_ROLL_NEED:
+    case CRITERIA_TYPE_SPECIAL_PVP_KILL:
+    case CRITERIA_TYPE_TOTAL_DAMAGE_RECEIVED:
+    case CRITERIA_TYPE_TOTAL_HEALING_RECEIVED:
+    case CRITERIA_TYPE_USE_LFD_TO_GROUP_WITH_PLAYERS:
+    case CRITERIA_TYPE_VISIT_BARBER_SHOP:
+    case CRITERIA_TYPE_WIN_DUEL:
+    case CRITERIA_TYPE_WIN_RATED_ARENA:
+    case CRITERIA_TYPE_WON_AUCTIONS:
+    case CRITERIA_TYPE_REACH_AREATRIGGER_WITH_ACTIONSET:
+        if (!miscValue1)
+            return false;
+        break;
+    case CRITERIA_TYPE_BUY_BANK_SLOT:
+    case CRITERIA_TYPE_COMPLETE_DAILY_QUEST_DAILY:
+    case CRITERIA_TYPE_COMPLETE_QUEST_COUNT:
+    case CRITERIA_TYPE_EARN_ACHIEVEMENT_POINTS:
+    case CRITERIA_TYPE_GAIN_EXALTED_REPUTATION:
+    case CRITERIA_TYPE_GAIN_HONORED_REPUTATION:
+    case CRITERIA_TYPE_GAIN_REVERED_REPUTATION:
+    case CRITERIA_TYPE_HIGHEST_GOLD_VALUE_OWNED:
+    case CRITERIA_TYPE_HIGHEST_PERSONAL_RATING:
+    case CRITERIA_TYPE_KNOWN_FACTIONS:
+    case CRITERIA_TYPE_REACH_LEVEL:
+    case CRITERIA_TYPE_ON_LOGIN:
+        break;
+    case CRITERIA_TYPE_COMPLETE_ACHIEVEMENT:
+        if (!RequiredAchievementSatisfied(criteria->Entry->Asset.AchievementID))
+            return false;
+        break;
+    case CRITERIA_TYPE_WIN_BG:
+    case CRITERIA_TYPE_COMPLETE_BATTLEGROUND:
+    case CRITERIA_TYPE_DEATH_AT_MAP:
+        if (!miscValue1 || criteria->Entry->Asset.MapID != referencePlayer->GetMapId())
+            return false;
+        break;
+    case CRITERIA_TYPE_KILL_CREATURE:
+    case CRITERIA_TYPE_KILLED_BY_CREATURE:
+        if (!miscValue1 || criteria->Entry->Asset.CreatureID != miscValue1)
+            return false;
+        break;
+    case CRITERIA_TYPE_REACH_SKILL_LEVEL:
+    case CRITERIA_TYPE_LEARN_SKILL_LEVEL:
+        // update at loading or specific skill update
+        if (miscValue1 && miscValue1 != criteria->Entry->Asset.SkillID)
+            return false;
+        break;
+    case CRITERIA_TYPE_COMPLETE_QUESTS_IN_ZONE:
+        if (miscValue1 && miscValue1 != criteria->Entry->Asset.ZoneID)
+            return false;
+        break;
+    case CRITERIA_TYPE_DEATH:
+    {
+        if (!miscValue1)
+            return false;
+        break;
+    }
+    case CRITERIA_TYPE_DEATH_IN_DUNGEON:
+    {
+        if (!miscValue1)
+            return false;
+
+        Map const* map = referencePlayer->IsInWorld() ? referencePlayer->GetMap() : sMapMgr->FindMap(referencePlayer->GetMapId(), referencePlayer->GetInstanceId());
+        if (!map || !map->IsDungeon())
+            return false;
+
+        //FIXME: work only for instances where max == min for players
+        if (map->ToInstanceMap()->GetMaxPlayers() != criteria->Entry->Asset.GroupSize)
+            return false;
+        break;
+    }
+    case CRITERIA_TYPE_KILLED_BY_PLAYER:
+        if (!miscValue1 || !unit || unit->GetTypeId() != TYPEID_PLAYER)
+            return false;
+        break;
+    case CRITERIA_TYPE_DEATHS_FROM:
+        if (!miscValue1 || miscValue2 != criteria->Entry->Asset.DamageType)
+            return false;
+        break;
+    case CRITERIA_TYPE_COMPLETE_QUEST:
+    {
+        // if miscValues != 0, it contains the questID.
+        if (miscValue1)
         {
-            if (!miscValue1)
+            if (miscValue1 != criteria->Entry->Asset.QuestID)
                 return false;
-            break;
         }
-        case CRITERIA_TYPE_DEATH_IN_DUNGEON:
+        else
         {
-            if (!miscValue1)
+            // login case.
+            if (!referencePlayer->GetQuestRewardStatus(criteria->Entry->Asset.QuestID))
                 return false;
-
-            Map const* map = referencePlayer->IsInWorld() ? referencePlayer->GetMap() : sMapMgr->FindMap(referencePlayer->GetMapId(), referencePlayer->GetInstanceId());
-            if (!map || !map->IsDungeon())
-                return false;
-
-            //FIXME: work only for instances where max == min for players
-            if (map->ToInstanceMap()->GetMaxPlayers() != criteria->Entry->Asset.GroupSize)
-                return false;
-            break;
         }
-        case CRITERIA_TYPE_KILLED_BY_PLAYER:
-            if (!miscValue1 || !unit || unit->GetTypeId() != TYPEID_PLAYER)
-                return false;
-            break;
-        case CRITERIA_TYPE_DEATHS_FROM:
-            if (!miscValue1 || miscValue2 != criteria->Entry->Asset.DamageType)
-                return false;
-            break;
-        case CRITERIA_TYPE_COMPLETE_QUEST:
-        {
-            // if miscValues != 0, it contains the questID.
-            if (miscValue1)
-            {
-                if (miscValue1 != criteria->Entry->Asset.QuestID)
-                    return false;
-            }
-            else
-            {
-                // login case.
-                if (!referencePlayer->GetQuestRewardStatus(criteria->Entry->Asset.QuestID))
-                    return false;
-            }
 
-            if (CriteriaDataSet const* data = sCriteriaMgr->GetCriteriaDataSet(criteria))
-                if (!data->Meets(referencePlayer, unit))
-                    return false;
-            break;
-        }
-        case CRITERIA_TYPE_BE_SPELL_TARGET:
-        case CRITERIA_TYPE_BE_SPELL_TARGET2:
-        case CRITERIA_TYPE_CAST_SPELL:
-        case CRITERIA_TYPE_CAST_SPELL2:
-            if (!miscValue1 || miscValue1 != criteria->Entry->Asset.SpellID)
+        if (CriteriaDataSet const* data = sCriteriaMgr->GetCriteriaDataSet(criteria))
+            if (!data->Meets(referencePlayer, unit))
                 return false;
-            break;
-        case CRITERIA_TYPE_LEARN_SPELL:
-            if (miscValue1 && miscValue1 != criteria->Entry->Asset.SpellID)
-                return false;
+        break;
+    }
+    case CRITERIA_TYPE_BE_SPELL_TARGET:
+    case CRITERIA_TYPE_BE_SPELL_TARGET2:
+    case CRITERIA_TYPE_CAST_SPELL:
+    case CRITERIA_TYPE_CAST_SPELL2:
+        if (!miscValue1 || miscValue1 != criteria->Entry->Asset.SpellID)
+            return false;
+        break;
+    case CRITERIA_TYPE_LEARN_SPELL:
+        if (miscValue1 && miscValue1 != criteria->Entry->Asset.SpellID)
+            return false;
 
-            if (!referencePlayer->HasSpell(criteria->Entry->Asset.SpellID))
-                return false;
+        if (!referencePlayer->HasSpell(criteria->Entry->Asset.SpellID))
+            return false;
+        break;
+    case CRITERIA_TYPE_LOOT_TYPE:
+        // miscValue1 = itemId - miscValue2 = count of item loot
+        // miscValue3 = loot_type (note: 0 = LOOT_CORPSE and then it ignored)
+        if (!miscValue1 || !miscValue2 || !miscValue3 || miscValue3 != criteria->Entry->Asset.LootType)
+            return false;
+        break;
+    case CRITERIA_TYPE_OWN_ITEM:
+        if (miscValue1 && criteria->Entry->Asset.ItemID != miscValue1)
+            return false;
+        break;
+    case CRITERIA_TYPE_USE_ITEM:
+    case CRITERIA_TYPE_LOOT_ITEM:
+    case CRITERIA_TYPE_EQUIP_ITEM:
+        if (!miscValue1 || criteria->Entry->Asset.ItemID != miscValue1)
+            return false;
+        break;
+    case CRITERIA_TYPE_EXPLORE_AREA:
+    {
+        WorldMapOverlayEntry const* worldOverlayEntry = sWorldMapOverlayStore.LookupEntry(criteria->Entry->Asset.WorldMapOverlayID);
+        if (!worldOverlayEntry)
             break;
-        case CRITERIA_TYPE_LOOT_TYPE:
-            // miscValue1 = itemId - miscValue2 = count of item loot
-            // miscValue3 = loot_type (note: 0 = LOOT_CORPSE and then it ignored)
-            if (!miscValue1 || !miscValue2 || !miscValue3 || miscValue3 != criteria->Entry->Asset.LootType)
-                return false;
-            break;
-        case CRITERIA_TYPE_OWN_ITEM:
-            if (miscValue1 && criteria->Entry->Asset.ItemID != miscValue1)
-                return false;
-            break;
-        case CRITERIA_TYPE_USE_ITEM:
-        case CRITERIA_TYPE_LOOT_ITEM:
-        case CRITERIA_TYPE_EQUIP_ITEM:
-            if (!miscValue1 || criteria->Entry->Asset.ItemID != miscValue1)
-                return false;
-            break;
-        case CRITERIA_TYPE_EXPLORE_AREA:
+
+        bool matchFound = false;
+        for (int j = 0; j < MAX_WORLD_MAP_OVERLAY_AREA_IDX; ++j)
         {
-            WorldMapOverlayEntry const* worldOverlayEntry = sWorldMapOverlayStore.LookupEntry(criteria->Entry->Asset.WorldMapOverlayID);
-            if (!worldOverlayEntry)
+            AreaTableEntry const* area = sAreaTableStore.LookupEntry(worldOverlayEntry->AreaID[j]);
+            if (!area)
                 break;
 
-            bool matchFound = false;
-            for (int j = 0; j < MAX_WORLD_MAP_OVERLAY_AREA_IDX; ++j)
+            if (area->AreaBit < 0)
+                continue;
+
+            uint16 playerIndexOffset = uint16(uint32(area->AreaBit) / 32);
+            if (playerIndexOffset >= PLAYER_EXPLORED_ZONES_SIZE)
+                continue;
+
+            uint32 mask = 1 << (uint32(area->AreaBit) % 32);
+            if (referencePlayer->GetUInt32Value(PLAYER_EXPLORED_ZONES_1 + playerIndexOffset) & mask)
             {
-                AreaTableEntry const* area = sAreaTableStore.LookupEntry(worldOverlayEntry->AreaID[j]);
-                if (!area)
-                    break;
-
-                if (area->AreaBit < 0)
-                    continue;
-
-                uint16 playerIndexOffset = uint16(uint32(area->AreaBit) / 32);
-                if (playerIndexOffset >= PLAYER_EXPLORED_ZONES_SIZE)
-                    continue;
-
-                uint32 mask = 1 << (uint32(area->AreaBit) % 32);
-                if (referencePlayer->GetUInt32Value(PLAYER_EXPLORED_ZONES_1 + playerIndexOffset) & mask)
-                {
-                    matchFound = true;
-                    break;
-                }
+                matchFound = true;
+                break;
             }
-
-            if (!matchFound)
-                return false;
-            break;
         }
-        case CRITERIA_TYPE_GAIN_REPUTATION:
-            if (miscValue1 && miscValue1 != criteria->Entry->Asset.FactionID)
-                return false;
-            break;
-        case CRITERIA_TYPE_EQUIP_EPIC_ITEM:
-            // miscValue1 = itemid miscValue2 = itemSlot
-            if (!miscValue1 || miscValue2 != criteria->Entry->Asset.ItemSlot)
-                return false;
-            break;
-        case CRITERIA_TYPE_ROLL_NEED_ON_LOOT:
-        case CRITERIA_TYPE_ROLL_GREED_ON_LOOT:
-        {
-            // miscValue1 = itemid miscValue2 = diced value
-            if (!miscValue1 || miscValue2 != criteria->Entry->Asset.RollValue)
-                return false;
 
-            ItemTemplate const* proto = sObjectMgr->GetItemTemplate(uint32(miscValue1));
-            if (!proto)
-                return false;
-            break;
-        }
-        case CRITERIA_TYPE_DO_EMOTE:
-            if (!miscValue1 || miscValue1 != criteria->Entry->Asset.EmoteID)
-                return false;
-            break;
-        case CRITERIA_TYPE_DAMAGE_DONE:
-        case CRITERIA_TYPE_HEALING_DONE:
-            if (!miscValue1)
-                return false;
-
-            if (criteria->Entry->FailEvent == CRITERIA_CONDITION_BG_MAP)
-            {
-                if (!referencePlayer->InBattleground())
-                    return false;
-
-                // map specific case (BG in fact) expected player targeted damage/heal
-                if (!unit || unit->GetTypeId() != TYPEID_PLAYER)
-                    return false;
-            }
-            break;
-        case CRITERIA_TYPE_USE_GAMEOBJECT:
-        case CRITERIA_TYPE_FISH_IN_GAMEOBJECT:
-            if (!miscValue1 || miscValue1 != criteria->Entry->Asset.GameObjectID)
-                return false;
-            break;
-        case CRITERIA_TYPE_LEARN_SKILLLINE_SPELLS:
-        case CRITERIA_TYPE_LEARN_SKILL_LINE:
-            if (miscValue1 && miscValue1 != criteria->Entry->Asset.SkillID)
-                return false;
-            break;
-        case CRITERIA_TYPE_LOOT_EPIC_ITEM:
-        case CRITERIA_TYPE_RECEIVE_EPIC_ITEM:
-        {
-            if (!miscValue1)
-                return false;
-            ItemTemplate const* proto = sObjectMgr->GetItemTemplate(uint32(miscValue1));
-            if (!proto || proto->GetQuality() < ITEM_QUALITY_EPIC)
-                return false;
-            break;
-        }
-        case CRITERIA_TYPE_HK_CLASS:
-            if (!miscValue1 || miscValue1 != criteria->Entry->Asset.ClassID)
-                return false;
-            break;
-        case CRITERIA_TYPE_HK_RACE:
-            if (!miscValue1 || miscValue1 != criteria->Entry->Asset.RaceID)
-                return false;
-            break;
-        case CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE:
-            if (!miscValue1 || miscValue1 != criteria->Entry->Asset.ObjectiveId)
-                return false;
-            break;
-        case CRITERIA_TYPE_HONORABLE_KILL_AT_AREA:
-            if (!miscValue1 || miscValue1 != criteria->Entry->Asset.AreaID)
-                return false;
-            break;
-        case CRITERIA_TYPE_CURRENCY:
-            if (!miscValue1 || !miscValue2 || int64(miscValue2) < 0
-                || miscValue1 != criteria->Entry->Asset.CurrencyID)
-                return false;
-            break;
-        case CRITERIA_TYPE_WIN_ARENA:
-            if (miscValue1 != criteria->Entry->Asset.MapID)
-                return false;
-            break;
-        case CRITERIA_TYPE_HIGHEST_TEAM_RATING:
+        if (!matchFound)
             return false;
-        case CRITERIA_TYPE_PLACE_GARRISON_BUILDING:
-            if (miscValue1 != criteria->Entry->Asset.GarrBuildingID)
+        break;
+    }
+    case CRITERIA_TYPE_GAIN_REPUTATION:
+        if (miscValue1 && miscValue1 != criteria->Entry->Asset.FactionID)
+            return false;
+        break;
+    case CRITERIA_TYPE_EQUIP_EPIC_ITEM:
+        // miscValue1 = itemid miscValue2 = itemSlot
+        if (!miscValue1 || miscValue2 != criteria->Entry->Asset.ItemSlot)
+            return false;
+        break;
+    case CRITERIA_TYPE_ROLL_NEED_ON_LOOT:
+    case CRITERIA_TYPE_ROLL_GREED_ON_LOOT:
+    {
+        // miscValue1 = itemid miscValue2 = diced value
+        if (!miscValue1 || miscValue2 != criteria->Entry->Asset.RollValue)
+            return false;
+
+        ItemTemplate const* proto = sObjectMgr->GetItemTemplate(uint32(miscValue1));
+        if (!proto)
+            return false;
+        break;
+    }
+    case CRITERIA_TYPE_DO_EMOTE:
+        if (!miscValue1 || miscValue1 != criteria->Entry->Asset.EmoteID)
+            return false;
+        break;
+    case CRITERIA_TYPE_DAMAGE_DONE:
+    case CRITERIA_TYPE_HEALING_DONE:
+        if (!miscValue1)
+            return false;
+
+        if (criteria->Entry->FailEvent == CRITERIA_CONDITION_BG_MAP)
+        {
+            if (!referencePlayer->InBattleground())
                 return false;
-            break;
-        default:
-            break;
+
+            // map specific case (BG in fact) expected player targeted damage/heal
+            if (!unit || unit->GetTypeId() != TYPEID_PLAYER)
+                return false;
+        }
+        break;
+    case CRITERIA_TYPE_USE_GAMEOBJECT:
+    case CRITERIA_TYPE_FISH_IN_GAMEOBJECT:
+        if (!miscValue1 || miscValue1 != criteria->Entry->Asset.GameObjectID)
+            return false;
+        break;
+    case CRITERIA_TYPE_LEARN_SKILLLINE_SPELLS:
+    case CRITERIA_TYPE_LEARN_SKILL_LINE:
+        if (miscValue1 && miscValue1 != criteria->Entry->Asset.SkillID)
+            return false;
+        break;
+    case CRITERIA_TYPE_LOOT_EPIC_ITEM:
+    case CRITERIA_TYPE_RECEIVE_EPIC_ITEM:
+    {
+        if (!miscValue1)
+            return false;
+        ItemTemplate const* proto = sObjectMgr->GetItemTemplate(uint32(miscValue1));
+        if (!proto || proto->GetQuality() < ITEM_QUALITY_EPIC)
+            return false;
+        break;
+    }
+    case CRITERIA_TYPE_HK_CLASS:
+        if (!miscValue1 || miscValue1 != criteria->Entry->Asset.ClassID)
+            return false;
+        break;
+    case CRITERIA_TYPE_HK_RACE:
+        if (!miscValue1 || miscValue1 != criteria->Entry->Asset.RaceID)
+            return false;
+        break;
+    case CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE:
+        if (!miscValue1 || miscValue1 != criteria->Entry->Asset.ObjectiveId)
+            return false;
+        break;
+    case CRITERIA_TYPE_HONORABLE_KILL_AT_AREA:
+        if (!miscValue1 || miscValue1 != criteria->Entry->Asset.AreaID)
+            return false;
+        break;
+    case CRITERIA_TYPE_CURRENCY:
+        if (!miscValue1 || !miscValue2 || int64(miscValue2) < 0
+            || miscValue1 != criteria->Entry->Asset.CurrencyID)
+            return false;
+        break;
+    case CRITERIA_TYPE_WIN_ARENA:
+        if (miscValue1 != criteria->Entry->Asset.MapID)
+            return false;
+        break;
+    case CRITERIA_TYPE_HIGHEST_TEAM_RATING:
+        return false;
+    case CRITERIA_TYPE_PLACE_GARRISON_BUILDING:
+        if (miscValue1 != uint32(criteria->Entry->Asset.GarrBuildingID))
+            return false;
+        break;
+    case CRITERIA_TYPE_TRANSMOG_SET_UNLOCKED:
+        if (miscValue1 != uint32(criteria->Entry->Asset.TransmogSetGroupID))
+            return false;
+        break;
+    case CRITERIA_TYPE_APPEARANCE_UNLOCKED_BY_SLOT:
+        if (!miscValue2 /*login case*/ || miscValue1 != uint32(criteria->Entry->Asset.EquipmentSlot))
+            return false;
+        break;
+    default:
+        break;
     }
     return true;
 }
 
-bool CriteriaHandler::ModifierTreeSatisfied(ModifierTreeNode const* tree, uint64 miscValue1, uint64 miscValue2, Unit const* unit, Player* referencePlayer) const
+bool CriteriaHandler::AdditionalRequirementsSatisfied(ModifierTreeNode const* tree, uint64 miscValue1, uint64 miscValue2, Unit const* unit, Player* referencePlayer) const
 {
-    switch (ModifierTreeOperator(tree->Entry->Operator))
+    const uint64 requiredCount = tree->Entry->Amount;
+
+    switch (tree->Entry->Operator)
     {
-    case ModifierTreeOperator::SingleTrue:
-        return tree->Entry->Type && ModifierSatisfied(tree->Entry, miscValue1, miscValue2, unit, referencePlayer);
-    case ModifierTreeOperator::SingleFalse:
-        return tree->Entry->Type && !ModifierSatisfied(tree->Entry, miscValue1, miscValue2, unit, referencePlayer);
-    case ModifierTreeOperator::All:
-        for (ModifierTreeNode const* node : tree->Children)
-            if (!ModifierTreeSatisfied(node, miscValue1, miscValue2, unit, referencePlayer))
-                return false;
-        return true;
-    case ModifierTreeOperator::Some:
+    case CRITERIA_TREE_OPERATOR_ANY:
     {
-        int8 requiredAmount = std::max<int8>(tree->Entry->Amount, 1);
+        uint64 progress = 0;
         for (ModifierTreeNode const* node : tree->Children)
-            if (ModifierTreeSatisfied(node, miscValue1, miscValue2, unit, referencePlayer))
-                if (!--requiredAmount)
+            if (AdditionalRequirementsSatisfied(node, miscValue1, miscValue2, unit, referencePlayer))
+                if (++progress >= requiredCount)
                     return true;
 
         return false;
     }
+    case CRITERIA_TREE_OPERATOR_ALL:
     default:
+    {
+        for (ModifierTreeNode const* node : tree->Children)
+            if (!AdditionalRequirementsSatisfied(node, miscValue1, miscValue2, unit, referencePlayer))
+                return false;
+
         break;
     }
+    }
+
+    bool conditionMet = AdditionalRequirementsConditionSatisfied(tree, miscValue1, miscValue2, unit, referencePlayer);
+    if (tree->Entry->Operator == CRITERIA_TREE_OPERATOR_MODIFIER_SINGLE_NOT_COMPLETED)
+        conditionMet = !conditionMet;
+
+    return conditionMet;
 }
 
-bool CriteriaHandler::ModifierSatisfied(ModifierTreeEntry const* modifier, uint64 miscValue1, uint64 miscValue2, Unit const* unit, Player* referencePlayer) const
+bool CriteriaHandler::AdditionalRequirementsConditionSatisfied(ModifierTreeNode const* tree, uint64 miscValue1, uint64 /*miscValue2*/, Unit const* unit, Player* referencePlayer) const
 {
-    uint32 reqValue = modifier->Asset;
-    uint32 secondaryAsset = modifier->SecondaryAsset;
-    uint32 tertiaryAsset = modifier->TertiaryAsset;
+    uint32 reqType = tree->Entry->Type;
+    if (!reqType)
+        return true;
 
-    switch (CriteriaAdditionalCondition(modifier->Type))
+    uint32 reqValue = tree->Entry->Asset;
+
+    switch (CriteriaAdditionalCondition(reqType))
     {
-        case CRITERIA_ADDITIONAL_CONDITION_SOURCE_DRUNK_VALUE: // 1
-        {
-            if (referencePlayer->GetDrunkValue() < reqValue)
-                return false;
-            break;
-        }
-        case CRITERIA_ADDITIONAL_CONDITION_SOURCE_PLAYER_CONDITION: // 2
-        {
-            PlayerConditionEntry const* playerCondition = sPlayerConditionStore.LookupEntry(reqValue);
-            if (!playerCondition || !ConditionMgr::IsPlayerMeetingCondition(referencePlayer, playerCondition))
-                return false;
-            break;
-        }
-        case CRITERIA_ADDITIONAL_CONDITION_ITEM_LEVEL: // 3
-        {
-            // miscValue1 is itemid
-            ItemTemplate const* const item = sObjectMgr->GetItemTemplate(uint32(miscValue1));
-            if (!item || item->GetBaseItemLevel() < reqValue)
-                return false;
-            break;
-        }
-        case CRITERIA_ADDITIONAL_CONDITION_TARGET_CREATURE_ENTRY: // 4
-            if (!unit || unit->GetEntry() != reqValue)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_TARGET_MUST_BE_PLAYER: // 5
-            if (!unit || unit->GetTypeId() != TYPEID_PLAYER)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_TARGET_MUST_BE_DEAD: // 6
-            if (!unit || unit->IsAlive())
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_TARGET_MUST_BE_ENEMY: // 7
-            if (!unit || !referencePlayer->IsHostileTo(unit))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_SOURCE_HAS_AURA: // 8
-            if (!referencePlayer->HasAura(reqValue))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_SOURCE_HAS_AURA_TYPE: // 9
-            if (!referencePlayer->HasAuraType(AuraType(reqValue)))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_TARGET_HAS_AURA: // 10
-            if (!unit || !unit->HasAura(reqValue))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_TARGET_HAS_AURA_TYPE: // 11
-            if (!unit || !unit->HasAuraType(AuraType(reqValue)))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_SOURCE_AURA_STATE: // 12
-            if (!referencePlayer->HasAuraState(AuraStateType(reqValue)))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_TARGET_AURA_STATE: // 13
-            if (!unit || !unit->HasAuraState(AuraStateType(reqValue)))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_ITEM_QUALITY_MIN: // 14
-        {
-            // miscValue1 is itemid
-            ItemTemplate const* const item = sObjectMgr->GetItemTemplate(uint32(miscValue1));
-            if (!item || item->GetQuality() < reqValue)
-                return false;
-            break;
-        }
-        case CRITERIA_ADDITIONAL_CONDITION_ITEM_QUALITY_EQUALS: // 15
-        {
-            // miscValue1 is itemid
-            ItemTemplate const* const item = sObjectMgr->GetItemTemplate(uint32(miscValue1));
-            if (!item || item->GetQuality() != reqValue)
-                return false;
-            break;
-        }
-        case CRITERIA_ADDITIONAL_CONDITION_SOURCE_IS_ALIVE: // 16
-            if (referencePlayer->isDead())
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_SOURCE_AREA_OR_ZONE: // 17
-        {
-            uint32 zoneId, areaId;
-            referencePlayer->GetZoneAndAreaId(zoneId, areaId);
-            if (zoneId != reqValue && areaId != reqValue)
-                return false;
-            break;
-        }
-        case CRITERIA_ADDITIONAL_CONDITION_TARGET_AREA_OR_ZONE: // 18
-        {
-            if (!unit)
-                return false;
-            uint32 zoneId, areaId;
-            unit->GetZoneAndAreaId(zoneId, areaId);
-            if (zoneId != reqValue && areaId != reqValue)
-                return false;
-            break;
-        }
-        case CRITERIA_ADDITIONAL_CONDITION_MAP_DIFFICULTY_OLD: // 20
-        {
-            DifficultyEntry const* difficulty = sDifficultyStore.LookupEntry(referencePlayer->GetMap()->GetDifficultyID());
-            if (!difficulty || difficulty->OldEnumValue == -1 || uint32(difficulty->OldEnumValue) != reqValue)
-                return false;
-            break;
-        }
-        case CRITERIA_ADDITIONAL_CONDITION_SOURCE_LEVEL_ABOVE_TARGET: // 22
-            if (!unit || referencePlayer->getLevel() + reqValue < unit->getLevel())
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_SOURCE_LEVEL_EQUAL_TARGET: // 23
-            if (!unit || referencePlayer->getLevel() != unit->getLevel())
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_ARENA_TYPE: // 24
-        {
-            Battleground* bg = referencePlayer->GetBattleground();
-            if (!bg || !bg->isArena() || bg->GetArenaType() != reqValue)
-                return false;
-            break;
-        }
-        case CRITERIA_ADDITIONAL_CONDITION_SOURCE_RACE: // 25
-            if (referencePlayer->getRace() != reqValue)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_SOURCE_CLASS: // 26
-            if (referencePlayer->getClass() != reqValue)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_TARGET_RACE: // 27
-            if (!unit || unit->GetTypeId() != TYPEID_PLAYER || unit->getRace() != reqValue)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_TARGET_CLASS: // 28
-            if (!unit || unit->GetTypeId() != TYPEID_PLAYER || unit->getClass() != reqValue)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_MAX_GROUP_MEMBERS: // 29
-            if (referencePlayer->GetGroup() && referencePlayer->GetGroup()->GetMembersCount() >= reqValue)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_TARGET_CREATURE_TYPE: // 30
-        {
-            if (!unit)
-                return false;
-            if (unit->GetTypeId() != TYPEID_UNIT || unit->GetCreatureType() != reqValue)
-                return false;
-            break;
-        }
-        case CRITERIA_ADDITIONAL_CONDITION_TARGET_CREATURE_FAMILY: // 31
-        {
-            if (!unit)
-                return false;
-            if (unit->GetTypeId() != TYPEID_UNIT || unit->ToCreature()->GetCreatureTemplate()->family != CreatureFamily(reqValue))
-                return false;
-            break;
-        }
-        case CRITERIA_ADDITIONAL_CONDITION_SOURCE_MAP: // 32
-            if (referencePlayer->GetMapId() != reqValue)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_CLIENT_VERSION: // 33
-            if (reqValue < sRealmList->GetMinorMajorBugfixVersionForBuild(realm.Build))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_BATTLE_PET_TEAM_LEVEL: // 34
-        //    for (WorldPackets::BattlePet::BattlePetSlot const& slot : referencePlayer->GetSession()->GetBattlePetMgr()->GetSlots())
-        //        if (slot.Pet.Level != reqValue)
-        //            return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_NOT_IN_GROUP: // 35
-            if (referencePlayer->GetGroup())
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_IN_GROUP: // 36
-            if (!referencePlayer->GetGroup())
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_TITLE_BIT_INDEX: // 38
-            // miscValue1 is title's bit index
-            if (miscValue1 != reqValue)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_SOURCE_LEVEL: // 39
-            if (referencePlayer->getLevel() != reqValue)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_TARGET_LEVEL: // 40
-            if (!unit || unit->GetLevelForTarget(referencePlayer) != reqValue)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_SOURCE_ZONE: // 41
-        {
-            uint32 zoneId = referencePlayer->GetAreaId();
-            if (AreaTableEntry const* areaEntry = sAreaTableStore.LookupEntry(zoneId))
-                if (areaEntry->Flags[0] & AREA_FLAG_SUB_ZONE)
-                    zoneId = areaEntry->ParentAreaID;
-            if (zoneId != reqValue)
-                return false;
-            break;
-        }
-        case CRITERIA_ADDITIONAL_CONDITION_TARGET_ZONE: // 42
-        {
-            if (!unit)
-                return false;
-            uint32 zoneId = unit->GetAreaId();
-            if (AreaTableEntry const* areaEntry = sAreaTableStore.LookupEntry(zoneId))
-                if (areaEntry->Flags[0] & AREA_FLAG_SUB_ZONE)
-                    zoneId = areaEntry->ParentAreaID;
-            if (zoneId != reqValue)
-                return false;
-            break;
-        }
-        case CRITERIA_ADDITIONAL_CONDITION_SOURCE_HEALTH_PCT_LOWER: // 43
-            if (referencePlayer->GetHealthPct() > float(reqValue))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_SOURCE_HEALTH_PCT_GREATER: // 44
-            if (referencePlayer->GetHealthPct() < float(reqValue))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_SOURCE_HEALTH_PCT_EQUAL: // 45
-            if (referencePlayer->GetHealthPct() != float(reqValue))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_TARGET_HEALTH_PCT_LOWER: // 46
-            if (!unit || unit->GetHealthPct() > float(reqValue))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_TARGET_HEALTH_PCT_GREATER: // 47
-            if (!unit || unit->GetHealthPct() < float(reqValue))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_TARGET_HEALTH_PCT_EQUAL: // 48
-            if (!unit || unit->GetHealthPct() != float(reqValue))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_SOURCE_HEALTH_LOWER: // 49
-            if (referencePlayer->GetHealth() > reqValue)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_SOURCE_HEALTH_GREATER: // 50
-            if (referencePlayer->GetHealth() < reqValue)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_SOURCE_HEALTH_EQUAL: // 51
-            if (referencePlayer->GetHealth() != reqValue)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_TARGET_HEALTH_LOWER: // 52
-            if (!unit || unit->GetHealthPct() >= reqValue)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_TARGET_PLAYER_CONDITION: // 55
-        {
-            if (!unit || !unit->IsPlayer())
-                return false;
-
-            PlayerConditionEntry const* playerCondition = sPlayerConditionStore.LookupEntry(reqValue);
-            if (!playerCondition || !ConditionMgr::IsPlayerMeetingCondition(unit->ToPlayer(), playerCondition))
-                return false;
-            break;
-        }
-        case CRITERIA_ADDITIONAL_CONDITION_MIN_ACHIEVEMENT_POINTS: // 56
-            if (referencePlayer->GetAchievementPoints() <= reqValue)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_IN_LFG_DUNGEON: // 57
-            if (!ConditionMgr::GetPlayerConditionLfgValue(referencePlayer, PlayerConditionLfgStatus::InLFGDungeon))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_IN_LFG_RANDOM_DUNGEON: // 58
-            if (!ConditionMgr::GetPlayerConditionLfgValue(referencePlayer, PlayerConditionLfgStatus::InLFGRandomDungeon))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_IN_LFG_FIRST_RANDOM_DUNGEON: // 59
-            if (!ConditionMgr::GetPlayerConditionLfgValue(referencePlayer, PlayerConditionLfgStatus::InLFGFirstRandomDungeon))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_GUILD_REPUTATION: // 62
-            if (referencePlayer->GetReputationMgr().GetReputation(1168) < int32(reqValue))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_RATED_BATTLEGROUND_RATING: // 64
-            if (!unit || unit->GetHealth() > reqValue)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_WORLD_STATE_EXPRESSION: // 67
-            //if (WorldStateExpressionEntry const* worldStateExpression = sWorldStateExpressionStore.LookupEntry(reqValue))
-            //    return ConditionMgr::IsPlayerMeetingExpression(referencePlayer, worldStateExpression); @toDo
+    case CRITERIA_ADDITIONAL_CONDITION_ITEM_LEVEL: // 3
+    {
+        // miscValue1 is itemid
+        ItemTemplate const* const item = sObjectMgr->GetItemTemplate(uint32(miscValue1));
+        if (!item || item->GetBaseItemLevel() < reqValue)
             return false;
-        case CRITERIA_ADDITIONAL_CONDITION_MAP_DIFFICULTY: // 68
-        {
-            DifficultyEntry const* difficulty = sDifficultyStore.LookupEntry(referencePlayer->GetMap()->GetDifficultyID());
-            if (!difficulty || difficulty->ID != reqValue)
-                return false;
-            break;
-        }
-        case CRITERIA_ADDITIONAL_CONDITION_SOURCE_LEVEL_GREATER: // 69
-            if (referencePlayer->getLevel() < reqValue)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_TARGET_LEVEL_GREATER: // 70
-            if (!unit || unit->getLevel() < reqValue)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_SOURCE_LEVEL_LOWER: // 71
-            if (referencePlayer->getLevel() > reqValue)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_TARGET_LEVEL_LOWER: // 72
-            if (!unit || unit->getLevel() > reqValue)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_MODIFIER_TREE: // 73
-            if (ModifierTreeNode const* nextModifierTree = sCriteriaMgr->GetModifierTree(reqValue))
-                return ModifierTreeSatisfied(nextModifierTree, miscValue1, miscValue2, unit, referencePlayer);
+        break;
+    }
+    case CRITERIA_ADDITIONAL_CONDITION_TARGET_CREATURE_ENTRY: // 4
+        if (!unit || unit->GetEntry() != reqValue)
             return false;
-        case CRITERIA_ADDITIONAL_CONDITION_SCENARIO_ID: // 74
-        {
-            Scenario const* scenario = referencePlayer->GetScenario();
-            if (!scenario)
-                return false;
-            if (scenario->GetEntry()->ID != reqValue)
-                return false;
-            break;
-        }
-        case CRITERIA_ADDITIONAL_CONDITION_THE_TILLERS_REPUTATION: // 75
-            if (referencePlayer->GetReputationMgr().GetReputation(1272) < int32(reqValue))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_SCENARIO_STEP_INDEX: // 82
-        {
-            Scenario const* scenario = referencePlayer->GetScenario();
-            if (!scenario)
-                return false;
-            if (scenario->GetStep()->OrderIndex != (reqValue - 1))
-                return false;
-            break;
-        }
-        case CRITERIA_ADDITIONAL_CONDITION_IS_ON_QUEST: // 84
-            if (referencePlayer->FindQuestSlot(reqValue) == MAX_QUEST_LOG_SIZE)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_EXALTED_WITH_FACTION: // 85
-            if (referencePlayer->GetReputationMgr().GetReputation(reqValue) < 42000)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_HAS_ACHIEVEMENT: // 86
-            if (!referencePlayer->HasAchieved(reqValue))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_CLOUD_SERPENT_REPUTATION: // 88
-            if (referencePlayer->GetReputationMgr().GetReputation(1271) < int32(reqValue))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_ACTIVE_EXPANSION: // 92
-            if (referencePlayer->GetSession()->GetExpansion() < reqValue)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_FACTION_STANDING: // 95
-            if (referencePlayer->GetReputationMgr().GetReputation(reqValue) < int32(secondaryAsset))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_SOURCE_SEX: // 97
-            if (referencePlayer->getGender() != uint8(reqValue))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_SOURCE_NATIVE_SEX: // 98
-            //if (referencePlayer->m_playerData->NativeSex != uint8(reqValue))
-            //    return false; @toDo
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_SKILL: // 99
-            if (referencePlayer->GetPureSkillValue(reqValue) < uint16(secondaryAsset))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_NORMAL_PHASE_SHIFT: // 101
-            if (!PhasingHandler::InDbPhaseShift(referencePlayer, 0, 0, 0))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_IN_PHASE: // 102
-            if (!PhasingHandler::InDbPhaseShift(referencePlayer, 0, reqValue, 0))
-                return false;
-            break;
-      case CRITERIA_ADDITIONAL_CONDITION_NOT_IN_PHASE: // 103
-            if (PhasingHandler::InDbPhaseShift(referencePlayer, 0, reqValue, 0))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_HAS_SPELL: // 104
-            if (!referencePlayer->HasSpell(reqValue))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_ITEM_COUNT: // 105
-            if (referencePlayer->GetItemCount(reqValue, false) < secondaryAsset)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_ACCOUNT_EXPANSION: // 106
-            if (referencePlayer->GetSession()->GetAccountExpansion() < reqValue)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_REWARDED_QUEST: // 110
-            if (!referencePlayer->GetQuestRewardStatus(reqValue))
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_COMPLETED_QUEST: // 111
-            if (referencePlayer->GetQuestStatus(reqValue) != QUEST_STATUS_COMPLETE)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWER_WITH_TRAIT: // 144
-        {
-            if (!referencePlayer)
-                return false;
-
-            for (auto const& garrison : referencePlayer->GetGarrisons())
-            {
-                Garrison::Follower const* follower = garrison.second->GetFollower(miscValue1);
-                if (follower && follower->PacketInfo.GarrFollowerID == reqValue)
-                    return true;
-            }
-
+        break;
+    case CRITERIA_ADDITIONAL_CONDITION_TARGET_MUST_BE_PLAYER: // 5
+        if (!unit || unit->GetTypeId() != TYPEID_PLAYER)
             return false;
-        }
-        case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWER_ABOVE_QUALITY_WOD: // 145
-        {
-            if (!referencePlayer)
-                return false;
-
-            for (auto const& garrison : referencePlayer->GetGarrisons())
-            {
-                Garrison::Follower const* follower = garrison.second->GetFollower(miscValue1);
-                if (follower && follower->PacketInfo.Quality == reqValue)
-                    return true;
-            }
-
+        break;
+    case CRITERIA_ADDITIONAL_CONDITION_TARGET_MUST_BE_DEAD: // 6
+        if (!unit || unit->IsAlive())
             return false;
-        }
-        case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWER_EQUAL_LEVEL: // 146
-        {
-            if (!referencePlayer)
-                return false;
-
-            for (auto const& garrison : referencePlayer->GetGarrisons())
-            {
-                Garrison::Follower const* follower = garrison.second->GetFollower(miscValue1);
-                if (follower && follower->PacketInfo.FollowerLevel >= reqValue)
-                    return true;
-            }
-
+        break;
+    case CRITERIA_ADDITIONAL_CONDITION_TARGET_MUST_BE_ENEMY: // 7
+        if (!unit || !referencePlayer->IsHostileTo(unit))
             return false;
-        }
-        case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWERS_ITEM_LEVEL_ABOVE: // 184
-        {
-            if (!referencePlayer)
-                return false;
-
-            for (auto const& garrison : referencePlayer->GetGarrisons())
-            {
-                Garrison::Follower const* follower = garrison.second->GetFollower(miscValue1);
-                if (follower && follower->GetItemLevel() >= reqValue)
-                    return true;
-            }
-
+        break;
+    case CRITERIA_ADDITIONAL_CONDITION_SOURCE_HAS_AURA: // 8
+        if (!referencePlayer->HasAura(reqValue))
             return false;
+        break;
+    case CRITERIA_ADDITIONAL_CONDITION_TARGET_HAS_AURA: // 10
+        if (!unit || !unit->HasAura(reqValue))
+            return false;
+        break;
+    case CRITERIA_ADDITIONAL_CONDITION_TARGET_HAS_AURA_TYPE: // 11
+        if (!unit || !unit->HasAuraType(AuraType(reqValue)))
+            return false;
+        break;
+    case CRITERIA_ADDITIONAL_CONDITION_ITEM_QUALITY_MIN: // 14
+    {
+        // miscValue1 is itemid
+        ItemTemplate const* const item = sObjectMgr->GetItemTemplate(uint32(miscValue1));
+        if (!item || item->GetQuality() < reqValue)
+            return false;
+        break;
+    }
+    case CRITERIA_ADDITIONAL_CONDITION_ITEM_QUALITY_EQUALS: // 15
+    {
+        // miscValue1 is itemid
+        ItemTemplate const* const item = sObjectMgr->GetItemTemplate(uint32(miscValue1));
+        if (!item || item->GetQuality() != reqValue)
+            return false;
+        break;
+    }
+    case CRITERIA_ADDITIONAL_CONDITION_SOURCE_AREA_OR_ZONE: // 17
+    {
+        uint32 zoneId, areaId;
+        referencePlayer->GetZoneAndAreaId(zoneId, areaId);
+        if (zoneId != reqValue && areaId != reqValue)
+            return false;
+        break;
+    }
+    case CRITERIA_ADDITIONAL_CONDITION_TARGET_AREA_OR_ZONE: // 18
+    {
+        if (!unit)
+            return false;
+        uint32 zoneId, areaId;
+        unit->GetZoneAndAreaId(zoneId, areaId);
+        if (zoneId != reqValue && areaId != reqValue)
+            return false;
+        break;
+    }
+    case CRITERIA_ADDITIONAL_CONDITION_MAP_DIFFICULTY_OLD: // 20
+    {
+        DifficultyEntry const* difficulty = sDifficultyStore.LookupEntry(referencePlayer->GetMap()->GetDifficultyID());
+        if (!difficulty || difficulty->OldEnumValue == -1 || uint32(difficulty->OldEnumValue) != reqValue)
+            return false;
+        break;
+    }
+    case CRITERIA_ADDITIONAL_CONDITION_ARENA_TYPE: // 24
+    {
+        Battleground* bg = referencePlayer->GetBattleground();
+        if (!bg || !bg->isArena() || bg->GetArenaType() != reqValue)
+            return false;
+        break;
+    }
+    case CRITERIA_ADDITIONAL_CONDITION_SOURCE_RACE: // 25
+        if (referencePlayer->getRace() != reqValue)
+            return false;
+        break;
+    case CRITERIA_ADDITIONAL_CONDITION_SOURCE_CLASS: // 26
+        if (referencePlayer->getClass() != reqValue)
+            return false;
+        break;
+    case CRITERIA_ADDITIONAL_CONDITION_TARGET_RACE: // 27
+        if (!unit || unit->GetTypeId() != TYPEID_PLAYER || unit->getRace() != reqValue)
+            return false;
+        break;
+    case CRITERIA_ADDITIONAL_CONDITION_TARGET_CLASS: // 28
+        if (!unit || unit->GetTypeId() != TYPEID_PLAYER || unit->getClass() != reqValue)
+            return false;
+        break;
+    case CRITERIA_ADDITIONAL_CONDITION_MAX_GROUP_MEMBERS: // 29
+        if (referencePlayer->GetGroup() && referencePlayer->GetGroup()->GetMembersCount() >= reqValue)
+            return false;
+        break;
+    case CRITERIA_ADDITIONAL_CONDITION_TARGET_CREATURE_TYPE: // 30
+    {
+        if (!unit)
+            return false;
+        if (unit->GetTypeId() != TYPEID_UNIT || unit->GetCreatureType() != reqValue)
+            return false;
+        break;
+    }
+    case CRITERIA_ADDITIONAL_CONDITION_SOURCE_MAP: // 32
+        if (referencePlayer->GetMapId() != reqValue)
+            return false;
+        break;
+    case CRITERIA_ADDITIONAL_CONDITION_TITLE_BIT_INDEX: // 38
+        // miscValue1 is title's bit index
+        if (miscValue1 != reqValue)
+            return false;
+        break;
+    case CRITERIA_ADDITIONAL_CONDITION_SOURCE_LEVEL: // 39
+        if (referencePlayer->getLevel() != reqValue)
+            return false;
+        break;
+    case CRITERIA_ADDITIONAL_CONDITION_TARGET_LEVEL: // 40
+        if (!unit || unit->GetLevelForTarget(referencePlayer) != reqValue)
+            return false;
+        break;
+    case CRITERIA_ADDITIONAL_CONDITION_TARGET_ZONE: // 41
+        if (!unit || unit->GetZoneId() != reqValue)
+            return false;
+        break;
+    case CRITERIA_ADDITIONAL_CONDITION_TARGET_HEALTH_PCT_LOWER: // 46
+        if (!unit || unit->GetHealthPct() >= reqValue)
+            return false;
+        break;
+    case CRITERIA_ADDITIONAL_CONDITION_RATED_BATTLEGROUND_RATING: // 64
+        //if (referencePlayer->GetRBGPersonalRating() < reqValue)
+        return false;
+        break;
+    case CRITERIA_ADDITIONAL_CONDITION_MAP_DIFFICULTY: // 68
+    {
+        DifficultyEntry const* difficulty = sDifficultyStore.LookupEntry(referencePlayer->GetMap()->GetDifficultyID());
+        if (!difficulty || difficulty->ID != reqValue)
+            return false;
+        break;
+    }
+
+    case CRITERIA_ADDITIONAL_CONDITION_IS_ON_QUEST: // 84
+        if (!referencePlayer->HasQuest(reqValue))
+            return false;
+        break;
+
+    case CRITERIA_ADDITIONAL_CONDITION_BATTLEPET_SPECIES: // 91
+        if (miscValue1 != reqValue)
+            return false;
+        break;
+
+    case CRITERIA_ADDITIONAL_CONDITION_FACTION_STANDING: // 95
+        if (referencePlayer->GetReputation(reqValue) < int32(tree->Entry->SecondaryAsset))
+            return false;
+        break;
+
+    case CRITERIA_ADDITIONAL_CONDITION_REWARDED_QUEST: // 110
+        if (!referencePlayer->IsQuestRewarded(reqValue))
+            return false;
+        break;
+
+    case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWER_WITH_TRAIT: // 144
+    {
+        if (!referencePlayer)
+            return false;
+
+        for (auto const& garrison : referencePlayer->GetGarrisons())
+        {
+            Garrison::Follower const* follower = garrison.second->GetFollower(miscValue1);
+            if (follower && follower->PacketInfo.GarrFollowerID == reqValue)
+                return true;
         }
-        case CRITERIA_ADDITIONAL_CONDITION_HONOR_LEVEL: // 193
-            if (!referencePlayer || referencePlayer->GetHonorLevel() != reqValue)
-                return false;
-            break;
-        case CRITERIA_ADDITIONAL_CONDITION_PRESTIGE_LEVEL: // 194
-            if (!referencePlayer || referencePlayer->GetPrestigeLevel() != reqValue)
-                return false;
-            break;
-        default:
-            break;
+
+        return false;
+    }
+    case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWER_ABOVE_QUALITY_WOD: // 145
+    {
+        if (!referencePlayer)
+            return false;
+
+        for (auto const& garrison : referencePlayer->GetGarrisons())
+        {
+            Garrison::Follower const* follower = garrison.second->GetFollower(miscValue1);
+            if (follower && follower->PacketInfo.Quality == reqValue)
+                return true;
+        }
+
+        return false;
+    }
+    case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWER_EQUAL_LEVEL: // 146
+    {
+        if (!referencePlayer)
+            return false;
+
+        for (auto const& garrison : referencePlayer->GetGarrisons())
+        {
+            Garrison::Follower const* follower = garrison.second->GetFollower(miscValue1);
+            if (follower && follower->PacketInfo.FollowerLevel >= reqValue)
+                return true;
+        }
+
+        return false;
+    }
+    case CRITERIA_ADDITIONAL_CONDITION_GARRISON_FOLLOWERS_ITEM_LEVEL_ABOVE: // 184
+    {
+        if (!referencePlayer)
+            return false;
+
+        for (auto const& garrison : referencePlayer->GetGarrisons())
+        {
+            Garrison::Follower const* follower = garrison.second->GetFollower(miscValue1);
+            if (follower && follower->GetItemLevel() >= reqValue)
+                return true;
+        }
+
+        return false;
+    }
+    case CRITERIA_ADDITIONAL_CONDITION_HONOR_LEVEL: // 193
+        if (!referencePlayer || referencePlayer->GetHonorLevel() != reqValue)
+            return false;
+        break;
+    case CRITERIA_ADDITIONAL_CONDITION_PRESTIGE_LEVEL: // 194
+        if (!referencePlayer || referencePlayer->GetPrestigeLevel() != reqValue)
+            return false;
+        break;
+    default:
+        break;
     }
     return true;
 }
@@ -2089,346 +1916,363 @@ char const* CriteriaMgr::GetCriteriaTypeString(CriteriaTypes type)
 {
     switch (type)
     {
-        case CRITERIA_TYPE_KILL_CREATURE:
-            return "KILL_CREATURE";
-        case CRITERIA_TYPE_WIN_BG:
-            return "TYPE_WIN_BG";
-        case CRITERIA_TYPE_COMPLETE_ARCHAEOLOGY_PROJECTS:
-            return "COMPLETE_RESEARCH";
-        case CRITERIA_TYPE_SURVEY_GAMEOBJECT:
-            return "SURVEY_GAMEOBJECT";
-        case CRITERIA_TYPE_REACH_LEVEL:
-            return "REACH_LEVEL";
-        case CRITERIA_TYPE_CLEAR_DIGSITE:
-            return "CLEAR_DIGSITE";
-        case CRITERIA_TYPE_REACH_SKILL_LEVEL:
-            return "REACH_SKILL_LEVEL";
-        case CRITERIA_TYPE_COMPLETE_ACHIEVEMENT:
-            return "COMPLETE_ACHIEVEMENT";
-        case CRITERIA_TYPE_COMPLETE_QUEST_COUNT:
-            return "COMPLETE_QUEST_COUNT";
-        case CRITERIA_TYPE_COMPLETE_DAILY_QUEST_DAILY:
-            return "COMPLETE_DAILY_QUEST_DAILY";
-        case CRITERIA_TYPE_COMPLETE_QUESTS_IN_ZONE:
-            return "COMPLETE_QUESTS_IN_ZONE";
-        case CRITERIA_TYPE_CURRENCY:
-            return "CURRENCY";
-        case CRITERIA_TYPE_DAMAGE_DONE:
-            return "DAMAGE_DONE";
-        case CRITERIA_TYPE_COMPLETE_DAILY_QUEST:
-            return "COMPLETE_DAILY_QUEST";
-        case CRITERIA_TYPE_COMPLETE_BATTLEGROUND:
-            return "COMPLETE_BATTLEGROUND";
-        case CRITERIA_TYPE_DEATH_AT_MAP:
-            return "DEATH_AT_MAP";
-        case CRITERIA_TYPE_DEATH:
-            return "DEATH";
-        case CRITERIA_TYPE_DEATH_IN_DUNGEON:
-            return "DEATH_IN_DUNGEON";
-        case CRITERIA_TYPE_COMPLETE_RAID:
-            return "COMPLETE_RAID";
-        case CRITERIA_TYPE_KILLED_BY_CREATURE:
-            return "KILLED_BY_CREATURE";
-        case CRITERIA_TYPE_MANUAL_COMPLETE_CRITERIA:
-            return "MANUAL_COMPLETE_CRITERIA";
-        case CRITERIA_TYPE_COMPLETE_CHALLENGE_MODE_GUILD:
-            return "COMPLETE_CHALLENGE_MODE_GUILD";
-        case CRITERIA_TYPE_KILLED_BY_PLAYER:
-            return "KILLED_BY_PLAYER";
-        case CRITERIA_TYPE_FALL_WITHOUT_DYING:
-            return "FALL_WITHOUT_DYING";
-        case CRITERIA_TYPE_DEATHS_FROM:
-            return "DEATHS_FROM";
-        case CRITERIA_TYPE_COMPLETE_QUEST:
-            return "COMPLETE_QUEST";
-        case CRITERIA_TYPE_BE_SPELL_TARGET:
-            return "BE_SPELL_TARGET";
-        case CRITERIA_TYPE_CAST_SPELL:
-            return "CAST_SPELL";
-        case CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE:
-            return "BG_OBJECTIVE_CAPTURE";
-        case CRITERIA_TYPE_HONORABLE_KILL_AT_AREA:
-            return "HONORABLE_KILL_AT_AREA";
-        case CRITERIA_TYPE_WIN_ARENA:
-            return "WIN_ARENA";
-        case CRITERIA_TYPE_PLAY_ARENA:
-            return "PLAY_ARENA";
-        case CRITERIA_TYPE_LEARN_SPELL:
-            return "LEARN_SPELL";
-        case CRITERIA_TYPE_HONORABLE_KILL:
-            return "HONORABLE_KILL";
-        case CRITERIA_TYPE_OWN_ITEM:
-            return "OWN_ITEM";
-        case CRITERIA_TYPE_WIN_RATED_ARENA:
-            return "WIN_RATED_ARENA";
-        case CRITERIA_TYPE_HIGHEST_TEAM_RATING:
-            return "HIGHEST_TEAM_RATING";
-        case CRITERIA_TYPE_HIGHEST_PERSONAL_RATING:
-            return "HIGHEST_PERSONAL_RATING";
-        case CRITERIA_TYPE_LEARN_SKILL_LEVEL:
-            return "LEARN_SKILL_LEVEL";
-        case CRITERIA_TYPE_USE_ITEM:
-            return "USE_ITEM";
-        case CRITERIA_TYPE_LOOT_ITEM:
-            return "LOOT_ITEM";
-        case CRITERIA_TYPE_EXPLORE_AREA:
-            return "EXPLORE_AREA";
-        case CRITERIA_TYPE_OWN_RANK:
-            return "OWN_RANK";
-        case CRITERIA_TYPE_BUY_BANK_SLOT:
-            return "BUY_BANK_SLOT";
-        case CRITERIA_TYPE_GAIN_REPUTATION:
-            return "GAIN_REPUTATION";
-        case CRITERIA_TYPE_GAIN_EXALTED_REPUTATION:
-            return "GAIN_EXALTED_REPUTATION";
-        case CRITERIA_TYPE_VISIT_BARBER_SHOP:
-            return "VISIT_BARBER_SHOP";
-        case CRITERIA_TYPE_EQUIP_EPIC_ITEM:
-            return "EQUIP_EPIC_ITEM";
-        case CRITERIA_TYPE_ROLL_NEED_ON_LOOT:
-            return "ROLL_NEED_ON_LOOT";
-        case CRITERIA_TYPE_ROLL_GREED_ON_LOOT:
-            return "GREED_ON_LOOT";
-        case CRITERIA_TYPE_HK_CLASS:
-            return "HK_CLASS";
-        case CRITERIA_TYPE_HK_RACE:
-            return "HK_RACE";
-        case CRITERIA_TYPE_DO_EMOTE:
-            return "DO_EMOTE";
-        case CRITERIA_TYPE_HEALING_DONE:
-            return "HEALING_DONE";
-        case CRITERIA_TYPE_GET_KILLING_BLOWS:
-            return "GET_KILLING_BLOWS";
-        case CRITERIA_TYPE_EQUIP_ITEM:
-            return "EQUIP_ITEM";
-        case CRITERIA_TYPE_MONEY_FROM_VENDORS:
-            return "MONEY_FROM_VENDORS";
-        case CRITERIA_TYPE_GOLD_SPENT_FOR_TALENTS:
-            return "GOLD_SPENT_FOR_TALENTS";
-        case CRITERIA_TYPE_NUMBER_OF_TALENT_RESETS:
-            return "NUMBER_OF_TALENT_RESETS";
-        case CRITERIA_TYPE_MONEY_FROM_QUEST_REWARD:
-            return "MONEY_FROM_QUEST_REWARD";
-        case CRITERIA_TYPE_GOLD_SPENT_FOR_TRAVELLING:
-            return "GOLD_SPENT_FOR_TRAVELLING";
-        case CRITERIA_TYPE_DEFEAT_CREATURE_GROUP:
-            return "DEFEAT_CREATURE_GROUP";
-        case CRITERIA_TYPE_GOLD_SPENT_AT_BARBER:
-            return "GOLD_SPENT_AT_BARBER";
-        case CRITERIA_TYPE_GOLD_SPENT_FOR_MAIL:
-            return "GOLD_SPENT_FOR_MAIL";
-        case CRITERIA_TYPE_LOOT_MONEY:
-            return "LOOT_MONEY";
-        case CRITERIA_TYPE_USE_GAMEOBJECT:
-            return "USE_GAMEOBJECT";
-        case CRITERIA_TYPE_BE_SPELL_TARGET2:
-            return "BE_SPELL_TARGET2";
-        case CRITERIA_TYPE_SPECIAL_PVP_KILL:
-            return "SPECIAL_PVP_KILL";
-        case CRITERIA_TYPE_COMPLETE_CHALLENGE_MODE:
-            return "COMPLETE_CHALLENGE_MODE";
-        case CRITERIA_TYPE_FISH_IN_GAMEOBJECT:
-            return "FISH_IN_GAMEOBJECT";
-        case CRITERIA_TYPE_SEND_EVENT:
-            return "SEND_EVENT";
-        case CRITERIA_TYPE_ON_LOGIN:
-            return "ON_LOGIN";
-        case CRITERIA_TYPE_LEARN_SKILLLINE_SPELLS:
-            return "LEARN_SKILLLINE_SPELLS";
-        case CRITERIA_TYPE_WIN_DUEL:
-            return "WIN_DUEL";
-        case CRITERIA_TYPE_LOSE_DUEL:
-            return "LOSE_DUEL";
-        case CRITERIA_TYPE_KILL_CREATURE_TYPE:
-            return "KILL_CREATURE_TYPE";
-        case CRITERIA_TYPE_COOK_RECIPES_GUILD:
-            return "COOK_RECIPE_GUILD";
-        case CRITERIA_TYPE_GOLD_EARNED_BY_AUCTIONS:
-            return "GOLD_EARNED_BY_AUCTIONS";
-        case CRITERIA_TYPE_CREATE_AUCTION:
-            return "CREATE_AUCTION";
-        case CRITERIA_TYPE_HIGHEST_AUCTION_BID:
-            return "HIGHEST_AUCTION_BID";
-        case CRITERIA_TYPE_WON_AUCTIONS:
-            return "WON_AUCTIONS";
-        case CRITERIA_TYPE_HIGHEST_AUCTION_SOLD:
-            return "HIGHEST_AUCTION_SOLD";
-        case CRITERIA_TYPE_HIGHEST_GOLD_VALUE_OWNED:
-            return "HIGHEST_GOLD_VALUE_OWNED";
-        case CRITERIA_TYPE_GAIN_REVERED_REPUTATION:
-            return "GAIN_REVERED_REPUTATION";
-        case CRITERIA_TYPE_GAIN_HONORED_REPUTATION:
-            return "GAIN_HONORED_REPUTATION";
-        case CRITERIA_TYPE_KNOWN_FACTIONS:
-            return "KNOWN_FACTIONS";
-        case CRITERIA_TYPE_LOOT_EPIC_ITEM:
-            return "LOOT_EPIC_ITEM";
-        case CRITERIA_TYPE_RECEIVE_EPIC_ITEM:
-            return "RECEIVE_EPIC_ITEM";
-        case CRITERIA_TYPE_SEND_EVENT_SCENARIO:
-            return "SEND_EVENT_SCENARIO";
-        case CRITERIA_TYPE_ROLL_NEED:
-            return "ROLL_NEED";
-        case CRITERIA_TYPE_ROLL_GREED:
-            return "ROLL_GREED";
-        case CRITERIA_TYPE_RELEASE_SPIRIT:
-            return "RELEASE_SPIRIT";
-        case CRITERIA_TYPE_GARRISON_COMPLETE_DUNGEON_ENCOUNTER:
-            return "GARRISON_COMPLETE_DUNGEON_ENCOUNTER";
-        case CRITERIA_TYPE_HIGHEST_HIT_DEALT:
-            return "HIT_DEALT";
-        case CRITERIA_TYPE_HIGHEST_HIT_RECEIVED:
-            return "HIT_RECEIVED";
-        case CRITERIA_TYPE_TOTAL_DAMAGE_RECEIVED:
-            return "TOTAL_DAMAGE_RECEIVED";
-        case CRITERIA_TYPE_HIGHEST_HEAL_CAST:
-            return "HIGHEST_HEAL_CAST";
-        case CRITERIA_TYPE_TOTAL_HEALING_RECEIVED:
-            return "TOTAL_HEALING_RECEIVED";
-        case CRITERIA_TYPE_HIGHEST_HEALING_RECEIVED:
-            return "HIGHEST_HEALING_RECEIVED";
-        case CRITERIA_TYPE_QUEST_ABANDONED:
-            return "QUEST_ABANDONED";
-        case CRITERIA_TYPE_FLIGHT_PATHS_TAKEN:
-            return "FLIGHT_PATHS_TAKEN";
-        case CRITERIA_TYPE_LOOT_TYPE:
-            return "LOOT_TYPE";
-        case CRITERIA_TYPE_CAST_SPELL2:
-            return "CAST_SPELL2";
-        case CRITERIA_TYPE_LEARN_SKILL_LINE:
-            return "LEARN_SKILL_LINE";
-        case CRITERIA_TYPE_EARN_HONORABLE_KILL:
-            return "EARN_HONORABLE_KILL";
-        case CRITERIA_TYPE_ACCEPTED_SUMMONINGS:
-            return "ACCEPTED_SUMMONINGS";
-        case CRITERIA_TYPE_EARN_ACHIEVEMENT_POINTS:
-            return "EARN_ACHIEVEMENT_POINTS";
-        case CRITERIA_TYPE_COMPLETE_LFG_DUNGEON:
-            return "COMPLETE_LFG_DUNGEON";
-        case CRITERIA_TYPE_USE_LFD_TO_GROUP_WITH_PLAYERS:
-            return "USE_LFD_TO_GROUP_WITH_PLAYERS";
-        case CRITERIA_TYPE_LFG_VOTE_KICKS_INITIATED_BY_PLAYER:
-            return "LFG_VOTE_KICKS_INITIATED_BY_PLAYER";
-        case CRITERIA_TYPE_LFG_VOTE_KICKS_NOT_INIT_BY_PLAYER:
-            return "LFG_VOTE_KICKS_NOT_INIT_BY_PLAYER";
-        case CRITERIA_TYPE_BE_KICKED_FROM_LFG:
-            return "BE_KICKED_FROM_LFG";
-        case CRITERIA_TYPE_LFG_LEAVES:
-            return "LFG_LEAVES";
-        case CRITERIA_TYPE_SPENT_GOLD_GUILD_REPAIRS:
-            return "SPENT_GOLD_GUILD_REPAIRS";
-        case CRITERIA_TYPE_REACH_GUILD_LEVEL:
-            return "REACH_GUILD_LEVEL";
-        case CRITERIA_TYPE_CRAFT_ITEMS_GUILD:
-            return "CRAFT_ITEMS_GUILD";
-        case CRITERIA_TYPE_CATCH_FROM_POOL:
-            return "CATCH_FROM_POOL";
-        case CRITERIA_TYPE_BUY_GUILD_BANK_SLOTS:
-            return "BUY_GUILD_BANK_SLOTS";
-        case CRITERIA_TYPE_EARN_GUILD_ACHIEVEMENT_POINTS:
-            return "EARN_GUILD_ACHIEVEMENT_POINTS";
-        case CRITERIA_TYPE_WIN_RATED_BATTLEGROUND:
-            return "WIN_RATED_BATTLEGROUND";
-        case CRITERIA_TYPE_REACH_BG_RATING:
-            return "REACH_BG_RATING";
-        case CRITERIA_TYPE_BUY_GUILD_TABARD:
-            return "BUY_GUILD_TABARD";
-        case CRITERIA_TYPE_COMPLETE_QUESTS_GUILD:
-            return "COMPLETE_QUESTS_GUILD";
-        case CRITERIA_TYPE_HONORABLE_KILLS_GUILD:
-            return "HONORABLE_KILLS_GUILD";
-        case CRITERIA_TYPE_KILL_CREATURE_TYPE_GUILD:
-            return "KILL_CREATURE_TYPE_GUILD";
-        case CRITERIA_TYPE_COUNT_OF_LFG_QUEUE_BOOSTS_BY_TANK:
-            return "COUNT_OF_LFG_QUEUE_BOOSTS_BY_TANK";
-        case CRITERIA_TYPE_COMPLETE_GUILD_CHALLENGE_TYPE:
-            return "GUILD_CHALLENGE_TYPE";
-        case CRITERIA_TYPE_COMPLETE_GUILD_CHALLENGE:
-            return "GUILD_CHALLENGE";
-        case CRITERIA_TYPE_LFR_DUNGEONS_COMPLETED:
-            return "LFR_DUNGEONS_COMPLETED";
-        case CRITERIA_TYPE_LFR_LEAVES:
-            return "LFR_LEAVES";
-        case CRITERIA_TYPE_LFR_VOTE_KICKS_INITIATED_BY_PLAYER:
-            return "LFR_VOTE_KICKS_INITIATED_BY_PLAYER";
-        case CRITERIA_TYPE_LFR_VOTE_KICKS_NOT_INIT_BY_PLAYER:
-            return "LFR_VOTE_KICKS_NOT_INIT_BY_PLAYER";
-        case CRITERIA_TYPE_BE_KICKED_FROM_LFR:
-            return "BE_KICKED_FROM_LFR";
-        case CRITERIA_TYPE_COUNT_OF_LFR_QUEUE_BOOSTS_BY_TANK:
-            return "COUNT_OF_LFR_QUEUE_BOOSTS_BY_TANK";
-        case CRITERIA_TYPE_COMPLETE_SCENARIO_COUNT:
-            return "COMPLETE_SCENARIO_COUNT";
-        case CRITERIA_TYPE_COMPLETE_SCENARIO:
-            return "COMPLETE_SCENARIO";
-        case CRITERIA_TYPE_REACH_AREATRIGGER_WITH_ACTIONSET:
-            return "REACH_AREATRIGGER_WITH_ACTIONSET";
-        case CRITERIA_TYPE_ENTER_AREA:
-            return "ENTER_AREA";
-        case CRITERIA_TYPE_LEAVE_AREA:
-            return "LEAVE_AREA";
-        case CRITERIA_TYPE_COMPLETE_DUNGEON_ENCOUNTER:
-            return "COMPLETE_DUNGEON_ENCOUNTER";
-        case CRITERIA_TYPE_PLACE_GARRISON_BUILDING:
-            return "PLACE_GARRISON_BUILDING";
-        case CRITERIA_TYPE_UPGRADE_GARRISON_BUILDING:
-            return "UPGRADE_GARRISON_BUILDING";
-        case CRITERIA_TYPE_CONSTRUCT_GARRISON_BUILDING:
-            return "CONSTRUCT_GARRISON_BUILDING";
-        case CRITERIA_TYPE_UPGRADE_GARRISON:
-            return "UPGRADE_GARRISON";
-        case CRITERIA_TYPE_START_GARRISON_MISSION:
-            return "START_GARRISON_MISSION";
-        case CRITERIA_TYPE_START_ORDER_HALL_MISSION:
-            return "START_ORDER_HALL_MISSION";
-        case CRITERIA_TYPE_COMPLETE_GARRISON_MISSION_COUNT:
-            return "COMPLETE_GARRISON_MISSION_COUNT";
-        case CRITERIA_TYPE_COMPLETE_GARRISON_MISSION:
-            return "COMPLETE_GARRISON_MISSION";
-        case CRITERIA_TYPE_RECRUIT_GARRISON_FOLLOWER_COUNT:
-            return "RECRUIT_GARRISON_FOLLOWER_COUNT";
-        case CRITERIA_TYPE_RECRUIT_GARRISON_FOLLOWER:
-            return "RECRUIT_GARRISON_FOLLOWER";
-        case CRITERIA_TYPE_LEARN_GARRISON_BLUEPRINT_COUNT:
-            return "LEARN_GARRISON_BLUEPRINT_COUNT";
-        case CRITERIA_TYPE_COMPLETE_GARRISON_SHIPMENT:
-            return "COMPLETE_GARRISON_SHIPMENT";
-        case CRITERIA_TYPE_RAISE_GARRISON_FOLLOWER_ITEM_LEVEL:
-            return "RAISE_GARRISON_FOLLOWER_ITEM_LEVEL";
-        case CRITERIA_TYPE_RAISE_GARRISON_FOLLOWER_LEVEL:
-            return "RAISE_GARRISON_FOLLOWER_LEVEL";
-        case CRITERIA_TYPE_OWN_TOY:
-            return "OWN_TOY";
-        case CRITERIA_TYPE_OWN_TOY_COUNT:
-            return "OWN_TOY_COUNT";
-        case CRITERIA_TYPE_RECRUIT_GARRISON_FOLLOWER_WITH_QUALITY:
-            return "RECRUIT_GARRISON_FOLLOWER_WITH_QUALITY";
-        case CRITERIA_TYPE_OWN_HEIRLOOMS:
-            return "OWN_HEIRLOOMS";
-        case CRITERIA_TYPE_ARTIFACT_POWER_EARNED:
-            return "ARTIFACT_POWER_EARNED";
-        case CRITERIA_TYPE_ARTIFACT_TRAITS_UNLOCKED:
-            return "ARTIFACT_TRAITS_UNLOCKED";
-        case CRITERIA_TYPE_HONOR_LEVEL_REACHED:
-            return "HONOR_LEVEL_REACHED";
-        case CRITERIA_TYPE_PRESTIGE_REACHED:
-            return "PRESTIGE_REACHED";
-        case CRITERIA_TYPE_ORDER_HALL_TALENT_LEARNED:
-            return "ORDER_HALL_TALENT_LEARNED";
-        case CRITERIA_TYPE_APPEARANCE_UNLOCKED_BY_SLOT:
-            return "APPEARANCE_UNLOCKED_BY_SLOT";
-        case CRITERIA_TYPE_ORDER_HALL_RECRUIT_TROOP:
-            return "ORDER_HALL_RECRUIT_TROOP";
-        case CRITERIA_TYPE_COMPLETE_WORLD_QUEST:
-            return "COMPLETE_WORLD_QUEST";
-        case CRITERIA_TYPE_TRANSMOG_SET_UNLOCKED:
-            return "TRANSMOG_SET_UNLOCKED";
-        case CRITERIA_TYPE_GAIN_PARAGON_REPUTATION:
-            return "GAIN_PARAGON_REPUTATION";
-        case CRITERIA_TYPE_EARN_HONOR_XP:
-            return "EARN_HONOR_XP";
-        case CRITERIA_TYPE_RELIC_TALENT_UNLOCKED:
-            return "RELIC_TALENT_UNLOCKED";
+    case CRITERIA_TYPE_KILL_CREATURE:
+        return "KILL_CREATURE";
+    case CRITERIA_TYPE_WIN_BG:
+        return "TYPE_WIN_BG";
+    case CRITERIA_TYPE_COMPLETE_ARCHAEOLOGY_PROJECTS:
+        return "COMPLETE_RESEARCH";
+    case CRITERIA_TYPE_SURVEY_GAMEOBJECT:
+        return "SURVEY_GAMEOBJECT";
+    case CRITERIA_TYPE_REACH_LEVEL:
+        return "REACH_LEVEL";
+    case CRITERIA_TYPE_CLEAR_DIGSITE:
+        return "CLEAR_DIGSITE";
+    case CRITERIA_TYPE_REACH_SKILL_LEVEL:
+        return "REACH_SKILL_LEVEL";
+    case CRITERIA_TYPE_COMPLETE_ACHIEVEMENT:
+        return "COMPLETE_ACHIEVEMENT";
+    case CRITERIA_TYPE_COMPLETE_QUEST_COUNT:
+        return "COMPLETE_QUEST_COUNT";
+    case CRITERIA_TYPE_COMPLETE_DAILY_QUEST_DAILY:
+        return "COMPLETE_DAILY_QUEST_DAILY";
+    case CRITERIA_TYPE_COMPLETE_QUESTS_IN_ZONE:
+        return "COMPLETE_QUESTS_IN_ZONE";
+    case CRITERIA_TYPE_CURRENCY:
+        return "CURRENCY";
+    case CRITERIA_TYPE_DAMAGE_DONE:
+        return "DAMAGE_DONE";
+    case CRITERIA_TYPE_COMPLETE_DAILY_QUEST:
+        return "COMPLETE_DAILY_QUEST";
+    case CRITERIA_TYPE_COMPLETE_BATTLEGROUND:
+        return "COMPLETE_BATTLEGROUND";
+    case CRITERIA_TYPE_DEATH_AT_MAP:
+        return "DEATH_AT_MAP";
+    case CRITERIA_TYPE_DEATH:
+        return "DEATH";
+    case CRITERIA_TYPE_DEATH_IN_DUNGEON:
+        return "DEATH_IN_DUNGEON";
+    case CRITERIA_TYPE_COMPLETE_RAID:
+        return "COMPLETE_RAID";
+    case CRITERIA_TYPE_KILLED_BY_CREATURE:
+        return "KILLED_BY_CREATURE";
+    case CRITERIA_TYPE_MANUAL_COMPLETE_CRITERIA:
+        return "MANUAL_COMPLETE_CRITERIA";
+    case CRITERIA_TYPE_COMPLETE_CHALLENGE_MODE_GUILD:
+        return "COMPLETE_CHALLENGE_MODE_GUILD";
+    case CRITERIA_TYPE_KILLED_BY_PLAYER:
+        return "KILLED_BY_PLAYER";
+    case CRITERIA_TYPE_FALL_WITHOUT_DYING:
+        return "FALL_WITHOUT_DYING";
+    case CRITERIA_TYPE_DEATHS_FROM:
+        return "DEATHS_FROM";
+    case CRITERIA_TYPE_COMPLETE_QUEST:
+        return "COMPLETE_QUEST";
+    case CRITERIA_TYPE_BE_SPELL_TARGET:
+        return "BE_SPELL_TARGET";
+    case CRITERIA_TYPE_CAST_SPELL:
+        return "CAST_SPELL";
+    case CRITERIA_TYPE_BG_OBJECTIVE_CAPTURE:
+        return "BG_OBJECTIVE_CAPTURE";
+    case CRITERIA_TYPE_HONORABLE_KILL_AT_AREA:
+        return "HONORABLE_KILL_AT_AREA";
+    case CRITERIA_TYPE_WIN_ARENA:
+        return "WIN_ARENA";
+    case CRITERIA_TYPE_PLAY_ARENA:
+        return "PLAY_ARENA";
+    case CRITERIA_TYPE_LEARN_SPELL:
+        return "LEARN_SPELL";
+    case CRITERIA_TYPE_HONORABLE_KILL:
+        return "HONORABLE_KILL";
+    case CRITERIA_TYPE_OWN_ITEM:
+        return "OWN_ITEM";
+    case CRITERIA_TYPE_WIN_RATED_ARENA:
+        return "WIN_RATED_ARENA";
+    case CRITERIA_TYPE_HIGHEST_TEAM_RATING:
+        return "HIGHEST_TEAM_RATING";
+    case CRITERIA_TYPE_HIGHEST_PERSONAL_RATING:
+        return "HIGHEST_PERSONAL_RATING";
+    case CRITERIA_TYPE_LEARN_SKILL_LEVEL:
+        return "LEARN_SKILL_LEVEL";
+    case CRITERIA_TYPE_USE_ITEM:
+        return "USE_ITEM";
+    case CRITERIA_TYPE_LOOT_ITEM:
+        return "LOOT_ITEM";
+    case CRITERIA_TYPE_EXPLORE_AREA:
+        return "EXPLORE_AREA";
+    case CRITERIA_TYPE_OWN_RANK:
+        return "OWN_RANK";
+    case CRITERIA_TYPE_BUY_BANK_SLOT:
+        return "BUY_BANK_SLOT";
+    case CRITERIA_TYPE_GAIN_REPUTATION:
+        return "GAIN_REPUTATION";
+    case CRITERIA_TYPE_GAIN_EXALTED_REPUTATION:
+        return "GAIN_EXALTED_REPUTATION";
+    case CRITERIA_TYPE_VISIT_BARBER_SHOP:
+        return "VISIT_BARBER_SHOP";
+    case CRITERIA_TYPE_EQUIP_EPIC_ITEM:
+        return "EQUIP_EPIC_ITEM";
+    case CRITERIA_TYPE_ROLL_NEED_ON_LOOT:
+        return "ROLL_NEED_ON_LOOT";
+    case CRITERIA_TYPE_ROLL_GREED_ON_LOOT:
+        return "GREED_ON_LOOT";
+    case CRITERIA_TYPE_HK_CLASS:
+        return "HK_CLASS";
+    case CRITERIA_TYPE_HK_RACE:
+        return "HK_RACE";
+    case CRITERIA_TYPE_DO_EMOTE:
+        return "DO_EMOTE";
+    case CRITERIA_TYPE_HEALING_DONE:
+        return "HEALING_DONE";
+    case CRITERIA_TYPE_GET_KILLING_BLOWS:
+        return "GET_KILLING_BLOWS";
+    case CRITERIA_TYPE_EQUIP_ITEM:
+        return "EQUIP_ITEM";
+    case CRITERIA_TYPE_MONEY_FROM_VENDORS:
+        return "MONEY_FROM_VENDORS";
+    case CRITERIA_TYPE_GOLD_SPENT_FOR_TALENTS:
+        return "GOLD_SPENT_FOR_TALENTS";
+    case CRITERIA_TYPE_NUMBER_OF_TALENT_RESETS:
+        return "NUMBER_OF_TALENT_RESETS";
+    case CRITERIA_TYPE_MONEY_FROM_QUEST_REWARD:
+        return "MONEY_FROM_QUEST_REWARD";
+    case CRITERIA_TYPE_GOLD_SPENT_FOR_TRAVELLING:
+        return "GOLD_SPENT_FOR_TRAVELLING";
+    case CRITERIA_TYPE_DEFEAT_CREATURE_GROUP:
+        return "DEFEAT_CREATURE_GROUP";
+    case CRITERIA_TYPE_GOLD_SPENT_AT_BARBER:
+        return "GOLD_SPENT_AT_BARBER";
+    case CRITERIA_TYPE_GOLD_SPENT_FOR_MAIL:
+        return "GOLD_SPENT_FOR_MAIL";
+    case CRITERIA_TYPE_LOOT_MONEY:
+        return "LOOT_MONEY";
+    case CRITERIA_TYPE_USE_GAMEOBJECT:
+        return "USE_GAMEOBJECT";
+    case CRITERIA_TYPE_BE_SPELL_TARGET2:
+        return "BE_SPELL_TARGET2";
+    case CRITERIA_TYPE_SPECIAL_PVP_KILL:
+        return "SPECIAL_PVP_KILL";
+    case CRITERIA_TYPE_COMPLETE_CHALLENGE_MODE:
+        return "COMPLETE_CHALLENGE_MODE";
+    case CRITERIA_TYPE_FISH_IN_GAMEOBJECT:
+        return "FISH_IN_GAMEOBJECT";
+    case CRITERIA_TYPE_SEND_EVENT:
+        return "SEND_EVENT";
+    case CRITERIA_TYPE_ON_LOGIN:
+        return "ON_LOGIN";
+    case CRITERIA_TYPE_LEARN_SKILLLINE_SPELLS:
+        return "LEARN_SKILLLINE_SPELLS";
+    case CRITERIA_TYPE_WIN_DUEL:
+        return "WIN_DUEL";
+    case CRITERIA_TYPE_LOSE_DUEL:
+        return "LOSE_DUEL";
+    case CRITERIA_TYPE_KILL_CREATURE_TYPE:
+        return "KILL_CREATURE_TYPE";
+    case CRITERIA_TYPE_COOK_RECIPES_GUILD:
+        return "COOK_RECIPE_GUILD";
+    case CRITERIA_TYPE_GOLD_EARNED_BY_AUCTIONS:
+        return "GOLD_EARNED_BY_AUCTIONS";
+    case CRITERIA_TYPE_CREATE_AUCTION:
+        return "CREATE_AUCTION";
+    case CRITERIA_TYPE_HIGHEST_AUCTION_BID:
+        return "HIGHEST_AUCTION_BID";
+    case CRITERIA_TYPE_WON_AUCTIONS:
+        return "WON_AUCTIONS";
+    case CRITERIA_TYPE_HIGHEST_AUCTION_SOLD:
+        return "HIGHEST_AUCTION_SOLD";
+    case CRITERIA_TYPE_HIGHEST_GOLD_VALUE_OWNED:
+        return "HIGHEST_GOLD_VALUE_OWNED";
+    case CRITERIA_TYPE_GAIN_REVERED_REPUTATION:
+        return "GAIN_REVERED_REPUTATION";
+    case CRITERIA_TYPE_GAIN_HONORED_REPUTATION:
+        return "GAIN_HONORED_REPUTATION";
+    case CRITERIA_TYPE_KNOWN_FACTIONS:
+        return "KNOWN_FACTIONS";
+    case CRITERIA_TYPE_LOOT_EPIC_ITEM:
+        return "LOOT_EPIC_ITEM";
+    case CRITERIA_TYPE_RECEIVE_EPIC_ITEM:
+        return "RECEIVE_EPIC_ITEM";
+    case CRITERIA_TYPE_SEND_EVENT_SCENARIO:
+        return "SEND_EVENT_SCENARIO";
+    case CRITERIA_TYPE_ROLL_NEED:
+        return "ROLL_NEED";
+    case CRITERIA_TYPE_ROLL_GREED:
+        return "ROLL_GREED";
+    case CRITERIA_TYPE_RELEASE_SPIRIT:
+        return "RELEASE_SPIRIT";
+
+    case CRITERIA_TYPE_GARRISON_COMPLETE_DUNGEON_ENCOUNTER:
+        return "GARRISON_COMPLETE_DUNGEON_ENCOUNTER";
+    case CRITERIA_TYPE_HIGHEST_HIT_DEALT:
+        return "HIT_DEALT";
+    case CRITERIA_TYPE_HIGHEST_HIT_RECEIVED:
+        return "HIT_RECEIVED";
+    case CRITERIA_TYPE_TOTAL_DAMAGE_RECEIVED:
+        return "TOTAL_DAMAGE_RECEIVED";
+    case CRITERIA_TYPE_HIGHEST_HEAL_CAST:
+        return "HIGHEST_HEAL_CAST";
+    case CRITERIA_TYPE_TOTAL_HEALING_RECEIVED:
+        return "TOTAL_HEALING_RECEIVED";
+    case CRITERIA_TYPE_HIGHEST_HEALING_RECEIVED:
+        return "HIGHEST_HEALING_RECEIVED";
+    case CRITERIA_TYPE_QUEST_ABANDONED:
+        return "QUEST_ABANDONED";
+    case CRITERIA_TYPE_FLIGHT_PATHS_TAKEN:
+        return "FLIGHT_PATHS_TAKEN";
+    case CRITERIA_TYPE_LOOT_TYPE:
+        return "LOOT_TYPE";
+    case CRITERIA_TYPE_CAST_SPELL2:
+        return "CAST_SPELL2";
+    case CRITERIA_TYPE_LEARN_SKILL_LINE:
+        return "LEARN_SKILL_LINE";
+    case CRITERIA_TYPE_EARN_HONORABLE_KILL:
+        return "EARN_HONORABLE_KILL";
+    case CRITERIA_TYPE_ACCEPTED_SUMMONINGS:
+        return "ACCEPTED_SUMMONINGS";
+    case CRITERIA_TYPE_EARN_ACHIEVEMENT_POINTS:
+        return "EARN_ACHIEVEMENT_POINTS";
+    case CRITERIA_TYPE_COMPLETE_LFG_DUNGEON:
+        return "COMPLETE_LFG_DUNGEON";
+    case CRITERIA_TYPE_USE_LFD_TO_GROUP_WITH_PLAYERS:
+        return "USE_LFD_TO_GROUP_WITH_PLAYERS";
+    case CRITERIA_TYPE_LFG_VOTE_KICKS_INITIATED_BY_PLAYER:
+        return "LFG_VOTE_KICKS_INITIATED_BY_PLAYER";
+    case CRITERIA_TYPE_LFG_VOTE_KICKS_NOT_INIT_BY_PLAYER:
+        return "LFG_VOTE_KICKS_NOT_INIT_BY_PLAYER";
+    case CRITERIA_TYPE_BE_KICKED_FROM_LFG:
+        return "BE_KICKED_FROM_LFG";
+    case CRITERIA_TYPE_LFG_LEAVES:
+        return "LFG_LEAVES";
+    case CRITERIA_TYPE_SPENT_GOLD_GUILD_REPAIRS:
+        return "SPENT_GOLD_GUILD_REPAIRS";
+    case CRITERIA_TYPE_REACH_GUILD_LEVEL:
+        return "REACH_GUILD_LEVEL";
+    case CRITERIA_TYPE_CRAFT_ITEMS_GUILD:
+        return "CRAFT_ITEMS_GUILD";
+    case CRITERIA_TYPE_CATCH_FROM_POOL:
+        return "CATCH_FROM_POOL";
+    case CRITERIA_TYPE_BUY_GUILD_BANK_SLOTS:
+        return "BUY_GUILD_BANK_SLOTS";
+    case CRITERIA_TYPE_EARN_GUILD_ACHIEVEMENT_POINTS:
+        return "EARN_GUILD_ACHIEVEMENT_POINTS";
+    case CRITERIA_TYPE_WIN_RATED_BATTLEGROUND:
+        return "WIN_RATED_BATTLEGROUND";
+    case CRITERIA_TYPE_REACH_BG_RATING:
+        return "REACH_BG_RATING";
+    case CRITERIA_TYPE_BUY_GUILD_TABARD:
+        return "BUY_GUILD_TABARD";
+    case CRITERIA_TYPE_COMPLETE_QUESTS_GUILD:
+        return "COMPLETE_QUESTS_GUILD";
+    case CRITERIA_TYPE_HONORABLE_KILLS_GUILD:
+        return "HONORABLE_KILLS_GUILD";
+    case CRITERIA_TYPE_KILL_CREATURE_TYPE_GUILD:
+        return "KILL_CREATURE_TYPE_GUILD";
+    case CRITERIA_TYPE_COUNT_OF_LFG_QUEUE_BOOSTS_BY_TANK:
+        return "COUNT_OF_LFG_QUEUE_BOOSTS_BY_TANK";
+    case CRITERIA_TYPE_COMPLETE_GUILD_CHALLENGE_TYPE:
+        return "GUILD_CHALLENGE_TYPE";
+    case CRITERIA_TYPE_COMPLETE_GUILD_CHALLENGE:
+        return "GUILD_CHALLENGE";
+    case CRITERIA_TYPE_LFR_DUNGEONS_COMPLETED:
+        return "LFR_DUNGEONS_COMPLETED";
+    case CRITERIA_TYPE_LFR_LEAVES:
+        return "LFR_LEAVES";
+    case CRITERIA_TYPE_LFR_VOTE_KICKS_INITIATED_BY_PLAYER:
+        return "LFR_VOTE_KICKS_INITIATED_BY_PLAYER";
+    case CRITERIA_TYPE_LFR_VOTE_KICKS_NOT_INIT_BY_PLAYER:
+        return "LFR_VOTE_KICKS_NOT_INIT_BY_PLAYER";
+    case CRITERIA_TYPE_BE_KICKED_FROM_LFR:
+        return "BE_KICKED_FROM_LFR";
+    case CRITERIA_TYPE_COUNT_OF_LFR_QUEUE_BOOSTS_BY_TANK:
+        return "COUNT_OF_LFR_QUEUE_BOOSTS_BY_TANK";
+    case CRITERIA_TYPE_COMPLETE_SCENARIO_COUNT:
+        return "COMPLETE_SCENARIO_COUNT";
+    case CRITERIA_TYPE_COMPLETE_SCENARIO:
+        return "COMPLETE_SCENARIO";
+    case CRITERIA_TYPE_REACH_AREATRIGGER_WITH_ACTIONSET:
+        return "REACH_AREATRIGGER_WITH_ACTIONSET";
+
+    case CRITERIA_TYPE_CAPTURE_SPECIFIC_BATTLEPET:
+        return "OWN_BATTLE_PET";
+    case CRITERIA_TYPE_COLLECT_BATTLEPET:
+        return "OWN_BATTLE_PET_COUNT";
+    case CRITERIA_TYPE_CAPTURE_PET_IN_BATTLE:
+        return "CAPTURE_BATTLE_PET";
+    case CRITERIA_TYPE_BATTLEPET_WIN:
+        return "WIN_PET_BATTLE";
+    case CRITERIA_TYPE_BATTLEPET_LEVEL_UP:
+        return "LEVEL_BATTLE_PET";
+    case CRITERIA_TYPE_CAPTURE_BATTLE_PET_CREDIT:
+        return "CAPTURE_BATTLE_PET_CREDIT";
+    case CRITERIA_TYPE_LEVEL_BATTLE_PET_CREDIT:
+        return "LEVEL_BATTLE_PET_CREDIT";
+
+    case CRITERIA_TYPE_ENTER_AREA:
+        return "ENTER_AREA";
+    case CRITERIA_TYPE_LEAVE_AREA:
+        return "LEAVE_AREA";
+    case CRITERIA_TYPE_COMPLETE_DUNGEON_ENCOUNTER:
+        return "COMPLETE_DUNGEON_ENCOUNTER";
+    case CRITERIA_TYPE_PLACE_GARRISON_BUILDING:
+        return "PLACE_GARRISON_BUILDING";
+    case CRITERIA_TYPE_UPGRADE_GARRISON_BUILDING:
+        return "UPGRADE_GARRISON_BUILDING";
+    case CRITERIA_TYPE_CONSTRUCT_GARRISON_BUILDING:
+        return "CONSTRUCT_GARRISON_BUILDING";
+    case CRITERIA_TYPE_UPGRADE_GARRISON:
+        return "UPGRADE_GARRISON";
+    case CRITERIA_TYPE_START_GARRISON_MISSION:
+        return "START_GARRISON_MISSION";
+    case CRITERIA_TYPE_START_ORDER_HALL_MISSION:
+        return "START_ORDER_HALL_MISSION";
+    case CRITERIA_TYPE_COMPLETE_GARRISON_MISSION_COUNT:
+        return "COMPLETE_GARRISON_MISSION_COUNT";
+    case CRITERIA_TYPE_COMPLETE_GARRISON_MISSION:
+        return "COMPLETE_GARRISON_MISSION";
+    case CRITERIA_TYPE_RECRUIT_GARRISON_FOLLOWER_COUNT:
+        return "RECRUIT_GARRISON_FOLLOWER_COUNT";
+    case CRITERIA_TYPE_RECRUIT_GARRISON_FOLLOWER:
+        return "RECRUIT_GARRISON_FOLLOWER";
+    case CRITERIA_TYPE_LEARN_GARRISON_BLUEPRINT_COUNT:
+        return "LEARN_GARRISON_BLUEPRINT_COUNT";
+    case CRITERIA_TYPE_COMPLETE_GARRISON_SHIPMENT:
+        return "COMPLETE_GARRISON_SHIPMENT";
+    case CRITERIA_TYPE_RAISE_GARRISON_FOLLOWER_ITEM_LEVEL:
+        return "RAISE_GARRISON_FOLLOWER_ITEM_LEVEL";
+    case CRITERIA_TYPE_RAISE_GARRISON_FOLLOWER_LEVEL:
+        return "RAISE_GARRISON_FOLLOWER_LEVEL";
+    case CRITERIA_TYPE_OWN_TOY:
+        return "OWN_TOY";
+    case CRITERIA_TYPE_OWN_TOY_COUNT:
+        return "OWN_TOY_COUNT";
+    case CRITERIA_TYPE_RECRUIT_GARRISON_FOLLOWER_WITH_QUALITY:
+        return "RECRUIT_GARRISON_FOLLOWER_WITH_QUALITY";
+    case CRITERIA_TYPE_OWN_HEIRLOOMS:
+        return "OWN_HEIRLOOMS";
+    case CRITERIA_TYPE_ARTIFACT_POWER_EARNED:
+        return "ARTIFACT_POWER_EARNED";
+    case CRITERIA_TYPE_ARTIFACT_TRAITS_UNLOCKED:
+        return "ARTIFACT_TRAITS_UNLOCKED";
+    case CRITERIA_TYPE_HONOR_LEVEL_REACHED:
+        return "HONOR_LEVEL_REACHED";
+    case CRITERIA_TYPE_PRESTIGE_REACHED:
+        return "PRESTIGE_REACHED";
+    case CRITERIA_TYPE_ORDER_HALL_TALENT_LEARNED:
+        return "ORDER_HALL_TALENT_LEARNED";
+    case CRITERIA_TYPE_APPEARANCE_UNLOCKED_BY_SLOT:
+        return "APPEARANCE_UNLOCKED_BY_SLOT";
+    case CRITERIA_TYPE_ORDER_HALL_RECRUIT_TROOP:
+        return "ORDER_HALL_RECRUIT_TROOP";
+    case CRITERIA_TYPE_COMPLETE_WORLD_QUEST:
+        return "COMPLETE_WORLD_QUEST";
+    case CRITERIA_TYPE_TRANSMOG_SET_UNLOCKED:
+        return "TRANSMOG_SET_UNLOCKED";
+    case CRITERIA_TYPE_GAIN_PARAGON_REPUTATION:
+        return "GAIN_PARAGON_REPUTATION";
+    case CRITERIA_TYPE_EARN_HONOR_XP:
+        return "EARN_HONOR_XP";
+    case CRITERIA_TYPE_RELIC_TALENT_UNLOCKED:
+        return "RELIC_TALENT_UNLOCKED";
     }
     return "MISSING_TYPE";
 }
@@ -2718,8 +2562,7 @@ void CriteriaMgr::LoadCriteriaData()
 
         // counting data by and data types
         ++count;
-    }
-    while (result->NextRow());
+    } while (result->NextRow());
 
     TC_LOG_INFO("server.loading", ">> Loaded %u additional criteria data in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
 }

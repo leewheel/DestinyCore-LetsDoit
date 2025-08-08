@@ -885,6 +885,12 @@ struct CriteriaEntry
         // CRITERIA_TYPE_LOOT_TYPE              = 109
         uint32 LootType;
 
+        // CRITERIA_TYPE_COMPLETE_SCENARIO      = 152
+        uint32 ScenarioID;
+
+        // CRITERIA_TYPE_REACH_AREATRIGGER_WITH_ACTIONSET 153
+        uint32 AreaTriggerID;
+
         // CRITERIA_TYPE_COMPLETE_DUNGEON_ENCOUNTER = 165
         uint32 DungeonEncounterID;
 

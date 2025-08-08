@@ -180,7 +180,7 @@ void QuestObjectiveCriteriaMgr::ResetCriteria(CriteriaTypes type, uint64 miscVal
         for (CriteriaTree const* tree : *trees)
         {
             // don't update already completed criteria if not forced
-            if (!(IsCompletedCriteriaTree(tree) && !evenIfCriteriaComplete))
+            if (!(CheckCompletedCriteriaTree(tree, _owner) && !evenIfCriteriaComplete))
             {
                 allComplete = false;
                 break;
