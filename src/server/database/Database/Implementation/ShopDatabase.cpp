@@ -15,10 +15,23 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "DatabaseEnv.h"
+#include "ShopDatabase.h"
+#include "PreparedStatement.h"
 
-DatabaseWorkerPool<WorldDatabaseConnection> WorldDatabase;
-DatabaseWorkerPool<CharacterDatabaseConnection> CharacterDatabase;
-DatabaseWorkerPool<LoginDatabaseConnection> LoginDatabase;
-DatabaseWorkerPool<HotfixDatabaseConnection> HotfixDatabase;
-DatabaseWorkerPool<ShopDatabaseConnection> ShopDatabase;
+void ShopDatabaseConnection::DoPrepareStatements()
+{
+    if (!m_reconnecting)
+        m_stmts.resize(MAX_SHOPDATABASE_STATEMENTS);
+}
+
+ShopDatabaseConnection::ShopDatabaseConnection(MySQLConnectionInfo& connInfo) : MySQLConnection(connInfo)
+{
+}
+
+ShopDatabaseConnection::ShopDatabaseConnection(ProducerConsumerQueue<SQLOperation*>* q, MySQLConnectionInfo& connInfo) : MySQLConnection(q, connInfo)
+{
+}
+
+ShopDatabaseConnection::~ShopDatabaseConnection()
+{
+}

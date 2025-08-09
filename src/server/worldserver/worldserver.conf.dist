@@ -1,5 +1,5 @@
 ################################################
-# Trinity Core World Server configuration file #
+# DestinyCore World Server configuration file  #
 ################################################
 [worldserver]
 
@@ -98,10 +98,11 @@ LogsDir = ""
 #                                                                 section my.ini)
 #                     ".;/path/to/unix_socket;username;password;database" - (use Unix sockets on
 #                                                                           Unix/Linux)
-#        Default:     "127.0.0.1;3306;trinity;trinity;auth"       - (LoginDatabaseInfo)
-#                     "127.0.0.1;3306;trinity;trinity;world"      - (WorldDatabaseInfo)
-#                     "127.0.0.1;3306;trinity;trinity;characters" - (CharacterDatabaseInfo)
-#                     "127.0.0.1;3306;trinity;trinity;hotfixes"   - (HotfixDatabaseInfo)
+#        Default:     "127.0.0.1;3306;destiny;destiny;auth"       - (LoginDatabaseInfo)
+#                     "127.0.0.1;3306;destiny;destiny;world"      - (WorldDatabaseInfo)
+#                     "127.0.0.1;3306;destiny;destiny;characters" - (CharacterDatabaseInfo)
+#                     "127.0.0.1;3306;destiny;destiny;hotfixes"   - (HotfixDatabaseInfo)
+#					  "127.0.0.1;3306;destiny;destiny;shop"       - (ShopDatabaseInfo)
 #
 #    Don't change hostname unless you are hosting mysql on a different machine, if you need help
 #    with configuration allowing to connect from diferent machine than the one running server
@@ -109,10 +110,11 @@ LogsDir = ""
 #    Don't open port on firewall to external connections (it belongs to mysql, not to wow server).
 #    The username you choose must have permisions to create/alter/rename tables.
 
-LoginDatabaseInfo     = "127.0.0.1;3306;trinity;trinity;auth"
-WorldDatabaseInfo     = "127.0.0.1;3306;trinity;trinity;world"
-CharacterDatabaseInfo = "127.0.0.1;3306;trinity;trinity;characters"
-HotfixDatabaseInfo    = "127.0.0.1;3306;trinity;trinity;hotfixes"
+LoginDatabaseInfo     = "127.0.0.1;3306;destiny;destiny;auth"
+WorldDatabaseInfo     = "127.0.0.1;3306;destiny;destiny;world"
+CharacterDatabaseInfo = "127.0.0.1;3306;destiny;destiny;characters"
+HotfixDatabaseInfo    = "127.0.0.1;3306;destiny;destiny;hotfixes"
+ShopDatabaseInfo      = "127.0.0.1;3306;destiny;destiny;shop"
 
 #
 #    LoginDatabase.WorkerThreads
@@ -126,11 +128,13 @@ HotfixDatabaseInfo    = "127.0.0.1;3306;trinity;trinity;hotfixes"
 #                     1 - (WorldDatabase.WorkerThreads)
 #                     1 - (CharacterDatabase.WorkerThreads)
 #                     1 - (HotfixDatabase.WorkerThreads)
+#					  1 - (ShopDatabase.WorkerThreads)
 
 LoginDatabase.WorkerThreads     = 1
 WorldDatabase.WorkerThreads     = 1
 CharacterDatabase.WorkerThreads = 1
 HotfixDatabase.WorkerThreads    = 1
+ShopDatabase.WorkerThreads      = 1
 
 #
 #    LoginDatabase.SynchThreads
@@ -142,11 +146,13 @@ HotfixDatabase.WorkerThreads    = 1
 #                     1 - (WorldDatabase.SynchThreads)
 #                     2 - (CharacterDatabase.SynchThreads)
 #                     1 - (HotfixDatabase.SynchThreads)
+#                     1 - (ShopDatabase.WorkerThreads)
 
 LoginDatabase.SynchThreads     = 1
 WorldDatabase.SynchThreads     = 1
 CharacterDatabase.SynchThreads = 2
 HotfixDatabase.SynchThreads    = 1
+ShopDatabase.SynchThreads      = 1
 
 #
 #    MaxPingTime
@@ -1294,16 +1300,17 @@ FeatureSystem.CharacterUndelete.Cooldown = 2592000
 #        Description: A mask that describes which databases shall be updated.
 #
 #        Following flags are available
-#           DATABASE_LOGIN     = 1, // Auth database
-#           DATABASE_CHARACTER = 2, // Character database
-#           DATABASE_WORLD     = 4, // World database
-#           DATABASE_HOTFIX    = 8, // Hotfixes database
+#           DATABASE_LOGIN     = 1,  // Auth database
+#           DATABASE_CHARACTER = 2,  // Character database
+#           DATABASE_WORLD     = 4,  // World database
+#           DATABASE_HOTFIX    = 8,  // Hotfixes database
+#			DATABASE_Shop      = 16, // Shop database
 #
-#        Default:     15 - (All enabled)
+#        Default:     31 - (All enabled)
 #                     4  - (Enable world only)
 #                     0  - (All Disabled)
 
-Updates.EnableDatabases = 15
+Updates.EnableDatabases = 31
 
 #
 #    Updates.AutoSetup

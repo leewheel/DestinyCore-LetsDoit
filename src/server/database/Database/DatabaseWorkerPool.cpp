@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -23,6 +23,7 @@
 #include "Implementation/WorldDatabase.h"
 #include "Implementation/CharacterDatabase.h"
 #include "Implementation/HotfixDatabase.h"
+#include "Implementation/ShopDatabase.h"
 #include "Log.h"
 #include "PreparedStatement.h"
 #include "ProducerConsumerQueue.h"
@@ -447,3 +448,4 @@ template class TC_DATABASE_API DatabaseWorkerPool<LoginDatabaseConnection>;
 template class TC_DATABASE_API DatabaseWorkerPool<WorldDatabaseConnection>;
 template class TC_DATABASE_API DatabaseWorkerPool<CharacterDatabaseConnection>;
 template class TC_DATABASE_API DatabaseWorkerPool<HotfixDatabaseConnection>;
+template class TC_DATABASE_API DatabaseWorkerPool<ShopDatabaseConnection>;

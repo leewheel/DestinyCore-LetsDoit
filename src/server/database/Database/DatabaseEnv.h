@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -21,12 +20,11 @@
 
 #include "Define.h"
 #include "DatabaseWorkerPool.h"
-
-#include "Implementation/WorldDatabase.h"
-#include "Implementation/CharacterDatabase.h"
 #include "Implementation/LoginDatabase.h"
+#include "Implementation/CharacterDatabase.h"
 #include "Implementation/HotfixDatabase.h"
-
+#include "Implementation/WorldDatabase.h"
+#include "Implementation/ShopDatabase.h"
 #include "Field.h"
 #include "PreparedStatement.h"
 #include "QueryCallback.h"
@@ -41,5 +39,7 @@ TC_DATABASE_API extern DatabaseWorkerPool<CharacterDatabaseConnection> Character
 TC_DATABASE_API extern DatabaseWorkerPool<LoginDatabaseConnection> LoginDatabase;
 /// Accessor to the hotfix database
 TC_DATABASE_API extern DatabaseWorkerPool<HotfixDatabaseConnection> HotfixDatabase;
+/// Accessor to the shop database
+TC_DATABASE_API extern DatabaseWorkerPool<ShopDatabaseConnection> ShopDatabase;
 
 #endif
