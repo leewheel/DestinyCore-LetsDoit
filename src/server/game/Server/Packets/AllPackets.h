@@ -28,6 +28,8 @@
 #include "BattlefieldPackets.h"
 #include "BattlegroundPackets.h"
 #include "BattlenetPackets.h"
+#include "BattlePayPackets.h"
+#include "BattlePayMgr.h"
 #include "BattlePetPackets.h"
 #include "BlackMarketPackets.h"
 #include "CalendarPackets.h"

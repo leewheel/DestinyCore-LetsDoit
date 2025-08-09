@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -155,6 +155,11 @@ enum LoginDatabaseStatements : uint32
     LOGIN_SEL_BNET_ITEM_FAVORITE_APPEARANCES,
     LOGIN_INS_BNET_ITEM_FAVORITE_APPEARANCE,
     LOGIN_DEL_BNET_ITEM_FAVORITE_APPEARANCE,
+
+    LOGIN_SEL_BATTLE_PAY_ACCOUNT_CREDITS,
+    LOGIN_UPD_BATTLE_PAY_ACCOUNT_CREDITS,
+
+    LOGIN_INS_PURCHASE,
 
     MAX_LOGINDATABASE_STATEMENTS
 };

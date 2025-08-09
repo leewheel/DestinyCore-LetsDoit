@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -175,7 +174,6 @@ enum WorldBoolConfigs
     CONFIG_INSTANCES_RESET_ANNOUNCE,
     CONFIG_IP_BASED_ACTION_LOGGING,
     CONFIG_ALLOW_TRACK_BOTH_RESOURCES,
-    CONFIG_FEATURE_SYSTEM_BPAY_STORE_ENABLED,
     CONFIG_FEATURE_SYSTEM_CHARACTER_UNDELETE_ENABLED,
     CONFIG_RESET_DUEL_COOLDOWNS,
     CONFIG_RESET_DUEL_HEALTH_MANA,
@@ -193,6 +191,9 @@ enum WorldBoolConfigs
     CONFIG_GAME_OBJECT_CHECK_INVALID_POSITION,
     CONFIG_LEGACY_BUFF_ENABLED,
     CONFIG_IGNORE_DUNGEONS_BIND,
+    CONFIG_FEATURE_SYSTEM_BATTLE_PAY_ENABLED,
+    CONFIG_FEATURE_SYSTEM_BATTLE_PAY_AVAILABLE,
+    CONFIG_BATTLE_PAY_ENABLED,
     BOOL_CONFIG_VALUE_COUNT
 };
 
@@ -405,6 +406,7 @@ enum WorldIntConfigs
     CONFIG_TALENTS_INSPECTING,
     CONFIG_BLACKMARKET_MAXAUCTIONS,
     CONFIG_BLACKMARKET_UPDATE_PERIOD,
+    CONFIG_BATTLE_PAY_CURRENCY,
     INT_CONFIG_VALUE_COUNT
 };
 

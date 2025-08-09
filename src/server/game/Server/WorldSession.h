@@ -37,6 +37,7 @@
 
 class PetBattle;
 class BattlePet;
+class BattlepayManager;
 class BigNumber;
 class BlackMarketEntry;
 class CollectionMgr;
@@ -74,6 +75,12 @@ enum LfgTeleportResult : uint8;
 namespace rbac
 {
 class RBACData;
+}
+
+namespace Battlepay
+{
+    struct Purchase;
+    enum Error : uint32;
 }
 
 namespace WorldPackets
@@ -282,6 +289,23 @@ namespace WorldPackets
         class AttackSwing;
         class AttackStop;
         class SetSheathed;
+    }
+
+    namespace BattlePay
+    {
+        class DistributionAssignToTarget;
+        class StartPurchase;
+        class PurchaseProduct;
+        class ConfirmPurchaseResponse;
+        class GetProductList;
+        class GetPurchaseListQuery;
+        class UpdateVasPurchaseStates;
+        class BattlePayAckFailedResponse;
+        class BattlePayBattlePetDelivered;
+        class BattlePayQueryClassTrialResult;
+        class BattlePayTrialBoostCharacter;
+        class BattlePayPurchaseDetailsResponse;
+        class BattlePayPurchaseUnkResponse;
     }
 
     namespace BattlePet
@@ -1856,22 +1880,31 @@ class TC_GAME_API WorldSession
 
         void HandleQueryRealmName(WorldPackets::Query::QueryRealmName& queryRealmName);
 
-        #pragma region (BattlePay)
-        //////////////////////////////////////////////////////////////////////////
-        /// Battlepay
-        //////////////////////////////////////////////////////////////////////////
-        void HandleBattlepayGetProductListQuery(WorldPacket& p_RecvData);
-        void HandleBattlepayGetPurchaseList(WorldPacket& p_RecvData);
-        void HandleBattlePayStartPurchase(WorldPackets::BattlePay::UserClientBattlePayStartPurchase& ClientBattlePayStartPurchase);
-        void HandleBattlePayConfirmPurchase(WorldPackets::BattlePay::UserClientBattlePayConfirmPurchaseResponse& ClientBattlePayConfirmPurchaseResponse);
-        #pragma endregion
-
         // Artifact
         void HandleArtifactAddPower(WorldPackets::Artifact::ArtifactAddPower& artifactAddPower);
         void HandleArtifactSetAppearance(WorldPackets::Artifact::ArtifactSetAppearance& artifactSetAppearance);
         void HandleConfirmArtifactRespec(WorldPackets::Artifact::ConfirmArtifactRespec& confirmArtifactRespec);
         void HandleArtifactAddRelicTalent(WorldPackets::Artifact::ArtifactAddRelicTalent& packet);
- 	void HandleArtifactAttuneSocketedRelic(WorldPackets::Artifact::ArtifactAttuneSocketedRelic& artifactAttuneSocketedRelic);
+ 	    void HandleArtifactAttuneSocketedRelic(WorldPackets::Artifact::ArtifactAttuneSocketedRelic& artifactAttuneSocketedRelic);
+
+        // BattlePay
+        void HandleBattlePayDistributionAssign(WorldPackets::BattlePay::DistributionAssignToTarget& packet);
+        void HandleBattlePayStartPurchase(WorldPackets::BattlePay::StartPurchase& packet);
+        void HandleBattlePayPurchaseProduct(WorldPackets::BattlePay::PurchaseProduct& packet);
+        void HandleBattlePayConfirmPurchase(WorldPackets::BattlePay::ConfirmPurchaseResponse& packet);
+        void HandleBattlePayAckFailedResponse(WorldPackets::BattlePay::BattlePayAckFailedResponse& packet);
+        void HandleGetPurchaseListQuery(WorldPackets::BattlePay::GetPurchaseListQuery& packet);
+        void HandleBattlePayQueryClassTrialResult(WorldPackets::BattlePay::BattlePayQueryClassTrialResult& packet);
+        void HandleBattlePayTrialBoostCharacter(WorldPackets::BattlePay::BattlePayTrialBoostCharacter& packet);
+        void HandleBattlePayPurchaseUnkResponse(WorldPackets::BattlePay::BattlePayPurchaseUnkResponse& packet);
+        void HandleBattlePayPurchaseDetailsResponse(WorldPackets::BattlePay::BattlePayPurchaseDetailsResponse& packet);
+        void HandleUpdateVasPurchaseStates(WorldPackets::BattlePay::UpdateVasPurchaseStates& packet);
+        void HandleGetProductList(WorldPackets::BattlePay::GetProductList& packet);
+        void SendDisplayPromo(int32 promotionID = 0);
+        //void SendPurchaseUpdate(WorldSession* session, Battlepay::Purchase const& purchase, uint32 result);
+        //void SendStartPurchaseResponse(WorldSession* session, Battlepay::Purchase const& purchase, Battlepay::Error const& result);
+        void SendMakePurchase(ObjectGuid targetCharacter, uint32 clientToken, uint32 productID, WorldSession* session);
+        //void SendSyncWowEntitlements();
 
         // Scenario
         void HandleQueryScenarioPOI(WorldPackets::Scenario::QueryScenarioPOI& queryScenarioPOI);
@@ -1897,6 +1930,10 @@ class TC_GAME_API WorldSession
         uint64 GetConnectToInstanceKey() const { return _instanceConnectKey.Raw; }
 
         void LoadRecoveries();
+
+    public:
+        BattlepayManager* GetBattlePayMgr() const { return _battlePayMgr.get(); }
+
     private:
         void ProcessQueryCallbacks();
 
@@ -1977,6 +2014,8 @@ class TC_GAME_API WorldSession
 
         // Warden
         Warden* _warden;                                    // Remains NULL if Warden system is not enabled by config
+
+        std::shared_ptr<BattlepayManager> _battlePayMgr;
 
         time_t _logoutTime;
         bool m_inQueue;                                     // session wait in auth.queue
