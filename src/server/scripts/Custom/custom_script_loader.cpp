@@ -18,7 +18,6 @@
 // This is where scripts' loading functions should be declared:
 
 void AddSC_custom_npcs();
-void AddSC_start_equipment();
 void AddSC_quest_conversation();
 void AddSC_debug_lfg();
 void AddSC_solocraft();
@@ -26,7 +25,6 @@ void AddSC_solocraft();
 void AddCustomScripts()
 {
     AddSC_custom_npcs(); 
-    AddSC_start_equipment();
     AddSC_quest_conversation();
     AddSC_debug_lfg();
     AddSC_solocraft();

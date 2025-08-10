@@ -4123,14 +4123,6 @@ Metric.OverallStatusInterval = 1
 ###################################################################################################
 # CUSTOM SETTINGS
 #
-#     Start.Equipment
-#        Description: New players get some starting equipment.
-#        Default:     0 (Disabled)
-#                     1 (Enabled)
-
-Start.Equipment = 0
-
-#
 #     Time Is Money Friend
 #         Gives money for players who is online after every X minutes.
 #
@@ -4139,14 +4131,6 @@ Start.Equipment = 0
 
 TimeIsMoneyFriend.Interval = 3600000
 TimeIsMoneyFriend.Money = 1000
-
-#
-#     Double.XP
-#        Description: Enables or disables the Double XP Weekend script.
-#        Default:     1 (Enabled)
-#                     0 (Disabled)
-
-Double.XP = 1
 
 #
 #     Debug.LFG
