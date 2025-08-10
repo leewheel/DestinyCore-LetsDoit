@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,6 +22,7 @@ void AddSC_start_equipment();
 void AddSC_double_xp();
 void AddSC_quest_conversation();
 void AddSC_debug_lfg();
+void AddSC_solocraft();
 
 void AddCustomScripts()
 {
@@ -30,4 +31,5 @@ void AddCustomScripts()
     AddSC_double_xp();
     AddSC_quest_conversation();
     AddSC_debug_lfg();
+    AddSC_solocraft();
 }
