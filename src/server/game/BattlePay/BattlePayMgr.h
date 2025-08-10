@@ -128,7 +128,7 @@ namespace Battlepay
         PackItems = 18,
         CategoryProfession = 19,
         CategoryPremade = 20,
-        ItemMount = 21,
+        Mount = 21,
         CharacterCustomization = 22,
         CategoryCharacterManagement = 23,
         CategoryRealmTransfer = 24,

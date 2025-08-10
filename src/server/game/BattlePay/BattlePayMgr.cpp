@@ -194,8 +194,34 @@ auto BattlepayManager::ProductFilter(Product product) -> bool
     {
         switch (product.WebsiteType)
         {
+        case Battlepay::Spell:
+        case Battlepay::Title:
+        case Battlepay::Item:
+        case Battlepay::Currency:
+        case Battlepay::CharacterRename:
+        case Battlepay::GuildRename:
+        case Battlepay::Gold:
+        case Battlepay::Level:
+        case Battlepay::CharacterFactionChange:
+        case Battlepay::CharacterRaceChange:
+        case Battlepay::PremadeCharacter:
+        case Battlepay::RealmTransfer:
+        case Battlepay::ExpansionTransfer:
+        case Battlepay::Premium:
+        case Battlepay::DeletedCharacter:
+        case Battlepay::ItemProfession:
+        case Battlepay::Transmogrification:
+        case Battlepay::PackItems:
+        case Battlepay::CategoryProfession:
+        case Battlepay::CategoryPremade:
+        case Battlepay::Mount:
+        case Battlepay::CharacterCustomization:
+        case Battlepay::CategoryCharacterManagement:
+        case Battlepay::CategoryRealmTransfer:
+        case Battlepay::CategoryExpansionTransfer:
+        case Battlepay::CategoryGold:
         case Battlepay::BattlePet:
-        case CharacterBoost:
+        case Battlepay::CharacterBoost:
             return true;
         default:
             return false;
