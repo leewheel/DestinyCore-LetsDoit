@@ -22,3 +22,4 @@ nbproject/*
 .vscode
 cmake-build-*/
 .vs
+sql/test/world/magic_storm/_revision_/magicstorm fixes/gilneas/gilneas city start area/military district/fix - quest 14087 14159 14239 phase corections for applying and removing phases 170 171 and 172 military district.sql
