@@ -1,6 +1,21 @@
 -- battlenet_accounts
-ALTER TABLE `battlenet_accounts`
-ADD COLUMN `battlePayCredits` int(10) unsigned NOT NULL DEFAULT 0 AFTER `LoginTicketExpiry`;
+SET @stmt = (
+  SELECT IF(
+    EXISTS(
+      SELECT 1
+      FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'battlenet_accounts'
+        AND COLUMN_NAME = 'battlePayCredits'
+    ),
+    'SELECT "Column exists, skip";',
+    'ALTER TABLE `battlenet_accounts` ADD COLUMN `battlePayCredits` int(10) unsigned NOT NULL DEFAULT 0 AFTER `LoginTicketExpiry`;'
+  )
+);
+
+PREPARE s FROM @stmt;
+EXECUTE s;
+DEALLOCATE PREPARE s;
 
 -- battlepay_purchases
 DROP TABLE IF EXISTS `battlepay_purchases`;

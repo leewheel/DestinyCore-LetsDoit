@@ -1,6 +1,6 @@
 -- rbac_permissions
 DELETE FROM `rbac_permissions` WHERE `id` IN(1500,1501,1502,1503,1504,1505,1506,1507,1508,1509,1510,1511,1512,1513,1514,1515,1516,1517,1518,1519,1520,1521,1522,1523,1524,1525);
-INSERT INTO `rbac_permissions` (`id`, `name`) VALUES
+INSERT IGNORE INTO `rbac_permissions` (`id`, `name`) VALUES
 (1500, 'Command:.resetgossip .displaymodel'),
 (1501, 'Command:.pbotacc'),
 (1502, 'Command:.pbotacc loginall'),
@@ -32,7 +32,7 @@ INSERT INTO `rbac_permissions` (`id`, `name`) VALUES
 
 -- rbac_linked_permissions
 DELETE FROM `rbac_linked_permissions` WHERE `linkedId` IN (1500,1501,1502,1503,1504,1505,1506,1507,1508,1509,1510,1511,1512,1513,1514,1515,1516,1517,1518,1519,1520,1521,1522,1523,1524,1525);
-INSERT INTO `rbac_linked_permissions` (`id`, `linkedId`) VALUES
+INSERT IGNORE INTO `rbac_linked_permissions` (`id`, `linkedId`) VALUES
 (198,1500),
 (198,1501),
 (198,1502),
