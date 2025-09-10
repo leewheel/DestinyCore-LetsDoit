@@ -980,6 +980,18 @@ namespace WorldPackets
             uint32 TeleportSpellID;
             uint32 LoadingScreenID;
         };
+
+        class UpdateSpellVisual final : public ClientPacket
+        {
+        public:
+            UpdateSpellVisual(WorldPacket&& packet) : ClientPacket(CMSG_UPDATE_SPELL_VISUAL, std::move(packet)) {}
+
+            void Read() override;
+
+            int32 SpellID = 0;
+            int32 SpellXSpellVisualId = 0;
+            ObjectGuid TargetGUID;
+        };
     }
 }
 

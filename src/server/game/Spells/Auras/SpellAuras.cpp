@@ -356,6 +356,10 @@ Aura* Aura::Create(SpellInfo const* spellproto, ObjectGuid castId, uint32 effMas
     // aura can be removed in Unit::_AddAura call
     if (aura->IsRemoved())
         return nullptr;
+
+    if (!spellproto)
+        aura->SetSpellVisual(spellproto->GetSpellXSpellVisualId(caster->ToUnit()));
+
     return aura;
 }
 

@@ -439,6 +439,15 @@ void WorldSession::HandleCancelAutoRepeatSpellOpcode(WorldPackets::Spells::Cance
     _player->InterruptSpell(CURRENT_AUTOREPEAT_SPELL);
 }
 
+void WorldSession::HandleUpdateSpellVisualOpcode(WorldPackets::Spells::UpdateSpellVisual& packet)
+{
+    if (Aura* aura = GetPlayer()->GetAura(packet.SpellID))
+    {
+        aura->SetSpellVisual(packet.SpellXSpellVisualId);
+        aura->SetNeedClientUpdateForTargets();
+    }
+}
+
 void WorldSession::HandleCancelChanneling(WorldPackets::Spells::CancelChannelling& /*cancelChanneling*/)
 {
     // ignore for remote control state (for player case)

@@ -22,6 +22,7 @@
 #include "SpellAuraDefines.h"
 #include "SpellInfo.h"
 #include "Unit.h"
+#include "Containers.h"
 
 class SpellInfo;
 struct SpellModifier;
@@ -137,6 +138,8 @@ class TC_GAME_API Aura
         ObjectGuid GetCasterGUID() const { return m_casterGuid; }
         ObjectGuid GetCastItemGUID() const { return m_castItemGuid; }
         int32 GetCastItemLevel() const { return m_castItemLevel; }
+        void SetSpellVisual(uint32 visual) { m_SpellVisual = visual; }
+        uint32 m_SpellVisual;
         uint32 GetSpellXSpellVisualId() const { return m_spellXSpellVisualId; }
         Unit* GetCaster() const;
         WorldObject* GetOwner() const { return m_owner; }
