@@ -15,8 +15,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __SPELL_H
-#define __SPELL_H
+#ifndef SPELL_H
+#define SPELL_H
 
 #include "ConditionMgr.h"
 #include "DBCEnums.h"
