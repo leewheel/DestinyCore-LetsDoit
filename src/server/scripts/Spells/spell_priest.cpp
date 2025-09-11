@@ -119,6 +119,7 @@ enum PriestSpells
     SPELL_PRIEST_MISERY                             = 238558,
     SPELL_PRIEST_NPC_PSYFIEND                       = 59190,
     SPELL_PRIEST_NPC_SHADOWY_APPARITION             = 46954,
+    SPELL_PRIEST_SHADOWY_APPARITION_MISSILE         = 147193,
     SPELL_PRIEST_NPC_VOID_TENDRILS                  = 65282,
     SPELL_PRIEST_PENANCE                            = 47540,
     SPELL_PRIEST_PENANCE_DAMAGE                     = 47758,
@@ -203,7 +204,10 @@ enum PriestSpellIcons
 
 enum MiscSpells
 {
-    SPELL_GEN_REPLENISHMENT                         = 57669
+    SPELL_GEN_REPLENISHMENT                         = 57669,
+    SPELL_VISUAL_SHADOWY_APPARITION                 = 33584,
+    SHADOWY_APPARITION_TRAVEL_SPEED                 = 6
+
 };
 
 //7.3.2.25549
@@ -303,6 +307,46 @@ class spell_pri_twist_of_fate : public AuraScript
         DoCheckProc += AuraCheckProcFn(spell_pri_twist_of_fate::CheckProc);
     }
 };
+
+// 78203 - Shadowy Apparitions
+class spell_pri_shadowy_apparitions : public AuraScript
+{
+    PrepareAuraScript(spell_pri_shadowy_apparitions);
+
+    bool Validate(SpellInfo const* /*spellInfo*/) override
+    {
+        return ValidateSpellInfo(
+            {
+                SPELL_PRIEST_SHADOWY_APPARITION_MISSILE,
+                SPELL_PRIEST_SHADOW_WORD_PAIN
+            });
+    }
+
+    bool CheckProc(ProcEventInfo& eventInfo)
+    {
+        if (eventInfo.GetSpellInfo()->Id == SPELL_PRIEST_SHADOW_WORD_PAIN)
+            if ((eventInfo.GetHitMask() & PROC_HIT_CRITICAL))
+                return true;
+
+        return false;
+    }
+
+    void HandleProc(AuraEffect const* /*aurEff*/, ProcEventInfo& eventInfo)
+    {
+        if (GetTarget() && eventInfo.GetActionTarget())
+        {
+            GetTarget()->CastSpell(eventInfo.GetActionTarget(), SPELL_PRIEST_SHADOWY_APPARITION_MISSILE, true);
+            GetTarget()->SendPlaySpellVisual(eventInfo.GetActionTarget()->GetGUID(), SPELL_VISUAL_SHADOWY_APPARITION, SPELL_MISS_NONE, SPELL_MISS_NONE, SHADOWY_APPARITION_TRAVEL_SPEED, false);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectProc += AuraEffectProcFn(spell_pri_shadowy_apparitions::HandleProc, EFFECT_0, SPELL_AURA_DUMMY);
+        DoCheckProc += AuraCheckProcFn(spell_pri_shadowy_apparitions::CheckProc);
+    }
+};
+
 
 // 205369 - Mind Bomb
 class spell_pri_mind_bomb : public AuraScript
@@ -3055,6 +3099,7 @@ void AddSC_priest_spell_scripts()
     new spell_pri_void_tendrils();
     new spell_pri_voidform();
     new spell_priest_angelic_bulwark();
+    RegisterAuraScript(spell_pri_shadowy_apparitions);
     RegisterAuraScript(spell_pri_spirit_of_redemption);
     RegisterAuraScript(spell_pri_spirit_of_redemption_form);
     RegisterSpellScript(spell_pri_holy_word_chastise);
