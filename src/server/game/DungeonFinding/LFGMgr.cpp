@@ -24,6 +24,7 @@
 #include "GroupMgr.h"
 #include "InstanceSaveMgr.h"
 #include "LFGGroupData.h"
+#include "LFGPackets.h"
 #include "LFGPlayerData.h"
 #include "LFGQueue.h"
 #include "LFGScripts.h"
@@ -528,8 +529,6 @@ void LFGMgr::JoinLfg(Player* player, uint8 roles, LfgDungeonSet& dungeons)
         return;
 
     Group* grp = player->GetGroup();
-    if (grp && player->IsPlayerBot())
-        return;
     ObjectGuid guid = player->GetGUID();
     ObjectGuid gguid = grp ? grp->GetGUID() : guid;
     LfgJoinResultData joinData;
@@ -612,16 +611,18 @@ void LFGMgr::JoinLfg(Player* player, uint8 roles, LfgDungeonSet& dungeons)
     }
 
     // Check player or group member restrictions
-    if (player->InBattleground() || player->InArena() || player->InBattlegroundQueue())
+    if (!player->GetSession()->HasPermission(rbac::RBAC_PERM_JOIN_DUNGEON_FINDER))
+        joinData.result = LFG_JOIN_NO_SLOTS_PLAYER;
+    else if (player->InBattleground() || player->InArena() || player->InBattlegroundQueue())
         joinData.result = LFG_JOIN_CANT_USE_DUNGEONS;
-    //else if (player->HasAura(LFG_SPELL_DUNGEON_DESERTER))
-    //    joinData.result = LFG_JOIN_DESERTER;
-    //else if (player->HasAura(LFG_SPELL_DUNGEON_COOLDOWN))
-    //    joinData.result = LFG_JOIN_RANDOM_COOLDOWN;
+    else if (player->HasAura(LFG_SPELL_DUNGEON_DESERTER))
+        joinData.result = LFG_JOIN_DESERTER_PLAYER;
+    else if (player->HasAura(LFG_SPELL_DUNGEON_COOLDOWN))
+        joinData.result = LFG_JOIN_RANDOM_COOLDOWN_PLAYER;
     else if (dungeons.empty())
         joinData.result = LFG_JOIN_NO_SLOTS_PLAYER;
-    //else if (player->HasAura(9454)) // check Freeze debuff
-    //    joinData.result = LFG_JOIN_NOT_MEET_REQS;
+    else if (player->HasAura(9454)) // check Freeze debuff
+        joinData.result = LFG_JOIN_NO_SLOTS_PLAYER;
     else if (grp)
     {
         if (grp->GetMembersCount() > uint32(isRaid ? MAX_RAID_SIZE: MAX_GROUP_SIZE))
@@ -633,14 +634,16 @@ void LFGMgr::JoinLfg(Player* player, uint8 roles, LfgDungeonSet& dungeons)
             {
                 if (Player* plrg = itr->GetSource())
                 {
-                    if (plrg->InBattleground() || plrg->InArena() || plrg->InBattlegroundQueue())
+                    if (!plrg->GetSession()->HasPermission(rbac::RBAC_PERM_JOIN_DUNGEON_FINDER))
+                        joinData.result = LFG_JOIN_NO_LFG_OBJECT;
+                    if (plrg->HasAura(LFG_SPELL_DUNGEON_DESERTER))
+                        joinData.result = LFG_JOIN_DESERTER_PARTY;
+                    else if (plrg->HasAura(LFG_SPELL_DUNGEON_COOLDOWN))
+                        joinData.result = LFG_JOIN_RANDOM_COOLDOWN_PARTY;
+                    else if (plrg->InBattleground() || plrg->InArena() || plrg->InBattlegroundQueue())
                         joinData.result = LFG_JOIN_CANT_USE_DUNGEONS;
-                    //else if (plrg->HasAura(LFG_SPELL_DUNGEON_DESERTER))
-     //                   joinData.result = LFG_JOIN_PARTY_DESERTER;
-     //               else if (plrg->HasAura(LFG_SPELL_DUNGEON_COOLDOWN))
-     //                   joinData.result = LFG_JOIN_PARTY_RANDOM_COOLDOWN;
-     //               else if (plrg->HasAura(9454)) // check Freeze debuff
-     //                   joinData.result = LFG_JOIN_PARTY_NOT_MEET_REQS;
+                    else if (plrg->HasAura(9454)) // check Freeze debuff
+                        joinData.result = LFG_JOIN_PARTY_NOT_MEET_REQS;
                     ++memberCount;
                     players.insert(plrg->GetGUID());
                 }
@@ -743,9 +746,16 @@ void LFGMgr::JoinLfg(Player* player, uint8 roles, LfgDungeonSet& dungeons)
             if (pSession)
             {
                 lfg::LfgRoles botRoles = sPlayerBotMgr->GetPlayerBotCurrentLFGRoles(bot);
-                WorldPacket cmd(1);
-                cmd << uint8(botRoles);
-                //pSession->HandleLfgSetRolesOpcode(cmd);
+
+                WorldPacket data(CMSG_DF_SET_ROLES, 5);
+                data << uint32(botRoles);
+                data << uint8(0);
+
+                WorldPackets::LFG::DFSetRoles rolesPacket(std::move(data));
+                pSession->HandleLfgSetRolesOpcode(rolesPacket);
+
+                UpdateRoleCheck(gguid, bot->GetGUID(), botRoles);
+
                 std::string roleText = "UNKNOW";
                 if (botRoles & LfgRoles::PLAYER_ROLE_TANK)
                     roleText = "Tanker";
@@ -1216,10 +1226,7 @@ void LFGMgr::MakeNewGroup(LfgProposal const& proposal)
     for (GuidList::const_iterator it = playersToTeleport.begin(); it != playersToTeleport.end(); ++it)
     {
         if (Player* player = ObjectAccessor::FindPlayer(*it))
-        {
-            if (!player->IsPlayerBot())
-                TeleportPlayer(player, false);
-        }
+            TeleportPlayer(player, false);
     }
 
     // Update group info
@@ -1540,7 +1547,7 @@ void LFGMgr::UpdateBoot(ObjectGuid guid, bool accept)
 */
 void LFGMgr::TeleportPlayer(Player* player, bool out, bool fromOpcode /*= false*/)
 {
-    LFGDungeonData const* dungeon = NULL;
+    LFGDungeonData const* dungeon = nullptr;
     Group* group = player->GetGroup();
 
     if (group && group->isLFGGroup())
@@ -1559,10 +1566,7 @@ void LFGMgr::TeleportPlayer(Player* player, bool out, bool fromOpcode /*= false*
         TC_LOG_DEBUG("lfg.teleport", "Player %s is being teleported out. Current Map %u - Expected Map %u",
             player->GetName().c_str(), player->GetMapId(), uint32(dungeon->map));
         if (player->GetMapId() == uint32(dungeon->map))
-        {
-            if (!player->IsPlayerBot())
-                player->TeleportToBGEntryPoint();
-        }
+            player->TeleportToBGEntryPoint();
 
         return;
     }
@@ -1591,12 +1595,15 @@ void LFGMgr::TeleportPlayer(Player* player, bool out, bool fromOpcode /*= false*
 
         if (!fromOpcode)
         {
-            // Select a player inside to be teleported to
-            for (GroupReference* itr = group->GetFirstMember(); itr != NULL && !mapid; itr = itr->next())
+            for (GroupReference* itr = group->GetFirstMember(); itr != nullptr; itr = itr->next())
             {
                 Player* plrg = itr->GetSource();
-                if (plrg && plrg != player && plrg->GetMapId() == uint32(dungeon->map))
+                if (!plrg || plrg == player)
+                    continue;
+
+                if (plrg->GetMapId() == uint32(dungeon->map))
                 {
+                    // Spieler in Instanz gefunden ? seine Koordinaten nehmen
                     mapid = plrg->GetMapId();
                     x = plrg->GetPositionX();
                     y = plrg->GetPositionY();
@@ -1607,6 +1614,10 @@ void LFGMgr::TeleportPlayer(Player* player, bool out, bool fromOpcode /*= false*
             }
         }
 
+        // Sicherstellen, dass mapid korrekt ist (wichtig für Bots)
+        if (!mapid)
+            mapid = dungeon->map;
+
         if (!player->GetMap()->IsDungeon())
             player->SetBattlegroundEntryPoint();
 
@@ -1616,11 +1627,8 @@ void LFGMgr::TeleportPlayer(Player* player, bool out, bool fromOpcode /*= false*
             player->CleanupAfterTaxiFlight();
         }
 
-        if (!player->IsPlayerBot())
-        {
-            if (!player->TeleportTo(mapid, x, y, z, orientation))
-                error = LFG_TELEPORT_RESULT_NO_RETURN_LOCATION;
-        }
+        if (!player->TeleportTo(mapid, x, y, z, orientation))
+            error = LFG_TELEPORT_RESULT_NO_RETURN_LOCATION;
     }
     else
         error = LFG_TELEPORT_RESULT_NO_RETURN_LOCATION;

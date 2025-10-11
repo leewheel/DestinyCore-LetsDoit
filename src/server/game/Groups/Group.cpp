@@ -1962,7 +1962,7 @@ void Group::UpdateLooterGuid(WorldObject* pLootedObject, bool ifneed)
     for (member_citerator itr = guid_itr; itr != m_memberSlots.end(); ++itr)
     {
         if (Player* player = ObjectAccessor::FindPlayer(itr->guid))
-            if (player->IsAtGroupRewardDistance(pLootedObject))
+            if (!player->IsPlayerBot() && player->IsAtGroupRewardDistance(pLootedObject))
             {
                 pNewLooter = player;
                 break;

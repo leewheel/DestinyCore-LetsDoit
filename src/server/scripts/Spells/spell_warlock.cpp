@@ -64,6 +64,8 @@ enum WarlockSpells
     SPELL_WARLOCK_CREATE_HEALTHSTONE                = 23517,
     SPELL_WARLOCK_CURSE_OF_DOOM_EFFECT              = 18662,
     SPELL_WARLOCK_DARK_BARGAIN_DOT                  = 110914,
+    SPELL_WARLOCK_DARKGLARE_EYE_BEAM                = 205231,
+    SPELL_WARLOCK_DARKGLARE_SUMMON                  = 205180,
     SPELL_WARLOCK_DARK_REGENERATION                 = 108359,
     SPELL_WARLOCK_DARK_SOUL_INSTABILITY             = 113858,
     SPELL_WARLOCK_DARK_SOUL_KNOWLEDGE               = 113861,
@@ -3372,36 +3374,6 @@ public:
     }
 };
 
-// Darkglare - 103673
-class npc_pet_warlock_darkglare : public CreatureScript
-{
-public:
-    npc_pet_warlock_darkglare() : CreatureScript("npc_pet_warlock_darkglare") {}
-
-    struct npc_pet_warlock_darkglare_PetAI : public PetAI
-    {
-        npc_pet_warlock_darkglare_PetAI(Creature* creature) : PetAI(creature) {}
-
-        void UpdateAI(uint32 /*diff*/) override
-        {
-            Unit* owner = me->GetOwner();
-            if (!owner)
-                return;
-
-            std::list<Unit*> targets;
-            owner->GetAttackableUnitListInRange(targets, 100.0f);
-            targets.remove_if(Trinity::UnitAuraCheck(false, SPELL_WARLOCK_DOOM, owner->GetGUID()));
-            if (!targets.empty())
-                me->CastSpell(targets.front(), SPELL_WARLOCK_EYE_LASER, false, nullptr, nullptr, owner->GetGUID());
-        }
-    };
-
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new npc_pet_warlock_darkglare_PetAI(creature);
-    }
-};
-
 // Wild Imp - 99739
 struct npc_pet_warlock_wild_imp : public PetAI
 {
@@ -3486,44 +3458,45 @@ public:
 };
 
 // Chaotic Energies - 77220
-class spell_warl_chaotic_energies : public SpellScriptLoader
+class spell_warl_chaotic_energies : public AuraScript
 {
-public:
-    spell_warl_chaotic_energies() : SpellScriptLoader("spell_warl_chaotic_energies") {}
+    PrepareAuraScript(spell_warl_chaotic_energies);
 
-    class spell_warl_chaotic_energies_AuraScript : public AuraScript
+    void CalcAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
     {
-        PrepareAuraScript(spell_warl_chaotic_energies_AuraScript);
+        amount = -1;
+    }
 
-        void CalcAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
-        {
-            amount = -1;
-        }
-
-        void HandleAbsorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
-        {
-            int32 absorb = 0;
-            if (Aura* aur = GetAura())
-                if (AuraEffect* absorbEffect = aur->GetEffect(EFFECT_1))
-                    absorb = std::rand() % absorbEffect->GetAmount() + 1;
-
-            aurEff->SetAmount(-1);
-            int32 damage = dmgInfo.GetDamage();
-            absorbAmount = ApplyPct(damage, absorb);
-        }
-
-        void Register() override
-        {
-            DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_chaotic_energies_AuraScript::CalcAmount, EFFECT_2, SPELL_AURA_SCHOOL_ABSORB);
-            OnEffectAbsorb += AuraEffectAbsorbFn(spell_warl_chaotic_energies_AuraScript::HandleAbsorb, EFFECT_2);
-        }
-    };
-
-    AuraScript* GetAuraScript() const override
+    void HandleAbsorb(AuraEffect* aurEff, DamageInfo& dmgInfo, uint32& absorbAmount)
     {
-        return new spell_warl_chaotic_energies_AuraScript();
+        absorbAmount = 0;
+
+        Aura* aura = GetAura();
+        if (!aura)
+            return;
+
+        AuraEffect* absorbEffect = aura->GetEffect(EFFECT_1);
+        if (!absorbEffect)
+            return;
+
+        int32 amount = absorbEffect->GetAmount();
+        if (amount <= 0)
+            return;
+
+        int32 absorb = urand(1, amount);
+
+        aurEff->SetAmount(-1);
+        int32 damage = dmgInfo.GetDamage();
+        absorbAmount = ApplyPct(damage, absorb);
+    }
+
+    void Register() override
+    {
+        DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warl_chaotic_energies::CalcAmount, EFFECT_2, SPELL_AURA_SCHOOL_ABSORB);
+        OnEffectAbsorb += AuraEffectAbsorbFn(spell_warl_chaotic_energies::HandleAbsorb, EFFECT_2);
     }
 };
+
 
 // Eradication - 196414
 class spell_warl_eradication : public SpellScriptLoader
@@ -3732,6 +3705,88 @@ public:
     }
 };
 
+// Summon Darkglare - 205180
+class spell_warl_summon_darkglare : public SpellScript
+{
+    PrepareSpellScript(spell_warl_summon_darkglare);
+
+    void HandleOnHitTarget(SpellEffIndex /*effIndex*/)
+    {
+        if (Unit* target = GetHitUnit())
+        {
+            Player::AuraEffectList effectList = target->GetAuraEffectsByTypes({ SPELL_AURA_PERIODIC_DAMAGE, SPELL_AURA_PERIODIC_DAMAGE_PERCENT }, GetCaster()->GetGUID());
+
+            for (AuraEffect* effect : effectList)
+                if (Aura* aura = effect->GetBase())
+                    aura->ModDuration(GetEffectInfo(EFFECT_1)->BasePoints * IN_MILLISECONDS);
+        }
+    }
+
+    void Register() override
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_warl_summon_darkglare::HandleOnHitTarget, EFFECT_1, SPELL_EFFECT_SCRIPT_EFFECT);
+    }
+};
+
+// Darkglare - 103673
+struct npc_pet_warlock_darkglare : public PetAI
+{
+    npc_pet_warlock_darkglare(Creature* creature) : PetAI(creature) {}
+
+    void UpdateAI(uint32 /*diff*/) override
+    {
+        Unit* owner = me->GetOwner();
+        if (!owner)
+            return;
+
+        Unit* target = GetTarget();
+        ObjectGuid newtargetGUID = owner->GetTarget();
+        if (newtargetGUID.IsEmpty() || newtargetGUID == _targetGUID)
+        {
+            CastSpellOnTarget(owner, target);
+            return;
+        }
+
+        if (Unit* newTarget = ObjectAccessor::GetUnit(*me, newtargetGUID))
+            if (target != newTarget && me->IsValidAttackTarget(newTarget))
+                target = newTarget;
+
+        CastSpellOnTarget(owner, target);
+    }
+
+    void DamageDealt(Unit* /*victim*/, uint32& damage, DamageEffectType /*damageType*/) override
+    {
+        Unit* owner = me->GetOwner();
+        if (!owner)
+            return;
+
+        uint32 baseDamageMultiplier = 0;
+        if (Aura* darkGlareSummonAura = owner->GetAura(SPELL_WARLOCK_DARKGLARE_SUMMON))
+            baseDamageMultiplier = darkGlareSummonAura->GetEffect(EFFECT_2)->GetBaseAmount();
+
+        auto ownedAuras = owner->GetOwnedAurasByTypes({ SPELL_AURA_PERIODIC_DAMAGE, SPELL_AURA_PERIODIC_DAMAGE_PERCENT });
+
+        AddPct(damage, ownedAuras.size() * baseDamageMultiplier);
+    }
+
+private:
+    Unit* GetTarget() const
+    {
+        return ObjectAccessor::GetUnit(*me, _targetGUID);
+    }
+
+    void CastSpellOnTarget(Unit* owner, Unit* target)
+    {
+        if (target && me->IsValidAttackTarget(target))
+        {
+            _targetGUID = target->GetGUID();
+            me->CastSpell(target, SPELL_WARLOCK_DARKGLARE_EYE_BEAM, false);
+        }
+    }
+
+    ObjectGuid _targetGUID;
+};
+
 void AddSC_warlock_spell_scripts()
 {
     RegisterAuraScript(spell_warl_demonskin);
@@ -3811,6 +3866,7 @@ void AddSC_warlock_spell_scripts()
     RegisterAuraScript(aura_warl_phantomatic_singularity);
     RegisterAuraScript(spell_warl_grimoire_of_service_aura);
     new spell_warl_incinerate();
+    RegisterSpellScript(spell_warl_summon_darkglare);
 
     ///AreaTrigger scripts
     RegisterAreaTriggerAI(at_warl_rain_of_fire);
@@ -3818,8 +3874,8 @@ void AddSC_warlock_spell_scripts()
     ///NPC scripts
     new spell_npc_warl_demonic_gateway_green();
     new spell_npc_warl_demonic_gateway_purple();
-    new npc_pet_warlock_darkglare();
     RegisterCreatureAI(npc_pet_warlock_wild_imp);
 	new spell_warl_sindorei_spite();
     new spell_warl_sindorei_spite_proc();
+    RegisterCreatureAI(npc_pet_warlock_darkglare);
 }

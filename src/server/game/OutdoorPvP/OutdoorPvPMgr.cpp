@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -231,6 +231,14 @@ void OutdoorPvPMgr::HandleDropFlag(Player* player, uint32 spellId)
     {
         if ((*itr)->HandleDropFlag(player, spellId))
             return;
+    }
+}
+
+void OutdoorPvPMgr::HandleGameEventStart(uint32 event)
+{
+    for (OutdoorPvPSet::iterator itr = m_OutdoorPvPSet.begin(); itr != m_OutdoorPvPSet.end(); ++itr)
+    {
+        (*itr)->HandleGameEventStart(event);
     }
 }
 

@@ -548,7 +548,7 @@ void WorldSession::HandlePetRename(WorldPackets::Pet::PetRename& packet)
 
     pet->RemoveByteFlag(UNIT_FIELD_BYTES_2, UNIT_BYTES_2_OFFSET_PET_FLAGS, UNIT_CAN_BE_RENAMED);
 
-    if (declinedname)
+    if (declinedname && sWorld->getBoolConfig(CONFIG_DECLINED_NAMES_USED))
     {
         std::wstring wname;
         if (!Utf8toWStr(name, wname))
@@ -562,7 +562,7 @@ void WorldSession::HandlePetRename(WorldPackets::Pet::PetRename& packet)
     }
 
     CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
-    if (declinedname)
+    if (declinedname && sWorld->getBoolConfig(CONFIG_DECLINED_NAMES_USED))
     {
         CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHAR_PET_DECLINEDNAME);
         stmt->setUInt32(0, pet->GetCharmInfo()->GetPetNumber());

@@ -22,6 +22,8 @@
 #include "Define.h"
 #include "DetourNavMesh.h"
 
+const auto MAX_GUILD_PROFESSIONS = 2;
+
 enum SpellEffIndex : uint8
 {
     EFFECT_0 = 0,
@@ -499,7 +501,7 @@ enum SpellAttr2
     SPELL_ATTR2_HEALTH_FUNNEL                    = 0x00000800, // 11
     SPELL_ATTR2_UNK12                            = 0x00001000, // 12 Cleave, Heart Strike, Maul, Sunder Armor, Swipe
     SPELL_ATTR2_PRESERVE_ENCHANT_IN_ARENA        = 0x00002000, // 13 Items enchanted by spells with this flag preserve the enchant to arenas
-    SPELL_ATTR2_UNK14                            = 0x00004000, // 14
+    SPELL_ATTR2_NOT_BREAK_INVISIBLITY            = 0x00004000, // 14
     SPELL_ATTR2_UNK15                            = 0x00008000, // 15 not set in 3.0.3
     SPELL_ATTR2_TAME_BEAST                       = 0x00010000, // 16
     SPELL_ATTR2_NOT_RESET_AUTO_ACTIONS           = 0x00020000, // 17 don't reset timers for melee autoattacks (swings) or ranged autoattacks (autoshoots)
@@ -584,7 +586,7 @@ enum SpellAttr4
     SPELL_ATTR4_UNK24                            = 0x01000000, // 24 some shoot spell
     SPELL_ATTR4_IS_PET_SCALING                   = 0x02000000, // 25 pet scaling auras
     SPELL_ATTR4_CAST_ONLY_IN_OUTLAND             = 0x04000000, // 26 Can only be used in Outland.
-    SPELL_ATTR4_UNK27                            = 0x08000000, // 27
+    SPELL_ATTR4_FORCE_UNIT_CAST_SPELL            = 0x08000000, // 27
     SPELL_ATTR4_UNK28                            = 0x10000000, // 28 Aimed Shot
     SPELL_ATTR4_UNK29                            = 0x20000000, // 29
     SPELL_ATTR4_UNK30                            = 0x40000000, // 30
@@ -601,7 +603,7 @@ enum SpellAttr5
     SPELL_ATTR5_SINGLE_TARGET_SPELL              = 0x00000020, //  5 Only one target can be apply at a time
     SPELL_ATTR5_UNK6                             = 0x00000040, //  6
     SPELL_ATTR5_UNK7                             = 0x00000080, //  7
-    SPELL_ATTR5_UNK8                             = 0x00000100, //  8
+    SPELL_ATTR5_DONT_ALLOW_PET_TARGET            = 0x00000100, //  8
     SPELL_ATTR5_START_PERIODIC_AT_APPLY          = 0x00000200, //  9 begin periodic tick at aura apply
     SPELL_ATTR5_HIDE_DURATION                    = 0x00000400, // 10 do not send duration to client
     SPELL_ATTR5_ALLOW_TARGET_OF_TARGET_AS_TARGET = 0x00000800, // 11 (NYI) uses target's target as target if original target not valid (intervene for example)
@@ -997,6 +999,7 @@ enum CharacterFlags4 : uint32
 {
     CHARACTER_FLAG_4_TRIAL_BOOST        = 0x00000080,
     CHARACTER_FLAG_4_TRIAL_BOOST_LOCKED = 0x00040000,
+    CHARACTER_FLAG_4_EXPANSION_TRIAL    = 0x00080000,
 };
 
 #define PLAYER_CUSTOM_DISPLAY_SIZE 3
@@ -1967,6 +1970,7 @@ enum SpellCustomErrors
     SPELL_CUSTOM_ERROR_CANNOT_RITUAL_OF_DOOM_WHILE_SUMMONING_SITERS     = 317, // You cannot perform the Ritual of Doom while attempting to summon the sisters.
     SPELL_CUSTOM_ERROR_LEARNED_ALL_THAT_YOU_CAN_ABOUT_YOUR_ARTIFACT     = 318, // You have learned all that you can about your artifact.
     SPELL_CUSTOM_ERROR_CANT_CALL_PET_WITH_LONE_WOLF                     = 319, // You cannot use Call Pet while Lone Wolf is active.
+    SPELL_CUSTOM_ERROR_TARGET_CANNOT_ALREADY_HAVE_ORB_OF_POWER          = 320, // Target cannot already have a Orb of Power.
     SPELL_CUSTOM_ERROR_YOU_MUST_BE_IN_AN_INN_TO_STRUM_THAT_GUITAR       = 321, // You must be in an inn to strum that guitar.
     SPELL_CUSTOM_ERROR_YOU_CANNOT_REACH_THE_LATCH                       = 322, // You cannot reach the latch.
     SPELL_CUSTOM_ERROR_REQUIRES_A_BRIMMING_KEYSTONE                     = 323, // Requires a Brimming Keystone.
@@ -2309,7 +2313,7 @@ enum Targets
     TARGET_UNIT_CASTER_PET             = 120,
     TARGET_UNIT_TARGET_DEAD            = 121,
     TARGET_UNIT_CASTER_AREA_ENEMY      = 122,
-    TARGET_UNIT_TARGET_AREA_ENEMY      = 123,
+    TARGET_UNIT_CASTER_LOOT_RECIPIENTS = 123,
     TARGET_UNK_124                     = 124,
     TARGET_UNK_125                     = 125,
     TARGET_UNK_126                     = 126,
@@ -2328,7 +2332,7 @@ enum Targets
     TARGET_UNK_139                     = 139,
     TARGET_UNK_140                     = 140,
     TARGET_UNK_141                     = 141,
-    TARGET_UNK_142                     = 142,
+    TARGET_DEST_LAST_QUEST_GIVER       = 142,
     TARGET_UNK_143                     = 143,
     TARGET_UNK_144                     = 144,
     TARGET_UNK_145                     = 145,
@@ -3886,7 +3890,7 @@ uint32 const CREATURE_TYPEMASK_DEMON_OR_UNDEAD = (1 << (CREATURE_TYPE_DEMON-1)) 
 uint32 const CREATURE_TYPEMASK_HUMANOID_OR_UNDEAD = (1 << (CREATURE_TYPE_HUMANOID-1)) | (1 << (CREATURE_TYPE_UNDEAD-1));
 uint32 const CREATURE_TYPEMASK_MECHANICAL_OR_ELEMENTAL = (1 << (CREATURE_TYPE_MECHANICAL-1)) | (1 << (CREATURE_TYPE_ELEMENTAL-1));
 
-// CreatureFamily.dbc (6.0.2.18988)
+// CreatureFamily.dbc (7.3.5.26972)
 enum CreatureFamily
 {
     CREATURE_FAMILY_NONE                = 0,
@@ -3963,7 +3967,13 @@ enum CreatureFamily
     CREATURE_FAMILY_ABYSSAL             = 148,
     CREATURE_FAMILY_RYLAK               = 149,
     CREATURE_FAMILY_RIVERBEAST          = 150,
-    CREATURE_FAMILY_STAG                = 151
+    CREATURE_FAMILY_STAG                = 151,
+    CREATURE_FAMILY_MECHAICAL           = 154,
+    CREATURE_FAMILY_ABOMINATION         = 155,
+    CREATURE_FAMILY_SCALEHIDE           = 156,
+    CREATURE_FAMILY_OXEN                = 157,
+    CREATURE_FAMILY_FEATHERMANE         = 160,
+    CREATURE_FAMILY_VOID_STALKER        = 161
 };
 
 enum CreatureTypeFlags
@@ -4457,6 +4467,116 @@ enum SkillType
     SKILL_RACIAL_VOID_ELF                = 2423,
     SKILL_LANG_SHALASSIAN                = 2464,
     SKILL_LANG_THALASSIAN2               = 2465,
+    SKILL_DRAENOR_BLACKSMITHING          = 2472,
+    SKILL_PANDARIA_BLACKSMITHING         = 2473,
+    SKILL_CATACLYSM_BLACKSMITHING        = 2474,
+    SKILL_NORTHREND_BLACKSMITHING        = 2475,
+    SKILL_OUTLAND_BLACKSMITHING          = 2476,
+    SKILL_BLACKSMITHING_2                = 2477,
+    SKILL_KUL_TIRAN_ALCHEMY              = 2478,
+    SKILL_LEGION_ALCHEMY                 = 2479,
+    SKILL_DRAENOR_ALCHEMY                = 2480,
+    SKILL_PANDARIA_ALCHEMY               = 2481,
+    SKILL_CATACLYSM_ALCHEMY              = 2482,
+    SKILL_NORTHREND_ALCHEMY              = 2483,
+    SKILL_OUTLAND_ALCHEMY                = 2484,
+    SKILL_ALCHEMY_2                      = 2485,
+    SKILL_KUL_TIRAN_ENCHANTING           = 2486,
+    SKILL_LEGION_ENCHANTING              = 2487,
+    SKILL_DRAENOR_ENCHANTING             = 2488,
+    SKILL_PANDARIA_ENCHANTING            = 2489,
+    SKILL_CATACLYSM_ENCHANTING           = 2491,
+    SKILL_NORTHREND_ENCHANTING           = 2492,
+    SKILL_OUTLAND_ENCHANTING             = 2493,
+    SKILL_ENCHANTING_2                   = 2494,
+    SKILL_KUL_TIRAN_ENGINEERING          = 2499,
+    SKILL_LEGION_ENGINEERING             = 2500,
+    SKILL_DRAENOR_ENGINEERING            = 2501,
+    SKILL_PANDARIA_ENGINEERING           = 2502,
+    SKILL_CATACLYSM_ENGINEERING          = 2503,
+    SKILL_NORTHREND_ENGINEERING          = 2504,
+    SKILL_OUTLAND_ENGINEERING            = 2505,
+    SKILL_ENGINEERING_2                  = 2506,
+    SKILL_KUL_TIRAN_INSCRIPTION          = 2507,
+    SKILL_LEGION_INSCRIPTION             = 2508,
+    SKILL_DRAENOR_INSCRIPTION            = 2509,
+    SKILL_PANDARIA_INSCRIPTION           = 2510,
+    SKILL_CATACLYSM_INSCRIPTION          = 2511,
+    SKILL_NORTHREND_INSCRIPTION          = 2512,
+    SKILL_OUTLAND_INSCRIPTION            = 2513,
+    SKILL_INSCRIPTION_2                  = 2514,
+    SKILL_KUL_TIRAN_JEWELCRAFTING        = 2517,
+    SKILL_LEGION_JEWELCRAFTING           = 2518,
+    SKILL_DRAENOR_JEWELCRAFTING          = 2519,
+    SKILL_PANDARIA_JEWELCRAFTING         = 2520,
+    SKILL_CATACLYSM_JEWELCRAFTING        = 2521,
+    SKILL_NORTHREND_JEWELCRAFTING        = 2522,
+    SKILL_OUTLAND_JEWELCRAFTING          = 2523,
+    SKILL_JEWELCRAFTING_2                = 2524,
+    SKILL_KUL_TIRAN_LEATHERWORKING       = 2525,
+    SKILL_LEGION_LEATHERWORKING          = 2526,
+    SKILL_DRAENOR_LEATHERWORKING         = 2527,
+    SKILL_PANDARIA_LEATHERWORKING        = 2528,
+    SKILL_CATACLYSM_LEATHERWORKING       = 2529,
+    SKILL_NORTHREND_LEATHERWORKING       = 2530,
+    SKILL_OUTLAND_LEATHERWORKING         = 2531,
+    SKILL_LEATHERWORKING_2               = 2532,
+    SKILL_KUL_TIRAN_TAILORING            = 2533,
+    SKILL_LEGION_TAILORING               = 2534,
+    SKILL_DRAENOR_TAILORING              = 2535,
+    SKILL_PANDARIA_TAILORING             = 2536,
+    SKILL_CATACLYSM_TAILORING            = 2537,
+    SKILL_NORTHREND_TAILORING            = 2538,
+    SKILL_OUTLAND_TAILORING              = 2539,
+    SKILL_TAILORING_2                    = 2540,
+    SKILL_KUL_TIRAN_COOKING              = 2541,
+    SKILL_LEGION_COOKING                 = 2542,
+    SKILL_DRAENOR_COOKING                = 2543,
+    SKILL_PANDARIA_COOKING               = 2544,
+    SKILL_CATACLYSM_COOKING              = 2545,
+    SKILL_NORTHREND_COOKING              = 2546,
+    SKILL_OUTLAND_COOKING                = 2547,
+    SKILL_COOKING_2                      = 2548,
+    SKILL_KUL_TIRAN_HERBALISM            = 2549,
+    SKILL_LEGION_HERBALISM               = 2550,
+    SKILL_DRAENOR_HERBALISM              = 2551,
+    SKILL_PANDARIA_HERBALISM             = 2552,
+    SKILL_CATACLYSM_HERBALISM            = 2553,
+    SKILL_NORTHREND_HERBALISM            = 2554,
+    SKILL_OUTLAND_HERBALISM              = 2555,
+    SKILL_HERBALISM_2                    = 2556,
+    SKILL_KUL_TIRAN_SKINNING             = 2557,
+    SKILL_LEGION_SKINNING                = 2558,
+    SKILL_DRAENOR_SKINNING               = 2559,
+    SKILL_PANDARIA_SKINNING              = 2560,
+    SKILL_CATACLYSM_SKINNING             = 2561,
+    SKILL_NORTHREND_SKINNING             = 2562,
+    SKILL_OUTLAND_SKINNING               = 2563,
+    SKILL_SKINNING_2                     = 2564,
+    SKILL_KUL_TIRAN_MINING               = 2565,
+    SKILL_LEGION_MINING                  = 2566,
+    SKILL_DRAENOR_MINING                 = 2567,
+    SKILL_PANDARIA_MINING                = 2568,
+    SKILL_CATACLYSM_MINING               = 2569,
+    SKILL_NORTHREND_MINING               = 2570,
+    SKILL_OUTLAND_MINING                 = 2571,
+    SKILL_MINING_2                       = 2572,
+    SKILL_KUL_TIRAN_FISHING              = 2585,
+    SKILL_LEGION_FISHING                 = 2586,
+    SKILL_DRAENOR_FISHING                = 2587,
+    SKILL_PANDARIA_FISHING               = 2588,
+    SKILL_CATACLYSM_FISHING              = 2589,
+    SKILL_NORTHREND_FISHING              = 2590,
+    SKILL_OUTLAND_FISHING                = 2591,
+    SKILL_FISHING_2                      = 2592,
+    SKILL_RACIAL_DARK_IRON_DWARF         = 2597,
+    SKILL_RACIAL_MAG_HAR_ORC             = 2598,
+    SKILL_PET_LIZARD                     = 2703,
+    SKILL_PET_HORSE                      = 2704,
+    SKILL_PET_EXOTIC_PTERRORDAX          = 2705,
+    SKILL_PET_TOAD                       = 2706,
+    SKILL_PET_EXOTIC_KROLUSK             = 2707,
+    SKILL_SECOND_PET_HUNTER              = 2716
 };
 
 inline SkillType SkillByLockType(LockType locktype)
@@ -4581,6 +4701,8 @@ enum CorpseDynFlags
 {
     CORPSE_DYNFLAG_LOOTABLE        = 0x0001
 };
+
+#define PLAYER_CORPSE_LOOT_ENTRY 1
 
 enum WeatherType
 {

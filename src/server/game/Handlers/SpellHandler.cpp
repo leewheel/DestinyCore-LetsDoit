@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -628,4 +627,11 @@ void WorldSession::HandleUpdateMissileTrajectory(WorldPackets::Spells::UpdateMis
 void WorldSession::HandleRequestCategoryCooldowns(WorldPackets::Spells::RequestCategoryCooldowns& /*requestCategoryCooldowns*/)
 {
     _player->SendSpellCategoryCooldowns();
+}
+
+void WorldSession::HandleUnlearnSpecialization(WorldPackets::Spells::UnlearnSpecialization& packet)
+{
+    const std::array<uint32, 5> specialisationsIndex = { 20219, 20222, 28677, 28675, 28672 };
+    if (packet.SpecializationIndex < 5)
+        GetPlayer()->RemoveSpell(specialisationsIndex[packet.SpecializationIndex]);
 }

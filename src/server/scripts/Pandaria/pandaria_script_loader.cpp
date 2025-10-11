@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2018 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2016 Firestorm Servers <https://firestorm-servers.com>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -112,6 +111,9 @@ void AddSC_boss_sha_of_anger();
 void AddSC_boss_xuen();
 void AddSC_boss_yu_lon();
 
+// Throne of Thunder
+void AddSC_boss_council_of_elders();
+void AddSC_boss_dark_animus();
 
 // Zones
 void AddSC_dread_wastes();
@@ -222,6 +224,10 @@ void AddPandariaScripts()
     AddSC_boss_sha_of_anger();
     AddSC_boss_xuen();
     AddSC_boss_yu_lon();
+
+    // Throne of Thunder
+    AddSC_boss_council_of_elders();
+    AddSC_boss_dark_animus();
 
     // Zones
     AddSC_dread_wastes();

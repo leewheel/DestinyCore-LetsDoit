@@ -3967,6 +3967,11 @@ bool Map::GetEntrancePos(int32 &mapid, float &x, float &y)
     return i_mapEntry->GetEntrancePos(mapid, x, y);
 }
 
+bool Map::IsNeedRespawn(uint32 lastRespawn) const
+{
+    return lastRespawn < m_respawnChallenge;
+}
+
 bool InstanceMap::HasPermBoundPlayers() const
 {
     CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_PERM_BIND_BY_INSTANCE);

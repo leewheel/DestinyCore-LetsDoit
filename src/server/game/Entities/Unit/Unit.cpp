@@ -534,7 +534,7 @@ void Unit::MonsterMoveWithSpeed(float x, float y, float z, float speed, bool gen
 
 void Unit::UpdateSplineMovement(uint32 t_diff)
 {
-    if (movespline->Finalized())
+    if (!movespline || movespline->Finalized())
         return;
 
     movespline->updateState(t_diff);
@@ -544,14 +544,19 @@ void Unit::UpdateSplineMovement(uint32 t_diff)
     {
         DisableSpline();
 
-        if (IsCreature() && IsAIEnabled)
+        if (IsCreature())
         {
-            ToCreature()->AI()->OnSplineIndexReached(movespline->_Spline().last());
-            ToCreature()->AI()->OnSplineEndReached();
+            if (IsAIEnabled && ToCreature()->AI())
+            {
+                ToCreature()->AI()->OnSplineIndexReached(movespline->_Spline().last());
+                ToCreature()->AI()->OnSplineEndReached();
+            }
         }
     }
-    else if (IsAIEnabled && movespline->_lastSplineIdx() != movespline->_currentSplineIdx())
+    else if (IsCreature() && IsAIEnabled && ToCreature()->AI() && movespline->_lastSplineIdx() != movespline->_currentSplineIdx())
+    {
         ToCreature()->AI()->OnSplineIndexReached(movespline->_lastSplineIdx());
+    }
 
     m_movesplineTimer.Update(t_diff);
     if (m_movesplineTimer.Passed() || arrived)
@@ -3717,6 +3722,25 @@ Aura* Unit::GetOwnedAura(uint32 spellId, ObjectGuid casterGUID, ObjectGuid itemC
     return NULL;
 }
 
+std::vector<Aura*> Unit::GetOwnedAurasByTypes(std::initializer_list<AuraType> types) const
+{
+    std::vector<Aura*> returnAuras;
+
+    for (auto itr : m_ownedAuras)
+    {
+        for (AuraType type : types)
+        {
+            if (itr.second->HasEffectType(type))
+            {
+                returnAuras.push_back(itr.second);
+                break;
+            }
+        }
+    }
+
+    return returnAuras;
+}
+
 void Unit::RemoveAura(AuraApplicationMap::iterator &i, AuraRemoveMode mode)
 {
     AuraApplication * aurApp = i->second;
@@ -4389,17 +4413,14 @@ void Unit::_ApplyAllAuraStatMods()
         (*i).second->GetBase()->HandleAllEffects(i->second, AURA_EFFECT_HANDLE_STAT, true);
 }
 
-Player::AuraEffectList const Unit::GetAuraEffectsByTypes(std::initializer_list<AuraType> types) const
+Player::AuraEffectList Unit::GetAuraEffectsByTypes(std::initializer_list<AuraType> types, ObjectGuid casterGUID /*= ObjectGuid::Empty*/) const
 {
     Player::AuraEffectList returnAuraEffectList;
 
     for (AuraType type : types)
-    {
-        Player::AuraEffectList typeAuraEffectList = GetAuraEffectsByType(type);
-
-        if (!typeAuraEffectList.empty())
-            returnAuraEffectList.insert(returnAuraEffectList.end(), typeAuraEffectList.begin(), typeAuraEffectList.end());
-    }
+        for (AuraEffect* effect : GetAuraEffectsByType(type))
+            if (casterGUID.IsEmpty() || effect->GetCasterGUID() == casterGUID)
+                returnAuraEffectList.push_back(effect);
 
     return returnAuraEffectList;
 }
@@ -5114,6 +5135,15 @@ GameObject* Unit::GetGameObject(uint32 spellId) const
     return gameobjects.empty() ? nullptr : gameobjects.front();
 }
 
+GameObject* Unit::GetGameObjectByEntry(uint32 entry) const
+{
+    for (GameObject* gob : m_gameObj)
+        if (gob->GetEntry() == entry)
+            return gob;
+
+    return nullptr;
+}
+
 std::vector<GameObject*> Unit::GetGameObjects(uint32 spellId) const
 {
     std::vector<GameObject*> gameobjects;
@@ -5194,6 +5224,30 @@ void Unit::RemoveGameObject(uint32 spellid, bool del)
     {
         next = i;
         if (spellid == 0 || (*i)->GetSpellId() == spellid)
+        {
+            (*i)->SetOwnerGUID(ObjectGuid::Empty);
+            if (del)
+            {
+                (*i)->SetRespawnTime(0);
+                (*i)->Delete();
+            }
+
+            next = m_gameObj.erase(i);
+        }
+        else
+            ++next;
+    }
+}
+
+void Unit::RemoveGameObjectByEntry(uint32 entry, bool del /*= true*/)
+{
+    if (m_gameObj.empty())
+        return;
+    GameObjectList::iterator i, next;
+    for (i = m_gameObj.begin(); i != m_gameObj.end(); i = next)
+    {
+        next = i;
+        if ((*i)->GetEntry() == entry)
         {
             (*i)->SetOwnerGUID(ObjectGuid::Empty);
             if (del)
@@ -6735,9 +6789,9 @@ uint32 Unit::SpellDamageBonusDone(Unit* victim, SpellInfo const* spellProto, uin
         DoneAdvertisedBenefit += static_cast<Guardian const*>(this)->GetBonusDamage();
 
     // Check for table values
-    if (effect->BonusCoefficientFromAP > 0.0f)
+    if (effect->BonusCoefficientFromAP > 0.0f || sSpellMgr->GetSpellBonusCoeffFromAP(spellProto->Id))
     {
-        float ApCoeffMod = effect->BonusCoefficientFromAP;
+        float ApCoeffMod = sSpellMgr->GetSpellBonusCoeffFromAP(spellProto->Id) ? sSpellMgr->GetSpellBonusCoeffFromAP(spellProto->Id) : effect->BonusCoefficientFromAP;
         if (Player* modOwner = GetSpellModOwner())
         {
             ApCoeffMod *= 100.0f;
@@ -6752,7 +6806,7 @@ uint32 Unit::SpellDamageBonusDone(Unit* victim, SpellInfo const* spellProto, uin
     }
 
     // Default calculation
-    float coeff = effect->BonusCoefficient;
+    float coeff = sSpellMgr->GetSpellBonusCoeffFromSP(spellProto->Id) ? sSpellMgr->GetSpellBonusCoeffFromSP(spellProto->Id) : effect->BonusCoefficient;
     if (DoneAdvertisedBenefit)
     {
         if (Player* modOwner = GetSpellModOwner())
@@ -11541,14 +11595,13 @@ void Unit::Kill(Unit* victim, bool durabilityLoss)
                 }
             }
 
-            // Generate loot before updating looter
-            if (creature)
-            {
-                Loot* loot = &creature->loot;
-
-                loot->clear();
-                if (uint32 lootid = creature->GetCreatureTemplate()->lootid)
-                    loot->FillLoot(lootid, LootTemplates_Creature, looter, false, false, creature->GetLootMode());
+        // Generate loot before updating looter
+        if (creature)
+        {
+            Loot* loot = &creature->loot;
+            loot->clear();
+            if (uint32 lootid = creature->GetCreatureTemplate()->lootid)
+                loot->FillLoot(lootid, LootTemplates_Creature, looter, false, false, creature->GetLootMode());
 
                 if (uint32 journalEncounterId = sObjectMgr->GetCreatureTemplateJournalId(creature->GetCreatureTemplate()->Entry))
                 {
@@ -11570,6 +11623,7 @@ void Unit::Kill(Unit* victim, bool durabilityLoss)
                     }
                 }
 
+            if (creature->GetLootMode() > 0)
                 loot->generateMoneyLoot(creature->GetCreatureTemplate()->mingold, creature->GetCreatureTemplate()->maxgold);
 
                 if (group)

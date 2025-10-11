@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,8 +15,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef OUTDOOR_PVP_MGR_H_
-#define OUTDOOR_PVP_MGR_H_
+#ifndef OUTDOORPVPMGR_H_
+#define OUTDOORPVPMGR_H_
 
 #define OUTDOORPVP_OBJECTIVE_UPDATE_INTERVAL 1000
 
@@ -82,6 +82,8 @@ class TC_GAME_API OutdoorPvPMgr
         void HandleDropFlag(Player* player, uint32 spellId);
 
         std::string GetDefenseMessage(uint32 zoneId, uint32 id, LocaleConstant locale) const;
+
+        void HandleGameEventStart(uint32 event);
 
     private:
         typedef std::vector<OutdoorPvP*> OutdoorPvPSet;

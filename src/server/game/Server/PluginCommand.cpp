@@ -23,6 +23,8 @@
 #include "SocialMgr.h"
 #include "FieldBotMgr.h"
 #include "GuildMgr.h"
+#include "SocialPackets.h"
+#include <Packet.h>
 
 PluginCommand* PluginCommand::instance()
 {
@@ -84,7 +86,7 @@ bool PluginCommand::ResetDungeon(Player* player)
 
 bool PluginCommand::AddGroupFriend(Player* player)
 {
-	/*Group* pGroup = player->GetGroup();
+	Group* pGroup = player->GetGroup();
 	PlayerSocial* pSocial = player->GetSocial();
 	if (!pSocial || !pGroup || pGroup->isBGGroup() || pGroup->isBFGroup())
 		return false;
@@ -92,16 +94,17 @@ bool PluginCommand::AddGroupFriend(Player* player)
 	for (Group::MemberSlot const& slot : memList)
 	{
 		Player* friendPlayer = ObjectAccessor::FindPlayer(slot.guid);
-		if (!friendPlayer || friendPlayer == player || friendPlayer->GetTeamId() != player->GetTeamId() ||
-			pSocial->HasFriend(friendPlayer->GetGUID().GetCounter()) || pSocial->HasIgnore(friendPlayer->GetGUID().GetCounter()))
+        if (!friendPlayer || friendPlayer == player || friendPlayer->GetTeamId() != player->GetTeamId() ||
+            pSocial->HasFriend(friendPlayer->GetGUID()) || pSocial->HasIgnore(friendPlayer->GetGUID()))
 			continue;
-		WorldPacket opcode(1);
+		WorldPacket opcode(CMSG_ADD_FRIEND);
+        WorldPackets::Social::AddFriend packet(std::move(opcode));
 		opcode << friendPlayer->GetName();
 		opcode << "";
-		player->GetSession()->HandleAddFriendOpcode(opcode);
-		pSocial->SendSocialList(player);
+		player->GetSession()->HandleAddFriendOpcode(packet);
+		pSocial->SendSocialList(player, friendPlayer->GetGUID());
 		break;
-	}*/
+	}
 	return true;
 }
 

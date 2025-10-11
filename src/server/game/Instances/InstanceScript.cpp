@@ -851,6 +851,17 @@ void InstanceScript::DoModifyPlayerCurrencies(uint32 id, int32 value)
                 pPlayer->ModifyCurrency(id, value);
 }
 
+void InstanceScript::RepopPlayersAtGraveyard()
+{
+    if (!instance)
+        return;
+
+    DoOnPlayers([](Player* player)
+        {
+            player->RepopAtGraveyard();
+        });
+}
+
 void InstanceScript::DoNearTeleportPlayers(const Position pos, bool casting /*=false*/)
 {
     Map::PlayerList const &plrList = instance->GetPlayers();
@@ -1440,7 +1451,7 @@ void InstanceScript::StartChallengeMode(uint8 modeid, uint8 level, uint8 affix1,
 	{
         CastChallengePlayerSpell(itr->GetSource());
 		// HOOK to PLAYERSCRIPT
-        sScriptMgr->OnPlayerStartChallengeMode(itr->GetSource(), level);
+        sScriptMgr->OnPlayerStartChallengeMode(itr->GetSource(), level, affix1, affix2, affix3);
     }
 
     AddTimedDelayedOperation(10000, [this]()
@@ -1761,6 +1772,16 @@ void InstanceScript::AddChallengeModeDoor(ObjectGuid doorGuid)
 void InstanceScript::AddChallengeModeOrb(ObjectGuid orbGuid)
 {
     _challengeOrbGuid = orbGuid;
+}
+
+void InstanceScript::ResetChallengeMode()
+{
+    //if (_challenge)
+    //    _challenge->ResetGo(); ToDo
+
+    instance->m_respawnChallenge = time(nullptr); // For respawn all mobs
+    RepopPlayersAtGraveyard();
+    instance->SetDifficultyID(DIFFICULTY_MYTHIC);
 }
 
 bool InstanceHasScript(WorldObject const* obj, char const* scriptName)

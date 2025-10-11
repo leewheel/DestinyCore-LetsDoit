@@ -37,6 +37,8 @@ void AddSC_rest_scripts();
 void AddSC_chat_log();
 void AddSC_duel_reset();
 void AddSC_npc_PetBattleTrainer();
+// challenge
+void AddSC_challenge_scripts();
 
 // The name of this function should match:
 // void Add${NameOfDirectory}Scripts()
@@ -63,4 +65,5 @@ void AddWorldScripts()
         AddSC_action_ip_logger(); // location: scripts\World\action_ip_logger.cpp
     AddSC_duel_reset();
     AddSC_npc_PetBattleTrainer();
+    AddSC_challenge_scripts();
 }

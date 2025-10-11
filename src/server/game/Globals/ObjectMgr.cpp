@@ -4603,6 +4603,10 @@ void ObjectMgr::LoadQuests()
                         TC_LOG_ERROR("sql.sql", "Quest %u objective %u has non existing creature entry %u, quest can't be done.",
                             qinfo->GetQuestId(), obj.ID, uint32(obj.ObjectID));
                     break;
+                case QUEST_OBJECTIVE_DEFEATBATTLEPET:
+                    if (!sBattlePetSpeciesStore.LookupEntry(obj.ObjectID))
+                        TC_LOG_ERROR("sql.sql", "Quest %u objective %u has non existing battlepet species id %d", qinfo->GetQuestId(), obj.ID, obj.ObjectID);
+                    break;
                 case QUEST_OBJECTIVE_CRITERIA_TREE:
                     if (!sCriteriaTreeStore.LookupEntry(obj.ObjectID))
                         TC_LOG_ERROR("sql.sql", "Quest %u objective %u has non existing criteria tree id %d", qinfo->GetQuestId(), obj.ID, obj.ObjectID);
@@ -9377,6 +9381,15 @@ uint32 ObjectMgr::GetCreatureDefaultTrainer(uint32 creatureId) const
     return 0;
 }
 
+uint32 ObjectMgr::GetAdventureMapUIByCreature(uint32 creatureId) const
+{
+    auto itr = _adventureMapUIByCreature.find(creatureId);
+    if (itr != _adventureMapUIByCreature.end())
+        return itr->second;
+
+    return 0;
+}
+
 void ObjectMgr::AddVendorItem(uint32 entry, VendorItem const& vItem, bool persist /*= true*/)
 {
     VendorItemData& vList = _cacheVendorItemStore[entry];
@@ -10602,6 +10615,46 @@ void ObjectMgr::LoadQuestTasks()
             }
         }
     }
+}
+
+void ObjectMgr::LoadAdventureMapUI()
+{
+    uint32 oldMSTime = getMSTime();
+
+    _adventureMapUIByCreature.clear(); // needed for reload case
+
+    //                                               0           1
+    QueryResult result = WorldDatabase.Query("SELECT CreatureId, uiMapId FROM adventure_map_ui");
+
+    if (!result)
+    {
+        TC_LOG_INFO("server.loading", ">> Loaded 0 adventure mapui by creature. DB table `adventure_map_ui` is empty.");
+        return;
+    }
+
+    uint32 count = 0;
+
+    do
+    {
+        ++count;
+
+        Field* fields = result->Fetch();
+
+        uint32 creatureId = fields[0].GetUInt32();
+        uint32 mapUiId = fields[1].GetUInt32();
+
+        CreatureTemplate const* cInfo = GetCreatureTemplate(creatureId);
+        if (!cInfo)
+        {
+            TC_LOG_ERROR("sql.sql", "Creature template (Entry: %u) does not exist but has a record in `adventure_map_ui`", creatureId);
+            continue;
+        }
+
+        _adventureMapUIByCreature[creatureId] = mapUiId;
+
+    } while (result->NextRow());
+
+    TC_LOG_INFO("server.loading", ">> Loaded %u adventure mapui by creature in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
 }
 
 void ObjectMgr::LoadPlayerChoices()

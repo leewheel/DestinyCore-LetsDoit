@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2018 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2008-2017 TrinityCore <http://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -65,6 +64,29 @@ bool ClassHall::IsAllowedArea(AreaTableEntry const* area) const
     if (!area)
         return false;
 
-    // TODO : Find a better way to handle this
-    return area->Flags[1] & AREA_FLAG_GARRISON && (area->ID >= 7638 && area->ID <= 8023);
+    if ((area->Flags[1] & AREA_FLAG_GARRISON && (area->ID >= 7638 && area->ID <= 8023)) || area->ID == 7877)
+    {
+        switch (area->ID)
+        {
+        case 7813:
+        case 7638:
+        case 7877:
+        case 8011:
+        case 7834:
+        case 7679:
+        case 7752:
+        case 7753:
+        case 7879:
+        case 7875:
+        case 7903:
+        case 7846:
+        case 8076:
+        case 8023:
+            return true;
+            break;
+        default:
+            break;
+        }
+    }
+    return false;
 }

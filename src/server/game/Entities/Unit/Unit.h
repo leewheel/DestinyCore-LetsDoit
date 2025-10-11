@@ -123,6 +123,7 @@ enum SpellValueMod : uint8
     SPELLVALUE_RADIUS_MOD,
     SPELLVALUE_MAX_TARGETS,
     SPELLVALUE_AURA_STACK,
+    SPELLVALUE_DURATION,
     SPELLVALUE_TRIGGER_SPELL,
     SPELLVALUE_TRIGGER_SPELL_END = SPELLVALUE_TRIGGER_SPELL + 32/*MAX_SPELL_EFFECTS*/,
 };
@@ -1499,6 +1500,8 @@ class TC_GAME_API Unit : public WorldObject
 
         Aura* GetOwnedAura(uint32 spellId, ObjectGuid casterGUID = ObjectGuid::Empty, ObjectGuid itemCasterGUID = ObjectGuid::Empty, uint32 reqEffMask = 0, Aura* except = NULL) const;
 
+        std::vector<Aura*> GetOwnedAurasByTypes(std::initializer_list<AuraType> types) const;
+
         // m_appliedAuras container management
         AuraApplicationMap      & GetAppliedAuras()       { return m_appliedAuras; }
         AuraApplicationMap const& GetAppliedAuras() const { return m_appliedAuras; }
@@ -1548,7 +1551,7 @@ class TC_GAME_API Unit : public WorldObject
         void _ApplyAllAuraStatMods();
 
         AuraEffectList const& GetAuraEffectsByType(AuraType type) const { return m_modAuras[type]; }
-        AuraEffectList const GetAuraEffectsByTypes(std::initializer_list<AuraType> types) const;
+        AuraEffectList GetAuraEffectsByTypes(std::initializer_list<AuraType> types, ObjectGuid casterGUID = ObjectGuid::Empty) const;
         AuraList      & GetSingleCastAuras()       { return m_scAuras; }
         AuraList const& GetSingleCastAuras() const { return m_scAuras; }
 
@@ -1794,9 +1797,11 @@ class TC_GAME_API Unit : public WorldObject
 
         GameObject* GetGameObject(uint32 spellId) const;
         std::vector<GameObject*> GetGameObjects(uint32 spellId) const;
+        GameObject* GetGameObjectByEntry(uint32 entry) const;
         void AddGameObject(GameObject* gameObj);
         void RemoveGameObject(GameObject* gameObj, bool del);
         void RemoveGameObject(uint32 spellid, bool del);
+        void RemoveGameObjectByEntry(uint32 entry, bool del = true);
         void RemoveAllGameObjects();
 
         // AreaTrigger management

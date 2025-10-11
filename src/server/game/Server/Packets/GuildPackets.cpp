@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -482,6 +482,41 @@ void WorldPackets::Guild::GuildChangeNameRequest::Read()
     NewName = _worldPacket.ReadString(nameLen);
 }
 
+
+WorldPacket const* WorldPackets::Guild::QueryGuildMembersForRecipeReponse::Write()
+{
+    _worldPacket << SkillLineID;
+    _worldPacket << SpellID;
+    _worldPacket << static_cast<uint32>(Member.size());
+    for (auto const& v : Member)
+        _worldPacket << v;
+
+    return &_worldPacket;
+}
+
+WorldPacket const* WorldPackets::Guild::GuildMemberRecipes::Write()
+{
+    _worldPacket << Member;
+    _worldPacket << SkillLineID;
+    _worldPacket << SkillRank;
+    _worldPacket << SkillStep;
+    for (auto const& v : SkillLineBitArray)
+        _worldPacket << v;
+
+    return &_worldPacket;
+}
+
+WorldPacket const* WorldPackets::Guild::GuildInviteDeclined::Write()
+{
+    _worldPacket.WriteBits(Name.length(), 6);
+    _worldPacket << AutoDecline;
+    _worldPacket.FlushBits();
+    _worldPacket << VirtualRealmAddress;
+    _worldPacket << Name;
+
+    return &_worldPacket;
+}
+
 WorldPacket const* WorldPackets::Guild::GuildFlaggedForRename::Write()
 {
     _worldPacket.WriteBit(FlagSet);
@@ -859,6 +894,26 @@ WorldPacket const* WorldPackets::Guild::PlayerSaveGuildEmblem::Write()
     return &_worldPacket;
 }
 
+void WorldPackets::Guild::QueryRecipes::Read()
+{
+    _worldPacket >> GuildGUID;
+}
+
+void WorldPackets::Guild::QueryMemberRecipes::Read()
+{
+    _worldPacket >> GuildMember;
+    _worldPacket >> GuildGUID;
+    _worldPacket >> SkillLineID;
+}
+
+void WorldPackets::Guild::QueryGuildMembersForRecipe::Read()
+{
+    _worldPacket >> GuildGUID;
+    _worldPacket >> SkillLineID;
+    _worldPacket >> SpellID;
+    _worldPacket >> UniqueBit;
+}
+
 void WorldPackets::Guild::GuildSetAchievementTracking::Read()
 {
     uint32 count;
@@ -878,6 +933,13 @@ WorldPacket const* WorldPackets::Guild::GuildNameChanged::Write()
     _worldPacket.WriteBits(GuildName.length(), 7);
     _worldPacket.FlushBits();
     _worldPacket.WriteString(GuildName);
+
+    return &_worldPacket;
+}
+
+WorldPacket const* WorldPackets::Guild::GuildReputationReactionChanged::Write()
+{
+    _worldPacket << MemberGUID;
 
     return &_worldPacket;
 }

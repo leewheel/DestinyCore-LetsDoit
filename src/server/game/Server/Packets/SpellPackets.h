@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,8 +15,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SpellPackets_h__
-#define SpellPackets_h__
+#ifndef SPELLPACKETS_H
+#define SPELLPACKETS_H
 
 #include "CombatLogPacketsCommon.h"
 #include "MovementInfo.h"
@@ -818,6 +818,16 @@ namespace WorldPackets
             uint32 SkillLine = 0;
         };
 
+        class UnlearnSpecialization final : public ClientPacket
+        {
+        public:
+            UnlearnSpecialization(WorldPacket&& packet) : ClientPacket(CMSG_UNLEARN_SPECIALIZATION, std::move(packet)) { }
+
+            void Read() override;
+
+            uint8 SpecializationIndex = 0;
+        };
+
         class SelfRes final : public ClientPacket
         {
         public:
@@ -992,9 +1002,21 @@ namespace WorldPackets
             int32 SpellXSpellVisualId = 0;
             ObjectGuid TargetGUID;
         };
+
+        class AreaTriggerSequence final : public ServerPacket
+        {
+        public:
+            AreaTriggerSequence() : ServerPacket(SMSG_AREA_TRIGGER_SEQUENCE) { }
+
+            WorldPacket const* Write() override;
+
+            ObjectGuid TriggerGUID;
+            int32 SequenceAnimationID = 0;
+            bool SequenceEntered = false;
+        };
     }
 }
 
 ByteBuffer& operator>>(ByteBuffer& buffer, WorldPackets::Spells::SpellCastRequest& request);
 
-#endif // SpellPackets_h__
+#endif

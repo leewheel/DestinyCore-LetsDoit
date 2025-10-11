@@ -2503,9 +2503,9 @@ void ScriptMgr::OnPlayerMovementUpdate(Player* player)
     FOREACH_SCRIPT(PlayerScript)->OnMovementUpdate(player);
 }
 
-void ScriptMgr::OnPlayerStartChallengeMode(Player* player, uint8 level)
+void ScriptMgr::OnPlayerStartChallengeMode(Player* player, uint8 level, uint8 affix1, uint8 affix2, uint8 affix3)
 {
-    FOREACH_SCRIPT(PlayerScript)->OnStartChallengeMode(player, level);
+    FOREACH_SCRIPT(PlayerScript)->OnStartChallengeMode(player, level, affix1, affix2, affix3);
 }
 
 // Account
@@ -2733,6 +2733,15 @@ void ScriptMgr::OnQuestStatusChange(Player* player, Quest const* quest, QuestSta
 
     GET_SCRIPT(QuestScript, quest->GetScriptId(), tmpscript);
     tmpscript->OnQuestStatusChange(player, quest, oldStatus, newStatus);
+}
+
+void ScriptMgr::OnQuestAcknowledgeAutoAccept(Player* player, Quest const* quest)
+{
+    ASSERT(player);
+    ASSERT(quest);
+
+    GET_SCRIPT(QuestScript, quest->GetScriptId(), tmpscript);
+    tmpscript->OnAcknowledgeAutoAccept(player, quest);
 }
 
 void ScriptMgr::OnQuestObjectiveChange(Player* player, Quest const* quest, QuestObjective const& objective, int32 oldAmount, int32 newAmount)

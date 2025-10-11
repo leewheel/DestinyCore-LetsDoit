@@ -543,10 +543,6 @@ void FieldWarfare::TeleportToTargetVisible(Player* pBot, Player* pTarget)
 	} while (!MapManager::IsValidMapCoord(pTarget->GetMapId(), distX, distY, distZ, pTarget->GetOrientation()));
 	Position resultPos(distX, distY, distZ, pTarget->GetOrientation());
 
-if (pTarget)
-if (pTarget->GetMapId()==1116 || pTarget->GetMapId()==449 || pTarget->GetMapId()==489 || pTarget->GetMapId()==529 || pTarget->GetMapId()==566 || pTarget->GetMapId()==638 || pTarget->GetMapId()==643 || pTarget->GetMapId()==644 || pTarget->GetMapId()==645 || pTarget->GetMapId()==646 || pTarget->GetMapId()==648 || pTarget->GetMapId()==654 || pTarget->GetMapId()==657 || pTarget->GetMapId()==669 || pTarget->GetMapId()==670 || pTarget->GetMapId()==671 || pTarget->GetMapId()==720 || pTarget->GetMapId()==725 || pTarget->GetMapId()==726 || pTarget->GetMapId()==730 || pTarget->GetMapId()==732 || pTarget->GetMapId()==754 || pTarget->GetMapId()==755 || pTarget->GetMapId()==757 || pTarget->GetMapId()==761 || pTarget->GetMapId()==859 || pTarget->GetMapId()==860 || pTarget->GetMapId()==861 || pTarget->GetMapId()==870 || pTarget->GetMapId()==938 || pTarget->GetMapId()==939 || pTarget->GetMapId()==940 || pTarget->GetMapId()==959 || pTarget->GetMapId()==960 || pTarget->GetMapId()==961 || pTarget->GetMapId()==962 || pTarget->GetMapId()==967 || pTarget->GetMapId()==974 || pTarget->GetMapId()==994 || pTarget->GetMapId()==996 || pTarget->GetMapId()==998 || pTarget->GetMapId()==1001 || pTarget->GetMapId()==1004 || pTarget->GetMapId()==1007 || pTarget->GetMapId()==1008 || pTarget->GetMapId()==1009 || pTarget->GetMapId()==1011 || pTarget->GetMapId()==1064 || pTarget->GetMapId()==1098 || pTarget->GetMapId()==1136)
-return;
-
 	pBot->CombatStop(true);
 	pBot->SetSelection(ObjectGuid::Empty);
 	pFieldAI->SetWarfareTarget(pTarget);
@@ -821,11 +817,6 @@ void FieldBotMgr::TeleportToTargetVisible(BotFieldAI* pFieldAI, Player* pTarget)
 			!IsVaildVisiblePos(pTarget, distX, distY, distZ));
 	}
 	Position resultPos(distX, distY, distZ, pTarget->GetOrientation());
-
-if (pTarget)
-if (pTarget->GetMapId()==1116 || pTarget->GetMapId()==449 || pTarget->GetMapId()==489 || pTarget->GetMapId()==529 || pTarget->GetMapId()==566 || pTarget->GetMapId()==638 || pTarget->GetMapId()==643 || pTarget->GetMapId()==644 || pTarget->GetMapId()==645 || pTarget->GetMapId()==646 || pTarget->GetMapId()==648 || pTarget->GetMapId()==654 || pTarget->GetMapId()==657 || pTarget->GetMapId()==669 || pTarget->GetMapId()==670 || pTarget->GetMapId()==671 || pTarget->GetMapId()==720 || pTarget->GetMapId()==725 || pTarget->GetMapId()==726 || pTarget->GetMapId()==730 || pTarget->GetMapId()==732 || pTarget->GetMapId()==754 || pTarget->GetMapId()==755 || pTarget->GetMapId()==757 || pTarget->GetMapId()==761 || pTarget->GetMapId()==859 || pTarget->GetMapId()==860 || pTarget->GetMapId()==861 || pTarget->GetMapId()==870 || pTarget->GetMapId()==938 || pTarget->GetMapId()==939 || pTarget->GetMapId()==940 || pTarget->GetMapId()==959 || pTarget->GetMapId()==960 || pTarget->GetMapId()==961 || pTarget->GetMapId()==962 || pTarget->GetMapId()==967 || pTarget->GetMapId()==974 || pTarget->GetMapId()==994 || pTarget->GetMapId()==996 || pTarget->GetMapId()==998 || pTarget->GetMapId()==1001 || pTarget->GetMapId()==1004 || pTarget->GetMapId()==1007 || pTarget->GetMapId()==1008 || pTarget->GetMapId()==1009 || pTarget->GetMapId()==1011 || pTarget->GetMapId()==1064 || pTarget->GetMapId()==1098 || pTarget->GetMapId()==1136)
-return;
-
 
 	pFieldAI->GetAIPayer()->CombatStop(true);
 	pFieldAI->GetAIPayer()->SetSelection(ObjectGuid::Empty);

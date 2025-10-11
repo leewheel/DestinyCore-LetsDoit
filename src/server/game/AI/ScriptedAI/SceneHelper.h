@@ -1,5 +1,22 @@
-#ifndef SCENE_HELPER_H
-#define SCENE_HELPER_H
+/*
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#ifndef SCENEHELPER_H
+#define SCENEHELPER_H
 
 #include "CreatureAI.h"
 #include "Creature.h"
@@ -17,6 +34,7 @@ enum ActionTypesScenehelperAction
     ACTION_YELL_SCENEHLPER_ACTIONS,
     ACTION_MOVE_SCENEHELPER_ACTIONS,
     ACTION_SUMMON_SCENEHLPER_ACTIONS,
+    ACTION_SUMMON_GO_SCENEHLPER_ACTIONS,
     ACTION_CAST_SCENEHLPER_ACTIONS,
     ACTION_AI_SCENEHLPER_ACTIONS,
     ACTION_MOVE_POS_SCENEHLPER_ACTIONS,
@@ -144,6 +162,21 @@ public:
 
     SceneActionSummon(ObjectGuid actorGuid, Map* actionMap, uint32 summonEntry, const Position& summonPosition, uint32 actionTimer, ObjectGuid playerGuid) :
         SceneAction(actorGuid, actionMap, ACTION_SUMMON_SCENEHLPER_ACTIONS, actionTimer, playerGuid), summonEntry(summonEntry), summonPosition(summonPosition) {}
+
+    void DoAction();
+
+private:
+
+    uint32 summonEntry;
+    Position summonPosition;
+};
+
+class TC_GAME_API SceneActionSummonGo : public SceneAction
+{
+public:
+
+    SceneActionSummonGo(ObjectGuid actorGuid, Map* actionMap, uint32 summonEntry, const Position& summonPosition, uint32 actionTimer, ObjectGuid playerGuid) :
+        SceneAction(actorGuid, actionMap, ACTION_SUMMON_GO_SCENEHLPER_ACTIONS, actionTimer, playerGuid), summonEntry(summonEntry), summonPosition(summonPosition) {}
 
     void DoAction();
 
@@ -517,6 +550,11 @@ public:
         sceneActionList.push_back(new SceneActionSummon(defaultActorGuid, actionMap, summonEntry, summonPosition, actionTimer, defaultPlayerGuid));
     }
 
+    void AddSceneSummonGameObject(uint32 summonEntry, const Position& summonPosition, uint32 actionTimer = 1000)
+    {
+        sceneActionList.push_back(new SceneActionSummonGo(defaultActorGuid, actionMap, summonEntry, summonPosition, actionTimer, defaultPlayerGuid));
+    }
+
     void AddSceneCast(uint32 spellEntry, uint32 actionTimer = 1000)
     {
         sceneActionList.push_back(new SceneActionCast(defaultActorGuid, actionMap, spellEntry, actionTimer, defaultPlayerGuid));
@@ -532,9 +570,19 @@ public:
         sceneActionList.push_back(new SceneActionMovePos(defaultActorGuid, actionMap, pos, actionTimer, defaultPlayerGuid));
     }
 
+    void AddSceneActionMovePosByActor(ObjectGuid actorGuid, const Position pos, uint32 actionTimer = 1000)
+    {
+        sceneActionList.push_back(new SceneActionMovePos(actorGuid, actionMap, pos, actionTimer, defaultPlayerGuid));
+    }
+
     void AddSceneActionMovePath(int pathId, uint32 actionTimer = 1000)
     {
         sceneActionList.push_back(new SceneActionMovePath(defaultActorGuid, actionMap, pathId, actionTimer, defaultPlayerGuid));
+    }
+
+    void AddSceneActionMovePathByActor(ObjectGuid actorGuid, int pathId, uint32 actionTimer = 1000)
+    {
+        sceneActionList.push_back(new SceneActionMovePath(actorGuid, actionMap, pathId, actionTimer, defaultPlayerGuid));
     }
 
     void AddSceneActionCastTarget(uint32 spellEntry, bool triggered, Unit* target, uint32 actionTimer = 1000)

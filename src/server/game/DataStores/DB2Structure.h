@@ -72,6 +72,24 @@ struct AdventureJournalEntry
     uint32 Unk17;
 };
 
+struct AdventureMapPOIEntry
+{
+    uint32 ID;
+    LocalizedString* Title;
+    LocalizedString* Description;
+    float WorldPosition[2];
+    int32 RewardItemID;
+    int8 Type;
+    uint32 PlayerConditionID;
+    uint32 QuestID;
+    uint32 LfgDungeonID;
+    uint32 UiTextureAtlasMemberID;
+    uint32 UiTextureKitID;
+    uint32 WorldMapAreaID;
+    int32 MapID;
+    uint32 AreaTableID;
+};
+
 struct AnimKitEntry
 {
     uint32 ID;

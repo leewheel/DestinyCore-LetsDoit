@@ -647,17 +647,6 @@ namespace WorldPackets
             uint32 GarrFollowerTypeID = 0;
         };
 
-        class GarrisonResponseClassSpecCategoryInfo final : public ServerPacket
-        {
-        public:
-            GarrisonResponseClassSpecCategoryInfo() : ServerPacket(SMSG_GARRISON_RESPONSE_CLASS_SPEC_CASTEGORY_INFO, 4 + 4) { }
-
-            WorldPacket const* Write() override;
-
-            int32 GarrFollowerTypeID = 0;
-            std::vector<FollowersClassSpecInfo> Datas;
-        };
-
         class GarrisonGenerateRecruits final : public ClientPacket
         {
         public:

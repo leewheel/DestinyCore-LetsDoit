@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,8 +15,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _SPELLMGR_H
-#define _SPELLMGR_H
+#ifndef SPELLMGR_H
+#define SPELLMGR_H
 
 // For static or at-server-startup loaded spell data
 
@@ -558,6 +557,14 @@ typedef std::vector<SpellInfo*> SpellInfoMap;
 
 typedef std::map<int32, std::vector<int32> > SpellLinkedMap;
 
+struct SpellOnLogRemoveAura
+{
+    uint32 Spell;
+    uint32 RequiredAura;
+};
+
+typedef std::map<uint32, SpellOnLogRemoveAura> SpellOnLogRemoveAuraMap;
+
 bool IsPrimaryProfessionSkill(uint32 skill);
 
 bool IsWeaponSkill(uint32 skill);
@@ -676,6 +683,9 @@ class TC_GAME_API SpellMgr
         SpellAreaForAuraMapBounds GetSpellAreaForAuraMapBounds(uint32 spell_id) const;
         SpellAreaForAreaMapBounds GetSpellAreaForAreaMapBounds(uint32 area_id) const;
         SpellAreaForQuestAreaMapBounds GetSpellAreaForQuestAreaMapBounds(uint32 area_id, uint32 quest_id) const;
+        float GetSpellBonusCoeffFromAP(uint32 spell_id) const;
+        float GetSpellBonusCoeffFromSP(uint32 spell_id) const;
+        SpellOnLogRemoveAuraMap GetOnLogRemoveAuras() const;
 
         // SpellInfo object management
         SpellInfo const* GetSpellInfo(uint32 spellId) const { return spellId < GetSpellInfoStoreSize() ?  mSpellInfoMap[spellId] : NULL; }
@@ -718,6 +728,8 @@ class TC_GAME_API SpellMgr
         void LoadPetLevelupSpellMap();
         void LoadPetDefaultSpells();
         void LoadSpellAreas();
+        void LoadSpellBonusData();
+        void LoadSpellOnLogRemoveAurasData();
         void LoadSpellInfoStore();
         void UnloadSpellInfoStore();
         void UnloadSpellInfoImplicitTargetConditionLists();
@@ -756,6 +768,9 @@ class TC_GAME_API SpellMgr
         PetDefaultSpellsMap        mPetDefaultSpellsMap;           // only spells not listed in related mPetLevelupSpellMap entry
         SpellInfoMap               mSpellInfoMap;
         SpellTotemModelMap         mSpellTotemModel;
+        std::map<int32, float>     mSpellsApCoeffData;
+        std::map<int32, float>     mSpellsSpCoeffData;
+        SpellOnLogRemoveAuraMap    mSpellsOnLogRemoveAurasData;
 };
 
 #define sSpellMgr SpellMgr::instance()

@@ -831,7 +831,7 @@ void BotGroupAI::UpdateAI(uint32 diff)
 	if (!UpdateMasterPlayer())
 	{
 		m_Flying.CancelFly();
-		me->RemoveFromGroup(RemoveMethod::GROUP_REMOVEMETHOD_LEAVE);
+		//me->RemoveFromGroup(RemoveMethod::GROUP_REMOVEMETHOD_LEAVE);
 		return;
 	}
 	if (TrySettingToMaster())

@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,8 +15,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SC_ESCORTAI_H
-#define SC_ESCORTAI_H
+#ifndef SCRIPTEDESCORTAI_H
+#define SCRIPTEDESCORTAI_H
 
 #include "ScriptedCreature.h"
 #include "ScriptSystem.h"
@@ -78,6 +77,7 @@ struct TC_GAME_API npc_escortAI : public ScriptedAI
 
         void SetDespawnAtEnd(bool despawn) { DespawnAtEnd = despawn; }
         void SetDespawnAtFar(bool despawn) { DespawnAtFar = despawn; }
+        void SetWPStarTimer(float SetWPStarTimer) { m_uiWPWaitTimer = SetWPStarTimer; }
         bool GetAttack() const { return m_bIsActiveAttacker; }//used in EnterEvadeMode override
         void SetCanAttack(bool attack) { m_bIsActiveAttacker = attack; }
         ObjectGuid GetEventStarterGUID() const { return m_uiPlayerGUID; }

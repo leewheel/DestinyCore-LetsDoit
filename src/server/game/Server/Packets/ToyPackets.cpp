@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -43,6 +43,26 @@ WorldPacket const* WorldPackets::Toy::AccountToysUpdate::Write()
         _worldPacket.WriteBit(favourite.second);
 
     _worldPacket.FlushBits();
+
+    return &_worldPacket;
+}
+
+WorldPacket const* WorldPackets::Toy::AccountHeirloomUpdate::Write()
+{
+    _worldPacket.WriteBit(IsFullUpdate);
+    _worldPacket.FlushBits();
+
+    _worldPacket << int32(Unk);
+
+    // both lists have to have the same size
+    _worldPacket << int32(Heirlooms->size());
+    _worldPacket << int32(Heirlooms->size());
+
+    for (auto const& item : *Heirlooms)
+        _worldPacket << uint32(item.first);
+
+    for (auto const& flags : *Heirlooms)
+        _worldPacket << uint32(flags.second.flags);
 
     return &_worldPacket;
 }

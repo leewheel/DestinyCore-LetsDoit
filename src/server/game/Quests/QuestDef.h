@@ -15,8 +15,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef TRINITYCORE_QUEST_H
-#define TRINITYCORE_QUEST_H
+#ifndef QUESTDEF_H
+#define QUESTDEF_H
 
 #include "Common.h"
 #include "DBCEnums.h"
@@ -444,6 +444,7 @@ class TC_GAME_API Quest
         bool   IsRaidQuest(Difficulty difficulty) const;
         bool   IsWorldQuest() const;
         bool   IsEmissaryQuest() const { return QuestInfoID == QUEST_INFO_EMISSARY; }
+        bool   IsLegionInvasion() const { return QuestInfoID == QUEST_INFO_WORLD_QUEST_LEGION_INVASION_WRAPPER; }
         bool   IsAllowedInRaid(Difficulty difficulty) const;
         bool   IsDFQuest() const { return (SpecialFlags & QUEST_SPECIAL_FLAGS_DF_QUEST) != 0; }
         uint32 CalculateHonorGain(uint8 level) const;
@@ -585,5 +586,4 @@ struct QuestStatusData
     std::vector<int32> ObjectiveData;
     bool Explored;
 };
-
 #endif

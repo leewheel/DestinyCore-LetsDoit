@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -123,7 +122,10 @@ ConditionMgr::ConditionTypeInfo const ConditionMgr::StaticConditionTypeData[COND
     { "On Taxi",             false, false, false },
     { "Quest state mask",     true,  true, false },
     { "Objective Complete",   true, false, false },
-    { "Map Difficulty",       true, false, false }
+    { "Map Difficulty",       true, false, false },
+    { "Aura stack amount",    true, true,  false },
+    { "Object Entry or Guid", true, true,  true  },
+    { "Object TypeMask",      true, false, false },
 };
 
 // Checks if object meets the condition
@@ -516,6 +518,13 @@ bool Condition::Meets(ConditionSourceInfo& sourceInfo) const
             condMeets = object->GetMap()->GetDifficultyID() == ConditionValue1;
             break;
         }
+        case CONDITION_AURA_STACK_AMOUNT:
+        {
+            if (Unit* unit = object->ToUnit())
+                if (Aura* aura = unit->GetAura(ConditionValue1))
+                    condMeets = aura->GetStackAmount() == ConditionValue2;
+            break;
+        }
         default:
             condMeets = false;
             break;
@@ -544,6 +553,7 @@ uint32 Condition::GetSearcherTypeMaskForCondition() const
             mask |= GRID_MAP_TYPE_MASK_ALL;
             break;
         case CONDITION_AURA:
+        case CONDITION_AURA_STACK_AMOUNT:
             mask |= GRID_MAP_TYPE_MASK_CREATURE | GRID_MAP_TYPE_MASK_PLAYER;
             break;
         case CONDITION_ITEM:
@@ -2074,6 +2084,10 @@ bool ConditionMgr::isConditionTypeValid(Condition* cond) const
             }
             break;
         }
+        case CONDITION_OBJECT_ENTRY_GUID_LEGACY:
+            cond->ConditionType = CONDITION_OBJECT_ENTRY_GUID;
+            cond->ConditionValue1 = Trinity::Legacy::ConvertLegacyTypeID(Trinity::Legacy::TypeID(cond->ConditionValue1));
+            /* fallthrough */
         case CONDITION_OBJECT_ENTRY_GUID:
         {
             switch (cond->ConditionValue1)
@@ -2137,6 +2151,10 @@ bool ConditionMgr::isConditionTypeValid(Condition* cond) const
             }
             break;
         }
+        case CONDITION_TYPE_MASK_LEGACY:
+            cond->ConditionType = CONDITION_TYPE_MASK;
+            cond->ConditionValue1 = Trinity::Legacy::ConvertLegacyTypeMask(cond->ConditionValue1);
+            /* fallthrough */
         case CONDITION_TYPE_MASK:
         {
             if (!cond->ConditionValue1 || (cond->ConditionValue1 & ~(TYPEMASK_UNIT | TYPEMASK_PLAYER | TYPEMASK_GAMEOBJECT | TYPEMASK_CORPSE)))
@@ -2326,6 +2344,15 @@ bool ConditionMgr::isConditionTypeValid(Condition* cond) const
                 return false;
             }
             break;
+        case CONDITION_AURA_STACK_AMOUNT:
+        {
+            if (!sSpellMgr->GetSpellInfo(cond->ConditionValue1))
+            {
+                TC_LOG_ERROR("sql.sql", "Aura (CONDITION_AURA_STACK_AMOUNT) condition has non existing spell (Id: %d), skipped", cond->ConditionValue1);
+                return false;
+            }
+            break;
+        }
         case CONDITION_INSTANCE_INFO:
         case CONDITION_AREAID:
         case CONDITION_ALIVE:

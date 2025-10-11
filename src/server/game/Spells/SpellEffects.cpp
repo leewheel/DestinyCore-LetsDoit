@@ -163,7 +163,7 @@ pEffect SpellEffects[TOTAL_SPELL_EFFECTS]=
     &Spell::EffectUnused,                                   // 78 SPELL_EFFECT_ATTACK
     &Spell::EffectSanctuary,                                // 79 SPELL_EFFECT_SANCTUARY
     &Spell::EffectAddComboPoints,                           // 80 SPELL_EFFECT_ADD_COMBO_POINTS
-    &Spell::EffectUnused,                                   // 81 SPELL_EFFECT_PUSH_ABILITY_TO_ACTION_BAR
+    &Spell::EffectPushAbiltyToActionBar,                    // 81 SPELL_EFFECT_PUSH_ABILITY_TO_ACTION_BAR
     &Spell::EffectNULL,                                     // 82 SPELL_EFFECT_BIND_SIGHT
     &Spell::EffectDuel,                                     // 83 SPELL_EFFECT_DUEL
     &Spell::EffectStuck,                                    // 84 SPELL_EFFECT_STUCK
@@ -1526,7 +1526,12 @@ void Spell::EffectCreateItem(SpellEffIndex effIndex)
     if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT_TARGET)
         return;
 
-    DoCreateItem(effIndex, effectInfo->ItemType);
+    std::set<uint32> bonusListIDs = sDB2Manager.GetItemBonusTree(effectInfo->ItemType, 13); // 13 is guessed tradeskill bonus mod
+    std::vector<int32> bonusList;
+
+    for (uint32 bonus : bonusListIDs)
+        bonusList.push_back(bonus);
+    DoCreateItem(effIndex, effectInfo->ItemType, 13, bonusList);
     ExecuteLogEffectCreateItem(effIndex, effectInfo->ItemType);
 }
 
@@ -3693,6 +3698,27 @@ void Spell::EffectAddComboPoints(SpellEffIndex /*effIndex*/)
     m_caster->m_playerMovingMe->AddComboPoints(damage, this);
 }
 
+void Spell::EffectPushAbiltyToActionBar(SpellEffIndex effIndex)
+{
+    if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT_TARGET)
+        return;
+
+    if (m_caster->GetTypeId() != TYPEID_PLAYER)
+        return;
+
+    Player* caster = m_caster->ToPlayer();
+
+    if (caster->IsInFlight())
+        return;
+
+    uint32 triggered_spell_id = m_spellValue->EffectTriggerSpell[effIndex];
+
+    SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(triggered_spell_id);
+    if (!spellInfo)
+        return;
+    Spell spell(caster, spellInfo, TRIGGERED_FULL_MASK);
+}
+
 void Spell::EffectDuel(SpellEffIndex effIndex)
 {
     if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT_TARGET)
@@ -4644,8 +4670,9 @@ void Spell::EffectSkinning(SpellEffIndex /*effIndex*/)
 
     uint32 skill = creature->GetCreatureTemplate()->GetRequiredLootSkill();
 
-    m_caster->ToPlayer()->SendLoot(creature->GetGUID(), LOOT_SKINNING);
     creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_SKINNABLE);
+    creature->SetFlag(OBJECT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE);
+    m_caster->ToPlayer()->SendLoot(creature->GetGUID(), LOOT_SKINNING);
 
     int32 reqValue = targetLevel < 10 ? 0 : targetLevel < 20 ? (targetLevel - 10) * 10 : targetLevel * 5;
     if (targetLevel > 80)
@@ -5443,7 +5470,11 @@ void Spell::EffectKillCredit(SpellEffIndex /*effIndex*/)
         return;
 
     if (int32 creatureEntry = effectInfo->MiscValue)
-        unitTarget->ToPlayer()->RewardPlayerAndGroupAtEvent(creatureEntry, unitTarget);
+    {
+        uint32 killCreditCount = damage > 0 ? damage : 1;
+        for (uint32 i = 0; i < killCreditCount; ++i)
+            unitTarget->ToPlayer()->RewardPlayerAndGroupAtEvent(creatureEntry, unitTarget);
+    }
 }
 
 void Spell::EffectQuestFail(SpellEffIndex /*effIndex*/)

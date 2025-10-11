@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,8 +15,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ToyPackets_h__
-#define ToyPackets_h__
+#ifndef TOYPACKETS_H
+#define TOYPACKETS_H
 
 #include "SpellPackets.h"
 #include "CollectionMgr.h"
@@ -55,7 +55,19 @@ namespace WorldPackets
             bool IsFullUpdate = false;
             ToyBoxContainer const* Toys = nullptr;
         };
+
+        class AccountHeirloomUpdate final : public ServerPacket
+        {
+        public:
+            AccountHeirloomUpdate() : ServerPacket(SMSG_ACCOUNT_HEIRLOOM_UPDATE) {}
+
+            WorldPacket const* Write() override;
+
+            bool IsFullUpdate = false;
+            HeirloomContainer const* Heirlooms = nullptr;
+            int32 Unk = 0;
+        };
     }
 }
 
-#endif // ToyPackets_h__
+#endif

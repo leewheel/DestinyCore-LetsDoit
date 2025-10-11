@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -821,6 +821,11 @@ void WorldPackets::Spells::UnlearnSkill::Read()
     _worldPacket >> SkillLine;
 }
 
+void WorldPackets::Spells::UnlearnSpecialization::Read()
+{
+    _worldPacket >> SpecializationIndex;
+}
+
 void WorldPackets::Spells::SelfRes::Read()
 {
     _worldPacket >> SpellID;
@@ -950,4 +955,14 @@ void WorldPackets::Spells::UpdateSpellVisual::Read()
     _worldPacket >> SpellID;
     _worldPacket >> SpellXSpellVisualId;
     _worldPacket >> TargetGUID;
+}
+
+WorldPacket const* WorldPackets::Spells::AreaTriggerSequence::Write()
+{
+    _worldPacket << TriggerGUID;
+    _worldPacket << SequenceAnimationID;
+    _worldPacket.WriteBit(SequenceEntered);
+    _worldPacket.FlushBits();
+
+    return &_worldPacket;
 }

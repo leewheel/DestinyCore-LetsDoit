@@ -15,8 +15,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef TRINITY_MAP_H
-#define TRINITY_MAP_H
+#ifndef MAP_H
+#define MAP_H
 
 #include "Define.h"
 
@@ -406,6 +406,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
 
         uint32 GetId() const;
         bool Instanceable() const;
+        bool isChallenge() const { return i_spawnMode == DIFFICULTY_MYTHIC_KEYSTONE; }
         bool IsDungeon() const;
         bool IsScenario() const;
         bool IsNonRaidDungeon() const;
@@ -421,6 +422,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         bool IsBattlegroundOrArena() const;
         bool IsGarrison() const;
         bool GetEntrancePos(int32 &mapid, float &x, float &y);
+        bool IsNeedRespawn(uint32 lastRespawn) const;
 
         void AddObjectToRemoveList(WorldObject* obj);
         void AddObjectToSwitchList(WorldObject* obj, bool on);
@@ -602,6 +604,8 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         WildBattlePetPool* GetWildBattlePetPool(Creature* creature);
         void PopulateBattlePet();
         void DepopulateBattlePet();
+
+        time_t m_respawnChallenge = 0;
 
     private:
         void LoadMapAndVMap(int gx, int gy);

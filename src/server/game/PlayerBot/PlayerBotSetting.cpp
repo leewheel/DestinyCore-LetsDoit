@@ -116,15 +116,17 @@ const ItemTemplate* ItemsForLevel::RandomTenacityItem()
 
 bool BotTalentEntry::operator < (const BotTalentEntry &tal) const
 {
-	if (!talentEntry || !tal.talentEntry)
-		return false;
-	//if (talentEntry->Row == tal.talentEntry->Row)
-	{
-		return talentEntry->ColumnIndex < tal.talentEntry->ColumnIndex;
-	}
-	//else
-	//	return talentEntry->Row < tal.talentEntry->Row;
-	return false;
+    if (!talentEntry || !tal.talentEntry)
+        return false;
+
+    if (talentEntry->TierID == tal.talentEntry->TierID)
+    {
+        return talentEntry->ColumnIndex < tal.talentEntry->ColumnIndex;
+    }
+    else
+    {
+        return talentEntry->TierID < tal.talentEntry->TierID;
+    }
 }
 
 bool PlayerBotSetting::IsEquipByClasses(uint32 cls, const ItemTemplate* itemTemplate)
@@ -1675,8 +1677,6 @@ void PlayerBotSetting::Initialize()
 	botFlyMountEntrys.insert(32345);
 	botFlyMountEntrys.insert(46199);
 	botFlyMountEntrys.insert(75596);
-
-	TC_LOG_INFO("server.loading", "Initialize all classes trainer talent and spell and equip.");
 }
 
 bool PlayerBotSetting::BindingPlayerHomePosition(Player* player)

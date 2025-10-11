@@ -15,8 +15,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef DESTINYCORE_BATTLEPAYMGR_H
-#define DESTINYCORE_BATTLEPAYMGR_H
+#ifndef BATTLEPAYMGR_H
+#define BATTLEPAYMGR_H
 
 #include "BattlePayPackets.h"
 #include "WorldSession.h"
@@ -136,7 +136,29 @@ namespace Battlepay
         CategoryGold = 26,
         CharacterBoost = 29,
         BattlePet = 30,
-
+        AppareanceArtifac = 31,
+        Currency1 = 38,
+        Currency2 = 39,
+        Promo = 55,
+        RepClassic = 56,
+        RepBurnig = 57,
+        RepTLK = 58,
+        RepCata = 59,
+        RepPanda = 60,
+        RepDraenor = 61,
+        RepLegion = 62,
+        Unbinall = 63,
+        PremadePve = 64,
+        PremadePvp = 65,
+        VueloD = 66,
+        ArtifactPower = 67,
+        RacesAlliedVoidElf = 68,
+        RacesAlliedLighForgedDraenei = 69,
+        RacesAlliedNightborne = 70,
+        RacesAlliedHighmountainTauren = 71,
+        ArtifactPower101 = 72,
+        HonorLvl = 73,
+        PremadePve100 = 74,
         MaxWebsiteType
     };
 

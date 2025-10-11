@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -132,6 +131,12 @@ void WorldSession::HandleGuildUpdateMotdText(WorldPackets::Guild::GuildUpdateMot
         guild->HandleSetMOTD(this, packet.MotdText);
 }
 
+void WorldSession::HandleShiftRank(WorldPackets::Guild::GuildShiftRank& packet)
+{
+    if (Guild* guild = GetPlayer()->GetGuild())
+        guild->HandleShiftRank(this, packet.RankOrder, packet.ShiftUp);
+}
+
 void WorldSession::HandleGuildSetMemberNote(WorldPackets::Guild::GuildSetMemberNote& packet)
 {
     TC_LOG_DEBUG("guild", "CMSG_GUILD_SET_NOTE [%s]: Target: %s, Note: %s, Public: %u",
@@ -198,7 +203,10 @@ void WorldSession::HandleSaveGuildEmblem(WorldPackets::Guild::SaveGuildEmblem& p
         }
 
         if (Guild* guild = GetPlayer()->GetGuild())
+        {
+            guild->UpdateCriteria(CRITERIA_TYPE_BUY_GUILD_TABARD, 1, 0, 0, nullptr, GetPlayer());
             guild->HandleSetEmblem(this, emblemInfo);
+        }
         else
             Guild::SendSaveEmblemResult(this, ERR_GUILDEMBLEM_NOGUILD); // "You are not part of a guild!";
     }
@@ -525,6 +533,49 @@ void WorldSession::HandleGuildNewsUpdateSticky(WorldPackets::Guild::GuildNewsUpd
         guild->HandleNewsSetSticky(this, packet.NewsID, packet.Sticky);
 }
 
+void WorldSession::HandleQueryRecipes(WorldPackets::Guild::QueryRecipes& /*packet*/)
+{
+    Guild* guild = _player->GetGuild();
+    if (!guild)
+        return;
+
+    Guild::KnownRecipesMap recipesMap = guild->GetGuildRecipes();
+
+    auto data = new WorldPacket(SMSG_GUILD_KNOWN_RECIPES, 2 + recipesMap.size() * (300 + 4));
+    uint32 pos = data->wpos();
+    uint32 count = 0;
+    *data << uint32(count);
+
+    for (Guild::KnownRecipesMap::const_iterator itr = recipesMap.begin(); itr != recipesMap.end(); ++itr)
+    {
+        if (itr->second.IsEmpty())
+            continue;
+
+        *data << uint32(itr->first);
+        data->append(itr->second.recipesMask, KNOW_RECIPES_MASK_SIZE);
+        ++count;
+    }
+
+    data->put<uint32>(pos, count);
+
+    _player->SendDirectMessage(data);
+}
+
+void WorldSession::HandleQueryGuildMembersForRecipe(WorldPackets::Guild::QueryGuildMembersForRecipe& packet)
+{
+    if (Guild* guild = _player->GetGuild())
+        guild->SendGuildMembersForRecipeResponse(this, packet.SkillLineID, packet.SpellID);
+}
+
+void WorldSession::HandleQyeryMemberRecipes(WorldPackets::Guild::QueryMemberRecipes& packet)
+{
+    Guild* guild = _player->GetGuild();
+    if (!guild || !guild->IsMember(packet.GuildMember))
+        return;
+
+    guild->SendGuildMemberRecipesResponse(this, packet.GuildMember, packet.SkillLineID);
+}
+
 void WorldSession::HandleGuildReplaceGuildMaster(WorldPackets::Guild::GuildReplaceGuildMaster& /*replaceGuildMaster*/)
 {
     if (Guild* guild = GetPlayer()->GetGuild())
@@ -546,4 +597,19 @@ void WorldSession::HandleGuildGetAchievementMembers(WorldPackets::Achievement::G
 {
     if (Guild* guild = GetPlayer()->GetGuild())
         guild->HandleGetAchievementMembers(this, uint32(getAchievementMembers.AchievementID));
+}
+
+void WorldSession::HandleGuildAutoDeclineInvitation(WorldPackets::Guild::GuildAutoDeclineInvitation& /*packet*/)
+{
+    if (Player* inviter = ObjectAccessor::FindPlayer(GetPlayer()->GetGuildInviterGuid()))
+    {
+        WorldPackets::Guild::GuildInviteDeclined packet;
+        packet.Name = GetPlayer()->GetName();
+        packet.AutoDecline = true;
+        packet.VirtualRealmAddress = GetVirtualRealmAddress();
+        inviter->SendDirectMessage(packet.Write());
+    }
+
+    GetPlayer()->SetGuildIdInvited(0);
+    GetPlayer()->SetInGuild(0);
 }

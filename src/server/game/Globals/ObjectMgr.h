@@ -1318,6 +1318,8 @@ class TC_GAME_API ObjectMgr
 
         void LoadSceneTemplates();
 
+        void LoadAdventureMapUI();
+
         void LoadPlayerChoices();
         void LoadPlayerChoicesLocale();
 
@@ -1556,6 +1558,8 @@ class TC_GAME_API ObjectMgr
 
         Trainer::Trainer const* GetTrainer(uint32 trainerId) const;
         uint32 GetCreatureDefaultTrainer(uint32 creatureId) const;
+
+        uint32 GetAdventureMapUIByCreature(uint32 creatureId) const;
 
         VendorItemData const* GetNpcVendorItemList(uint32 entry) const
         {
@@ -1832,6 +1836,7 @@ class TC_GAME_API ObjectMgr
         CacheTrainerSpellContainer _cacheTrainerSpellStore;
         std::unordered_map<uint32, Trainer::Trainer> _trainers;
         std::unordered_map<uint32, uint32> _creatureDefaultTrainers;
+        std::unordered_map<uint32, uint32> _adventureMapUIByCreature;
 
         std::set<uint32> _difficultyEntries[MAX_CREATURE_DIFFICULTIES]; // already loaded difficulty 1 value in creatures, used in CheckCreatureTemplate
         std::set<uint32> _hasDifficultyEntries[MAX_CREATURE_DIFFICULTIES]; // already loaded creatures with difficulty 1 values, used in CheckCreatureTemplate

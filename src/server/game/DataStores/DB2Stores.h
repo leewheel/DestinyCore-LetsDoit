@@ -36,6 +36,7 @@ class DB2HotfixGeneratorBase;
 
 TC_GAME_API extern DB2Storage<AchievementEntry>                     sAchievementStore;
 TC_GAME_API extern DB2Storage<AdventureJournalEntry>                sAdventureJournalStore;
+TC_GAME_API extern DB2Storage<AdventureMapPOIEntry>                 sAdventureMapPOIStore;
 TC_GAME_API extern DB2Storage<AnimKitEntry>                         sAnimKitStore;
 TC_GAME_API extern DB2Storage<AreaTableEntry>                       sAreaTableStore;
 TC_GAME_API extern DB2Storage<AreaTriggerEntry>                     sAreaTriggerStore;
@@ -280,6 +281,9 @@ public:
     typedef std::unordered_map<uint32, std::unordered_map<uint32, MapDifficultyEntry const*>> MapDifficultyContainer;
     typedef std::set<MountTypeXCapabilityEntry const*, MountTypeXCapabilityEntryComparator> MountTypeXCapabilitySet;
     typedef std::vector<MountXDisplayEntry const*> MountXDisplayContainer;
+    typedef std::vector<std::vector<SkillLineAbilityEntry const*>> SkillLineAbilityContainer;
+    typedef std::set<uint32> PetFamilySpellsSet;
+    typedef std::unordered_map<uint32, PetFamilySpellsSet > PetFamilySpellsContainer;
 
     static DB2Manager& Instance();
 
@@ -306,6 +310,9 @@ public:
     static char const* GetChrRaceName(uint8 race, LocaleConstant locale = DEFAULT_LOCALE);
     ChrSpecializationEntry const* GetChrSpecializationByIndex(uint32 class_, uint32 index) const;
     ChrSpecializationEntry const* GetDefaultChrSpecializationForClass(uint32 class_) const;
+    DB2Manager::PetFamilySpellsContainer _petFamilySpells;
+    PetFamilySpellsSet const* GetPetFamilySpells(uint32 family);
+    uint32 GetSpellMisc(uint32 spellID);
     static char const* GetCreatureFamilyPetName(uint32 petfamily, uint32 locale);
     float GetCurveValueAt(uint32 curveId, float x) const;
     EmotesTextSoundEntry const* GetTextSoundEmoteFor(uint32 emote, uint8 race, uint8 gender, uint8 class_) const;
@@ -375,6 +382,7 @@ public:
     void Zone2MapCoordinates(uint32 areaId, float& x, float& y) const;
     void Map2ZoneCoordinates(uint32 areaId, float& x, float& y) const;
     static void DeterminaAlternateMapPosition(uint32 mapId, float x, float y, float z, uint32* newMapId = nullptr, DBCPosition2D* newPos = nullptr);
+    SkillLineAbilityContainer _skillLineAbilityContainer;
     BattlePetSpeciesEntry const* GetSpeciesBySpell(uint32 SpellID) const;
     BattlePetSpeciesEntry const* GetSpeciesByCreatureID(uint32 CreatureID) const;
     static bool HasBattlePetSpeciesFlag(uint16 species, uint16 flag);

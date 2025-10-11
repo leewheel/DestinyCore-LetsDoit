@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -63,26 +63,78 @@ class npc_pet_pri_lightwell : public CreatureScript
         }
 };
 
-class npc_pet_pri_shadowfiend : public CreatureScript
+//npcs: Mindbender 62982    Shadowfiend 19668
+//spells: 123040 Mindbender / 34433 Shadowfiend
+struct npc_pet_pri_shadowfiend_mindbender : public ScriptedAI
 {
-    public:
-        npc_pet_pri_shadowfiend() : CreatureScript("npc_pet_pri_shadowfiend") { }
-
-        struct npc_pet_pri_shadowfiendAI : public PetAI
+    explicit npc_pet_pri_shadowfiend_mindbender(Creature* creature)
+        : ScriptedAI(creature)
+    {
+        if (Unit* owner = me->GetOwner())
         {
-            npc_pet_pri_shadowfiendAI(Creature* creature) : PetAI(creature) { }
-
-            void IsSummonedBy(Unit* summoner) override
-            {
-                if (summoner->HasAura(SPELL_PRIEST_GLYPH_OF_SHADOWFIEND))
-                    DoCastAOE(SPELL_PRIEST_SHADOWFIEND_DEATH);
-            }
-        };
-
-        CreatureAI* GetAI(Creature* creature) const override
-        {
-            return new npc_pet_pri_shadowfiendAI(creature);
+            if (owner->HasAura(SpellIds::PriestAtonement))
+                me->AddAura(SpellIds::PriestAtonementPet, me);
         }
+    }
+
+    struct SpellIds
+    {
+        static constexpr uint32 ManaLeech = 123051;
+        static constexpr uint32 PriestGlyphShadowfiend = 58228;
+        static constexpr uint32 PriestShadowfiendDeath = 57989;
+        static constexpr uint32 PriestLightwellCharges = 59907;
+        static constexpr uint32 MindbenderSpell = 123040;
+        static constexpr uint32 PowerInfusionSpell = 200174;
+        static constexpr uint32 PriestAtonement = 81749;
+        static constexpr uint32 PriestAtonementPet = 195178;
+    };
+
+    void Reset() override
+    {
+        if (auto* tempSum = me->ToTempSummon())
+        {
+            if (auto* owner = tempSum->GetOwner())
+            {
+                if (auto* player = owner->ToPlayer())
+                {
+                    if (auto* victim = player->GetSelectedUnit())
+                        AttackStart(victim);
+                }
+            }
+        }
+    }
+
+    void IsSummonedBy(Unit* summoner) override
+    {
+        if (me->GetEntry() == 19668 && summoner->HasAura(SpellIds::PriestGlyphShadowfiend))
+            DoCastAOE(SpellIds::PriestShadowfiendDeath);
+    }
+
+    void DamageDealt(Unit* /*victim*/, uint32& /*damage*/, DamageEffectType /*damageType*/) override
+    {
+        auto* tempSum = me->ToTempSummon();
+        if (!tempSum)
+            return;
+
+        Unit* owner = tempSum->GetOwner();
+        if (!owner)
+            return;
+
+        if (owner->HasSpell(SpellIds::MindbenderSpell))
+        {
+            tempSum->CastSpell(owner, SpellIds::ManaLeech, true);
+            return;
+        }
+
+        if (owner->HasSpell(SpellIds::PowerInfusionSpell))
+        {
+            if (const SpellInfo* spellInfo = sSpellMgr->GetSpellInfo(SpellIds::PowerInfusionSpell))
+            {
+                int32 plusPower = spellInfo->GetEffect(EFFECT_2)->BasePoints * 100;
+                tempSum->EnergizeBySpell(owner, SpellIds::PowerInfusionSpell, plusPower, Powers::POWER_INSANITY);
+            }
+        }
+    }
 };
 
 enum PsyfiendSpells
@@ -147,6 +199,6 @@ public:
 void AddSC_priest_pet_scripts()
 {
     new npc_pet_pri_lightwell();
-    new npc_pet_pri_shadowfiend();
+    RegisterCreatureAI(npc_pet_pri_shadowfiend_mindbender);
     new npc_pri_psyfiend();
 }

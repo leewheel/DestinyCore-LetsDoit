@@ -1262,6 +1262,40 @@ void PlayerBotMgr::SupplementPlayerBot()
 
 void PlayerBotMgr::OnRealPlayerJoinBattlegroundQueue(uint32 bgTypeId, uint32 level)
 {
+    BattlegroundTypeId _bgTypeId = BattlegroundTypeId(bgTypeId);
+    BattlegroundQueueTypeId bgQueueTypeId = BattlegroundMgr::BGQueueTypeId(BattlegroundTypeId(bgTypeId), 0);
+    BattlegroundQueue& bgQueue = sBattlegroundMgr->GetBattlegroundQueue(bgQueueTypeId);
+    Battleground* bg = sBattlegroundMgr->GetBattlegroundTemplate(BattlegroundTypeId(bgTypeId));
+    if (!bg)
+        return;
+
+    uint32 needAlliancePlayerCount = 5;
+    uint32 needHordePlayerCount = 5;
+    uint32 _time = 0;
+
+    for (uint32 j = BattlegroundBracketId::BG_BRACKET_ID_FIRST; j <= BattlegroundBracketId::BG_BRACKET_ID_LAST; j++)
+    {
+        BattlegroundBracketId bracket = BattlegroundBracketId(j);
+        PVPDifficultyEntry const* bracketEntry = DB2Manager::GetBattlegroundBracketById(bg->GetMapId(), bracket);
+        if (!bracketEntry)
+            continue;
+        if (!bgQueue.ExistRealPlayer(bracketEntry))
+            continue;
+        if (needAlliancePlayerCount > 0)
+        {
+            for (uint32 k = 0; k <= needAlliancePlayerCount; k++)
+                AddNewPlayerBotToBG(TeamId::TEAM_ALLIANCE, bracketEntry->MinLevel, bracketEntry->MaxLevel, _bgTypeId);
+        }
+
+        if (needHordePlayerCount > 0)
+        {
+            for (uint32 k = 0; k <= needHordePlayerCount; k++)
+                AddNewPlayerBotToBG(TeamId::TEAM_HORDE, bracketEntry->MinLevel, bracketEntry->MaxLevel, _bgTypeId);
+        }
+
+        printf("QueryNeedPlayerCount %d %d \n", needAlliancePlayerCount, needHordePlayerCount);
+        return;
+    }
 }
 
 void PlayerBotMgr::OnRealPlayerLeaveBattlegroundQueue(uint32 bgTypeId, uint32 level)
@@ -2062,150 +2096,150 @@ void PlayerBotMgr::AddNewPlayerBotToBG(TeamId team, uint32 minLV, uint32 maxLV, 
     sWorld->SendGlobalText(allonlineText.c_str(), NULL);
 }
 
-//void PlayerBotMgr::AddNewPlayerBotToLFG(lfg::LFGBotRequirement* botRequirement)
-//{
-//	if (!botRequirement || botRequirement->selectedDungeons.empty())
-//		return;
-//		
-//	int32 isok = sConfigMgr->GetIntDefault("pbotall", 1);
-//	if (isok==0)
-//		return;
-//
-//int32 isoka = sConfigMgr->GetIntDefault("pbotasl", 88);
-//
-//	int32 allianceCount = (int32)sPlayerBotMgr->GetOnlineBotCount(TEAM_ALLIANCE, true);
-//	int32 hordeCount = (int32)sPlayerBotMgr->GetOnlineBotCount(TEAM_HORDE, true);
-//
-//if ((allianceCount+hordeCount) >isoka) return;
-//
-//
-//	const SessionMap& allSession = sWorld->GetAllSessions();
-//	for (SessionMap::const_iterator itSession = allSession.begin(); itSession != allSession.end(); itSession++)
-//	{
-//
-//		Player* player = itSession->second->GetPlayer();
-//		if (player)
-//{
-//		if (player->IsLoading())
-//			return;
-//if (player->GetSession()->PlayerLoading())
-//return;
-////if (player->IsInCombat())
-////return;
-//	}
-//	}
-//	
-//
-//	//const SessionMap& allSession = sWorld->GetAllSessions();
-//	for (SessionMap::const_iterator itSession = allSession.begin(); itSession != allSession.end(); itSession++)
-//	{
-//
-//		Player* player = itSession->second->GetPlayer();
-//		if (player)
-//{
-//		if (player->IsLoading())
-//			return;
-//if (player->GetSession()->PlayerLoading())
-//return;
-////if (player->IsInCombat())
-////return;
-//	}
-//	}
-//		
-//	std::vector<uint32> duns;
-//	for (lfg::LfgDungeonSet::iterator itLfgSet = botRequirement->selectedDungeons.begin(); itLfgSet != botRequirement->selectedDungeons.end(); itLfgSet++)
-//	{
-//		uint32 dun = *itLfgSet;
-//		duns.push_back(dun);
-//	}
-////	const SessionMap& allSession = sWorld->GetAllSessions();
-//	for (SessionMap::const_iterator itSession = allSession.begin(); itSession != allSession.end(); itSession++)
-//	{
-//		if (!itSession->second->IsBotSession())
-//			continue;
-//		PlayerBotSession* pSession = dynamic_cast<PlayerBotSession*>((WorldSession*)itSession->second);
-//		if (!pSession || pSession->PlayerLoading() || pSession->HasSchedules() || pSession->IsAccountBotSession())
-//			continue;
-//		Player* player = pSession->GetPlayer();
-//		if (!player)
-//		{
-//			BotGlobleSchedule schedule1(BotGlobleScheduleType::BGSType_Online, 0);
-//			if (!FillOnlineBotScheduleByLFGRequirement(botRequirement, &schedule1))
-//				continue;
-//			pSession->PushScheduleToQueue(schedule1);
-//
-//			BotGlobleSchedule schedule2(BotGlobleScheduleType::BGSType_Settting, 0);
-//			schedule2.parameter1 = botRequirement->needLevel;
-//			schedule2.parameter2 = botRequirement->needLevel;
-//			schedule2.parameter3 = GetScheduleTalentByLFGRequirement(botRequirement->needRole, schedule1.parameter2) + 1;
-//			pSession->PushScheduleToQueue(schedule2);
-//
-//			BotGlobleSchedule schedule3(BotGlobleScheduleType::BGSType_InLFGQueue, 0);
-//			schedule3.parameter1 = uint32(botRequirement->needRole);
-//			uint32 count = botRequirement->selectedDungeons.size();
-//			schedule3.parameter2 = (count > 3) ? 3 : count;
-//			if (count >= 1)
-//				schedule3.parameter3 = duns[0];
-//			if (count >= 2)
-//				schedule3.parameter4 = duns[1];
-//			if (count >= 3)
-//				schedule3.parameter5 = duns[2];
-//			pSession->PushScheduleToQueue(schedule3);
-//
-//			return;
-//		}
-//		else if (IsIDLEPlayerBot(player))
-//		{
-//			if (player->GetTeamId() != botRequirement->needTeam)
-//				continue;
-//			lfg::LfgRoles playerRole = lfg::LfgRoles::PLAYER_ROLE_NONE;
-//			if (BotFieldAI* pFieldAI = dynamic_cast<BotFieldAI*>(player->GetAI()))
-//			{
-//				if ((player->getClass() == 1 && player->FindTalentType() == 2) || (player->getClass() == 2 && player->FindTalentType() == 1))
-//					playerRole = lfg::LfgRoles::PLAYER_ROLE_TANK;
-//				else if (pFieldAI->IsHealerBotAI())
-//					playerRole = lfg::LfgRoles::PLAYER_ROLE_HEALER;
-//				else
-//					playerRole = lfg::LfgRoles::PLAYER_ROLE_DAMAGE;
-//			}
-//			else if (BotGroupAI* pGroupAI = dynamic_cast<BotGroupAI*>(player->GetAI()))
-//			{
-//				if (pGroupAI->IsTankBotAI())
-//					playerRole = lfg::LfgRoles::PLAYER_ROLE_TANK;
-//				else if (pGroupAI->IsHealerBotAI())
-//					playerRole = lfg::LfgRoles::PLAYER_ROLE_HEALER;
-//				else
-//					playerRole = lfg::LfgRoles::PLAYER_ROLE_DAMAGE;
-//			}
-//			if (playerRole != botRequirement->needRole)
-//				continue;
-//
-//			BotGlobleSchedule schedule2(BotGlobleScheduleType::BGSType_Settting, 0);
-//			schedule2.parameter1 = botRequirement->needLevel;
-//			schedule2.parameter2 = botRequirement->needLevel;
-//			schedule2.parameter3 = player->FindTalentType() + 1;
-//			pSession->PushScheduleToQueue(schedule2);
-//
-//			BotGlobleSchedule schedule3(BotGlobleScheduleType::BGSType_InLFGQueue, 0);
-//			schedule3.parameter1 = uint32(botRequirement->needRole);
-//			uint32 count = botRequirement->selectedDungeons.size();
-//			schedule3.parameter2 = (count > 3) ? 3 : count;
-//			if (count >= 1)
-//				schedule3.parameter3 = duns[0];
-//			if (count >= 2)
-//				schedule3.parameter4 = duns[1];
-//			if (count >= 3)
-//				schedule3.parameter5 = duns[2];
-//			pSession->PushScheduleToQueue(schedule3);
-//
-//			return;
-//		}
-//	}
-//
-//	std::string allonlineText;
-//	consoleToUtf8(std::string("|cffff8800所有机器人账号已经全部在线，无法加入新机器人到地下城队列中。|r"), allonlineText);
-//	sWorld->SendGlobalText(allonlineText.c_str(), NULL);
-//}
+void PlayerBotMgr::AddNewPlayerBotToLFG(lfg::LFGBotRequirement* botRequirement)
+{
+    if (!botRequirement || botRequirement->selectedDungeons.empty())
+        return;
+
+    int32 isok = sConfigMgr->GetIntDefault("pbotall", 1);
+    if (isok == 0)
+        return;
+
+    int32 isoka = sConfigMgr->GetIntDefault("pbotasl", 88);
+
+    int32 allianceCount = (int32)sPlayerBotMgr->GetOnlineBotCount(TEAM_ALLIANCE, true);
+    int32 hordeCount = (int32)sPlayerBotMgr->GetOnlineBotCount(TEAM_HORDE, true);
+
+    if ((allianceCount + hordeCount) > isoka) return;
+
+
+    const SessionMap& allSession = sWorld->GetAllSessions();
+    for (SessionMap::const_iterator itSession = allSession.begin(); itSession != allSession.end(); itSession++)
+    {
+
+        Player* player = itSession->second->GetPlayer();
+        if (player)
+        {
+            if (player->IsLoading())
+                return;
+            if (player->GetSession()->PlayerLoading())
+                return;
+            //if (player->IsInCombat())
+            //return;
+        }
+    }
+
+
+    //const SessionMap& allSession = sWorld->GetAllSessions();
+    for (SessionMap::const_iterator itSession = allSession.begin(); itSession != allSession.end(); itSession++)
+    {
+
+        Player* player = itSession->second->GetPlayer();
+        if (player)
+        {
+            if (player->IsLoading())
+                return;
+            if (player->GetSession()->PlayerLoading())
+                return;
+            //if (player->IsInCombat())
+            //return;
+        }
+    }
+
+    std::vector<uint32> duns;
+    for (lfg::LfgDungeonSet::iterator itLfgSet = botRequirement->selectedDungeons.begin(); itLfgSet != botRequirement->selectedDungeons.end(); itLfgSet++)
+    {
+        uint32 dun = *itLfgSet;
+        duns.push_back(dun);
+    }
+    //	const SessionMap& allSession = sWorld->GetAllSessions();
+    for (SessionMap::const_iterator itSession = allSession.begin(); itSession != allSession.end(); itSession++)
+    {
+        if (!itSession->second->IsBotSession())
+            continue;
+        PlayerBotSession* pSession = dynamic_cast<PlayerBotSession*>((WorldSession*)itSession->second);
+        if (!pSession || pSession->PlayerLoading() || pSession->HasSchedules() || pSession->IsAccountBotSession())
+            continue;
+        Player* player = pSession->GetPlayer();
+        if (!player)
+        {
+            BotGlobleSchedule schedule1(BotGlobleScheduleType::BGSType_Online, 0);
+            if (!FillOnlineBotScheduleByLFGRequirement(botRequirement, &schedule1))
+                continue;
+            pSession->PushScheduleToQueue(schedule1);
+
+            BotGlobleSchedule schedule2(BotGlobleScheduleType::BGSType_Settting, 0);
+            schedule2.parameter1 = botRequirement->needLevel;
+            schedule2.parameter2 = botRequirement->needLevel;
+            schedule2.parameter3 = GetScheduleTalentByLFGRequirement(botRequirement->needRole, schedule1.parameter2) + 1;
+            pSession->PushScheduleToQueue(schedule2);
+
+            BotGlobleSchedule schedule3(BotGlobleScheduleType::BGSType_InLFGQueue, 0);
+            schedule3.parameter1 = uint32(botRequirement->needRole);
+            uint32 count = botRequirement->selectedDungeons.size();
+            schedule3.parameter2 = (count > 3) ? 3 : count;
+            if (count >= 1)
+                schedule3.parameter3 = duns[0];
+            if (count >= 2)
+                schedule3.parameter4 = duns[1];
+            if (count >= 3)
+                schedule3.parameter5 = duns[2];
+            pSession->PushScheduleToQueue(schedule3);
+
+            return;
+        }
+        else if (IsIDLEPlayerBot(player))
+        {
+            if (player->GetTeamId() != botRequirement->needTeam)
+                continue;
+            lfg::LfgRoles playerRole = lfg::LfgRoles::PLAYER_ROLE_NONE;
+            if (BotFieldAI* pFieldAI = dynamic_cast<BotFieldAI*>(player->GetAI()))
+            {
+                if ((player->getClass() == 1 && player->FindTalentType() == 2) || (player->getClass() == 2 && player->FindTalentType() == 1))
+                    playerRole = lfg::LfgRoles::PLAYER_ROLE_TANK;
+                else if (pFieldAI->IsHealerBotAI())
+                    playerRole = lfg::LfgRoles::PLAYER_ROLE_HEALER;
+                else
+                    playerRole = lfg::LfgRoles::PLAYER_ROLE_DAMAGE;
+            }
+            else if (BotGroupAI* pGroupAI = dynamic_cast<BotGroupAI*>(player->GetAI()))
+            {
+                if (pGroupAI->IsTankBotAI())
+                    playerRole = lfg::LfgRoles::PLAYER_ROLE_TANK;
+                else if (pGroupAI->IsHealerBotAI())
+                    playerRole = lfg::LfgRoles::PLAYER_ROLE_HEALER;
+                else
+                    playerRole = lfg::LfgRoles::PLAYER_ROLE_DAMAGE;
+            }
+            if (playerRole != botRequirement->needRole)
+                continue;
+
+            BotGlobleSchedule schedule2(BotGlobleScheduleType::BGSType_Settting, 0);
+            schedule2.parameter1 = botRequirement->needLevel;
+            schedule2.parameter2 = botRequirement->needLevel;
+            schedule2.parameter3 = player->FindTalentType() + 1;
+            pSession->PushScheduleToQueue(schedule2);
+
+            BotGlobleSchedule schedule3(BotGlobleScheduleType::BGSType_InLFGQueue, 0);
+            schedule3.parameter1 = uint32(botRequirement->needRole);
+            uint32 count = botRequirement->selectedDungeons.size();
+            schedule3.parameter2 = (count > 3) ? 3 : count;
+            if (count >= 1)
+                schedule3.parameter3 = duns[0];
+            if (count >= 2)
+                schedule3.parameter4 = duns[1];
+            if (count >= 3)
+                schedule3.parameter5 = duns[2];
+            pSession->PushScheduleToQueue(schedule3);
+
+            return;
+        }
+    }
+
+    std::string allonlineText;
+    consoleToUtf8(std::string("|cffff8800All bot accounts are currently online, preventing new bots from joining the dungeon queue.|r"), allonlineText);
+    sWorld->SendGlobalText(allonlineText.c_str(), NULL);
+}
 
 void PlayerBotMgr::AddNewPlayerBotToAA(TeamId team, BattlegroundTypeId bgTypeID, uint32 bracketID, uint32 aaType)
 {
@@ -2437,50 +2471,50 @@ void PlayerBotMgr::AddTeamBotToRatedArena(uint32 arenaTeamId)
     //	}
 }
 
-//bool PlayerBotMgr::FillOnlineBotScheduleByLFGRequirement(lfg::LFGBotRequirement* botRequirement, BotGlobleSchedule* botSchedule)
-//{
-//	if (!botRequirement || !botSchedule)
-//		return false;
-//	botSchedule->parameter1 = 0;
-//	if (botRequirement->needTeam == TEAM_ALLIANCE)
-//		botSchedule->parameter1 = 1;
-//	else if (botRequirement->needTeam == TEAM_HORDE)
-//		botSchedule->parameter1 = 2;
-//	else
-//		return false;
-//	std::vector<uint32> matchClasses;
-//	botSchedule->parameter2 = 0;
-//	if (botRequirement->needRole == lfg::LfgRoles::PLAYER_ROLE_TANK)
-//	{
-//		matchClasses.push_back(1);
-//#ifndef INCOMPLETE_BOT
-//		matchClasses.push_back(2);
-//#endif
-//		//matchClasses.push_back(6);
-//	}
-//	else if (botRequirement->needRole == lfg::LfgRoles::PLAYER_ROLE_HEALER)
-//	{
-//		matchClasses.push_back(5);
-//#ifndef INCOMPLETE_BOT
-//		matchClasses.push_back(2);
-//		matchClasses.push_back(7);
-//		matchClasses.push_back(11);
-//#endif
-//	}
-//	else if (botRequirement->needRole == lfg::LfgRoles::PLAYER_ROLE_DAMAGE)
-//	{
-//#ifndef INCOMPLETE_BOT
-//		matchClasses.push_back(3);
-//		matchClasses.push_back(4);
-//		matchClasses.push_back(8);
-//#endif
-//		matchClasses.push_back(9);
-//	}
-//	if (matchClasses.empty())
-//		return false;
-//	botSchedule->parameter2 = matchClasses[urand(0, matchClasses.size() - 1)];
-//	return true;
-//}
+bool PlayerBotMgr::FillOnlineBotScheduleByLFGRequirement(lfg::LFGBotRequirement* botRequirement, BotGlobleSchedule* botSchedule)
+{
+    if (!botRequirement || !botSchedule)
+        return false;
+    botSchedule->parameter1 = 0;
+    if (botRequirement->needTeam == TEAM_ALLIANCE)
+        botSchedule->parameter1 = 1;
+    else if (botRequirement->needTeam == TEAM_HORDE)
+        botSchedule->parameter1 = 2;
+    else
+        return false;
+    std::vector<uint32> matchClasses;
+    botSchedule->parameter2 = 0;
+    if (botRequirement->needRole == lfg::LfgRoles::PLAYER_ROLE_TANK)
+    {
+        matchClasses.push_back(1);
+#ifndef INCOMPLETE_BOT
+        matchClasses.push_back(2);
+#endif
+        //matchClasses.push_back(6);
+    }
+    else if (botRequirement->needRole == lfg::LfgRoles::PLAYER_ROLE_HEALER)
+    {
+        matchClasses.push_back(5);
+#ifndef INCOMPLETE_BOT
+        matchClasses.push_back(2);
+        matchClasses.push_back(7);
+        matchClasses.push_back(11);
+#endif
+    }
+    else if (botRequirement->needRole == lfg::LfgRoles::PLAYER_ROLE_DAMAGE)
+    {
+#ifndef INCOMPLETE_BOT
+        matchClasses.push_back(3);
+        matchClasses.push_back(4);
+        matchClasses.push_back(8);
+#endif
+        matchClasses.push_back(9);
+    }
+    if (matchClasses.empty())
+        return false;
+    botSchedule->parameter2 = matchClasses[urand(0, matchClasses.size() - 1)];
+    return true;
+}
 
 uint32 PlayerBotMgr::GetScheduleTalentByLFGRequirement(lfg::LfgRoles roles, uint32 botCls)
 {
@@ -2992,11 +3026,11 @@ void PlayerBotMgr::Update()
     if (m_LFGSearchTick > 1)
     {
         m_LFGSearchTick = 0;
-        //if (lfg::LFGBotRequirement* pbotReq = sLFGMgr->SearchLFGBotRequirement())
-        //{
-        //	AddNewPlayerBotToLFG(pbotReq);
-        //	delete pbotReq;
-        //}
+        if (lfg::LFGBotRequirement* pbotReq = sLFGMgr->SearchLFGBotRequirement())
+        {
+        	AddNewPlayerBotToLFG(pbotReq);
+        	delete pbotReq;
+        }
     }
     else
         ++m_LFGSearchTick;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -5056,6 +5056,39 @@ class spell_gen_coin_of_many_faces : public SpellScriptLoader
         }
 };
 
+// Rocket Barrage (Goblin Racial)
+class spell_gen_rocket_barrage : public SpellScript
+{
+    PrepareSpellScript(spell_gen_rocket_barrage);
+
+    void HandleDamage(SpellEffIndex /*effIndex*/)
+    {
+        if (Player* caster = GetCaster()->ToPlayer())
+        {
+            int32 range, melee, act = 0;
+
+            // Getting attack powers
+            melee = caster->GetTotalAttackPowerValue(BASE_ATTACK);
+            range = caster->GetTotalAttackPowerValue(RANGED_ATTACK);
+
+            // Checking what attack power to take
+            if (melee > range)
+                act = melee;
+
+            if (range > melee)
+                act = range;
+
+            // This is according to whether it's range or melee
+            SetHitDamage(1 + (0.25f * act) + (0.429f * caster->SpellBaseDamageBonusDone(SPELL_SCHOOL_MASK_FIRE)) + (caster->getLevel() * 2));
+        }
+    }
+
+    void Register()
+    {
+        OnEffectHitTarget += SpellEffectFn(spell_gen_rocket_barrage::HandleDamage, EFFECT_0, SPELL_EFFECT_SCHOOL_DAMAGE);
+    }
+};
+
 void AddSC_generic_spell_scripts()
 {
     new spell_gen_absorb0_hitlimit1();
@@ -5174,4 +5207,5 @@ void AddSC_generic_spell_scripts()
     new spell_gen_jewel_of_hellfire_trigger();
     new spell_gen_jewel_of_hellfire();
     new spell_gen_coin_of_many_faces();
+    RegisterSpellScript(spell_gen_rocket_barrage);
 }

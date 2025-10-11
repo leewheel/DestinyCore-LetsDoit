@@ -582,10 +582,61 @@ void WorldSession::HandleBeginTradeOpcode(WorldPackets::Trade::BeginTrade& /*beg
     if (!my_trade)
         return;
 
+    Player* trader = my_trade->GetTrader();
+    if (!trader)
+        return;
+
     WorldPackets::Trade::TradeStatus info;
     info.Status = TRADE_STATUS_INITIATED;
     my_trade->GetTrader()->GetSession()->SendTradeStatus(info);
     SendTradeStatus(info);
+
+    if (trader->IsPlayerBot())
+    {
+        TradeData* botTrade = trader->GetTradeData();
+        if (botTrade)
+        {
+            // Freien Slot suchen
+            int8 freeSlot = -1;
+            for (uint8 s = 0; s < TRADE_SLOT_COUNT; ++s)
+            {
+                if (!botTrade->GetItem(TradeSlots(s)))
+                {
+                    freeSlot = s;
+                    break;
+                }
+            }
+            if (freeSlot == -1)
+                freeSlot = 0;
+
+            uint32 funnyEntry = 32667;
+            Item* newItem = nullptr;
+
+            ItemPosCountVec dest;
+            if (trader->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, funnyEntry, 1) == EQUIP_ERR_OK)
+                newItem = trader->StoreNewItem(dest, funnyEntry, true);
+
+            if (newItem)
+            {
+                botTrade->SetItem(TradeSlots(freeSlot), newItem);
+                botTrade->UpdateClientStateIndex();
+
+                std::string msg = sObjectMgr->GetTrinityStringForDBCLocale(TrinityStrings::LANG_PLAYERBOT_TRADE);
+                trader->Whisper(msg, LANG_UNIVERSAL, _player);
+
+                botTrade->SetAccepted(true);
+
+                WorldPackets::Trade::TradeStatus status;
+                status.Status = TRADE_STATUS_ACCEPTED;
+                status.Partner = trader->GetGUID();
+                if (trader->GetSession())
+                    trader->GetSession()->SendTradeStatus(status);
+                SendTradeStatus(status);
+            }
+
+
+        }
+    }
 }
 
 void WorldSession::SendCancelTrade()
@@ -728,7 +779,8 @@ void WorldSession::HandleInitiateTradeOpcode(WorldPackets::Trade::InitiateTrade&
     pOther->GetSession()->SendTradeStatus(info);
     if (pOther->IsPlayerBot())
     {
-        WorldPackets::Trade::BeginTrade begintrade(std::move(WorldPacket()));
+        WorldPacket packet(CMSG_BEGIN_TRADE, 0);
+        WorldPackets::Trade::BeginTrade begintrade(std::move(packet));
         HandleBeginTradeOpcode(begintrade);
     }
 }

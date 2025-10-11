@@ -301,6 +301,7 @@ struct SpellValue
     uint32    MaxAffectedTargets;
     float     RadiusMod;
     uint8     AuraStackAmount;
+    uint32    Duration;
     uint32    EffectTriggerSpell[MAX_SPELL_EFFECTS];
 };
 
@@ -427,6 +428,7 @@ class TC_GAME_API Spell
         void EffectSummonObjectWild(SpellEffIndex effIndex);
         void EffectScriptEffect(SpellEffIndex effIndex);
         void EffectSanctuary(SpellEffIndex effIndex);
+        void EffectPushAbiltyToActionBar(SpellEffIndex);
         void EffectAddComboPoints(SpellEffIndex effIndex);
         void EffectDuel(SpellEffIndex effIndex);
         void EffectStuck(SpellEffIndex effIndex);

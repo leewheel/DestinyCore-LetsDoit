@@ -15,8 +15,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SC_SCRIPTMGR_H
-#define SC_SCRIPTMGR_H
+#ifndef SCRIPTMGR_H
+#define SCRIPTMGR_H
 
 #include "Common.h"
 #include "ObjectGuid.h"
@@ -834,8 +834,8 @@ class TC_GAME_API PlayerScript : public UnitScript
         // Called when a charge recovery cooldown start for that player
         virtual void OnChargeRecoveryTimeStart(Player* /*player*/, uint32 /*chargeCategoryId*/, int32& /*chargeRecoveryTime*/) { }
 
-	    //Called when a player Start ChallengeMode
-        virtual void OnStartChallengeMode(Player* /*player*/, uint8 /*level*/) { }
+        //Called when a player Start ChallengeMode
+        virtual void OnStartChallengeMode(Player* /*player*/, uint8 /*level*/, uint8 /*affix1*/, uint8 /*affix2*/, uint8 /*affix3*/) {}
 
         virtual void OnCompleteQuestChoice(Player* /*player*/, uint32 /*choiceId*/, uint32 /*responseId*/) { }
 
@@ -1022,6 +1022,9 @@ class TC_GAME_API QuestScript : public ScriptObject
     public:
         // Called when a quest status change
         virtual void OnQuestStatusChange(Player* /*player*/, Quest const* /*quest*/, QuestStatus /*oldStatus*/, QuestStatus /*newStatus*/) { }
+
+        // Called for auto accept quests when player closes quest UI after seeing initial quest details
+        virtual void OnAcknowledgeAutoAccept(Player* /*player*/, Quest const* /*quest*/) {}
 
         // Called when a quest objective data change
         virtual void OnQuestObjectiveChange(Player* /*player*/, Quest const* /*quest*/, QuestObjective const& /*objective*/, int32 /*oldAmount*/, int32 /*newAmount*/) { }
@@ -1284,7 +1287,7 @@ class TC_GAME_API ScriptMgr
         void OnSceneComplete(Player* player, uint32 sceneInstanceId);
         void OnMovieComplete(Player* player, uint32 movieId);
         void OnPlayerMovementUpdate(Player* player);
-        void OnPlayerStartChallengeMode(Player* player, uint8 level);
+        void OnPlayerStartChallengeMode(Player* player, uint8 level, uint8 affix1, uint8 affix2, uint8 affix3);
         void OnPlayerChoiceResponse(Player* player, uint32 choiceId, uint32 responseId);
         void OnCooldownStart(Player* player, SpellInfo const* spellInfo, uint32 itemId, int32& cooldown, uint32& categoryId, int32& categoryCooldown);
         void OnChargeRecoveryTimeStart(Player* player, uint32 chargeCategoryId, int32& chargeRecoveryTime);
@@ -1360,6 +1363,7 @@ class TC_GAME_API ScriptMgr
     public: /* QuestScript */
 
         void OnQuestStatusChange(Player* player, Quest const* quest, QuestStatus oldStatus, QuestStatus newStatus);
+        void OnQuestAcknowledgeAutoAccept(Player* player, Quest const* quest);
         void OnQuestObjectiveChange(Player* player, Quest const* quest, QuestObjective const& objective, int32 oldAmount, int32 newAmount);
 
     public: /* ZoneScript */

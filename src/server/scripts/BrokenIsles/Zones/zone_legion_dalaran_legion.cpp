@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 AshamaneProject <https://github.com/AshamaneProject>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -17,6 +17,7 @@
 
 #include "Conversation.h"
 #include "GameObject.h"
+#include "GameEventMgr.h"
 #include "MapManager.h"
 #include "ObjectMgr.h"
 #include "PhasingHandler.h"
@@ -2208,6 +2209,137 @@ class spell_redoubt_teleport_to_dh_ch : public SpellScript
     }
 };
 
+// Dalaran Underbelly
+
+enum eSpells
+{
+    NO_GUARDS = 223202,
+    SEWER_GUARDS = 223203,
+    FAIR_GAME = 223176,
+    SUMMON_UNDERBELLY_GUARD = 203892,
+    HIRED_GUARD = 203894,
+
+    // spells items
+    SCREECHER_WHISTLE = 220260,
+    IMP_BINDING_CONTRACT = 220265,
+    WIDOWSISTER_CONTRACT = 220266,
+    CROC_FLUSHER = 220253,
+    UNDERBELLY_BANQUET = 220021,
+    YOUNG_MUTANT_WARTURTLES = 220236,
+    FEL_CHUM = 220237
+};
+
+enum Events
+{
+    EVENT_PVP_ON = 120,
+    EVENT_PVP_OFF = 121
+};
+
+// 220260 220265 220266 220253 220021 220236
+class spell_kloaka_call_some_adds : public SpellScriptLoader
+{
+public:
+    spell_kloaka_call_some_adds() : SpellScriptLoader("spell_kloaka_call_some_adds") { }
+
+    class spell_kloaka_call_some_adds_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_kloaka_call_some_adds_SpellScript);
+
+        void HandleAfterCast()
+        {
+            uint32 eventid = 0;
+            switch (GetSpellInfo()->Id)
+            {
+            case SCREECHER_WHISTLE:
+                eventid = 122;
+                break;
+            case IMP_BINDING_CONTRACT:
+                eventid = 123;
+                break;
+            case WIDOWSISTER_CONTRACT:
+                eventid = 124;
+                break;
+            case CROC_FLUSHER:
+                eventid = 125;
+                break;
+            case UNDERBELLY_BANQUET:
+                eventid = 126;
+                break;
+            case YOUNG_MUTANT_WARTURTLES:
+                eventid = 127;
+                break;
+            case FEL_CHUM:
+                eventid = 128;
+                break;
+            default:
+                break;
+            }
+
+            if (eventid)
+                sGameEventMgr->StartEvent(eventid, true);
+        }
+
+        void Register() override
+        {
+            AfterCast += SpellCastFn(spell_kloaka_call_some_adds_SpellScript::HandleAfterCast);
+        }
+    };
+
+    SpellScript* GetSpellScript() const override
+    {
+        return new spell_kloaka_call_some_adds_SpellScript();
+    }
+};
+
+class Underbelly_event_controller : public PlayerScript
+{
+public:
+    Underbelly_event_controller() : PlayerScript("Underbelly_event_controller") {}
+
+    void OnUpdate(Player* player, uint32 diff) override
+    {
+        if (sGameEventMgr->IsActiveEvent(EVENT_PVP_OFF))
+        {
+            if (player->GetAreaId() == 7594 || player->GetAreaId() == 7825) // pvp off
+            {
+                player->RemoveAura(NO_GUARDS);
+                player->RemoveAura(FAIR_GAME);
+                player->AddAura(SEWER_GUARDS, player);
+                return;
+            }
+            else
+            {
+                player->RemoveAura(SEWER_GUARDS);
+                return;
+            }
+        }
+
+        if (sGameEventMgr->IsActiveEvent(EVENT_PVP_ON))
+        {
+            if (player->GetAreaId() == 7594 || player->GetAreaId() == 7825) // pvp on
+            {
+                player->RemoveAura(SEWER_GUARDS);
+                player->AddAura(NO_GUARDS, player);
+                return;
+            }
+            else
+            {
+                player->RemoveAura(NO_GUARDS);
+                return;
+            }
+        }
+    }
+
+    void OnUpdateArea(Player* player, Area* newArea, Area* /*oldArea*/)
+    {
+        if (newArea->GetId() == 7825 && player->HasAura(NO_GUARDS) && !player->HasAura(HIRED_GUARD))
+        {
+            player->AddAura(FAIR_GAME, player);
+            return;
+        }
+    }
+};
+
 void AddSC_dalaran_legion()
 {
     new OnLegionArrival();
@@ -2249,4 +2381,8 @@ void AddSC_dalaran_legion()
     RegisterCreatureAI(npc_redoubt_belath);
     RegisterSpellScript(spell_redoubt_teleport_to_dh_ch);
     RegisterCreatureAI(npc_Gryphon_108973);
+
+    // Dalaran Underbelly
+    new spell_kloaka_call_some_adds();
+    new Underbelly_event_controller();
 }

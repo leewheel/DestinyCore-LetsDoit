@@ -309,6 +309,7 @@ enum OpcodeClient : uint16
     CMSG_GARRISON_START_MISSION                       = 0x3300,
     CMSG_GARRISON_SWAP_BUILDINGS                      = 0x32BD,
     CMSG_GENERATE_RANDOM_CHARACTER_NAME               = 0x35E7,
+    CMSG_GET_ACCOUNT_CHARACTER_LIST                   = 0x36B6,
     CMSG_GET_CHALLENGE_MODE_REWARDS                   = 0x3683,
     CMSG_GET_GARRISON_INFO                            = 0x32B2,
     CMSG_GET_ITEM_PURCHASE_DATA                       = 0x3533,
@@ -574,6 +575,7 @@ enum OpcodeClient : uint16
     CMSG_QUEST_CONFIRM_ACCEPT                         = 0x34A1,
     CMSG_QUEST_GIVER_ACCEPT_QUEST                     = 0x349B,
     CMSG_QUEST_GIVER_CHOOSE_REWARD                    = 0x349D,
+    CMSG_QUEST_GIVER_CLOSE_QUEST                      = 0x354D,
     CMSG_QUEST_GIVER_COMPLETE_QUEST                   = 0x349C,
     CMSG_QUEST_GIVER_HELLO                            = 0x3499,
     CMSG_QUEST_GIVER_QUERY_QUEST                      = 0x349A,
@@ -805,6 +807,7 @@ enum OpcodeServer : uint16
     SMSG_AREA_TRIGGER_NO_CORPSE                       = 0x2755,
     SMSG_AREA_TRIGGER_RE_PATH                         = 0x263F,
     SMSG_AREA_TRIGGER_RE_SHAPE                        = 0x263C,
+    SMSG_AREA_TRIGGER_SEQUENCE                        = 0x263D,
     SMSG_ARENA_CROWD_CONTROL_SPELLS                   = 0x264E,
     SMSG_ARENA_ERROR                                  = 0x2711,
     SMSG_ARENA_PREP_OPPONENT_SPECIALIZATIONS          = 0x2665,
@@ -1122,7 +1125,6 @@ enum OpcodeServer : uint16
     SMSG_GARRISON_REMOVE_FOLLOWER_RESULT              = 0x2903,
     SMSG_GARRISON_REQUEST_BLUEPRINT_AND_SPECIALIZATION_DATA_RESULT = 0x28F9,
     SMSG_GARRISON_RESEARCH_TALENT                     = 0x28FE,
-    SMSG_GARRISON_RESPONSE_CLASS_SPEC_CASTEGORY_INFO  = 0x2901,
     SMSG_GARRISON_START_MISSION_RESULT                = 0x2907,
     SMSG_GARRISON_UNLEARN_BLUEPRINT_RESULT            = 0x28F8,
     SMSG_GARRISON_UPGRADE_RESULT                      = 0x28FD,
@@ -1769,7 +1771,7 @@ enum OpcodeServer : uint16
     SMSG_ZONE_UNDER_ATTACK                            = 0x2BB5,
 
     // Opcodes that are not generated automatically
-    SMSG_ACCOUNT_HEIRLOOM_UPDATE                      = 0xBADD, // no client handler
+    SMSG_ACCOUNT_HEIRLOOM_UPDATE                      = 0x25C5,
     SMSG_ITEM_UPGRADE_RESULT                          = 0xBADD, // no client handler
     SMSG_COMPRESSED_PACKET                            = 0x3052,
     SMSG_MULTIPLE_PACKETS                             = 0x3051,

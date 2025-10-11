@@ -499,6 +499,7 @@ void CriteriaHandler::UpdateCriteria(CriteriaTypes type, uint64 miscValue1 /*= 0
         case CRITERIA_TYPE_PLACE_GARRISON_BUILDING:
         case CRITERIA_TYPE_COLLECT_BATTLEPET:
         case CRITERIA_TYPE_HONOR_LEVEL_REACHED:
+        case CRITERIA_TYPE_BUY_GUILD_TABARD:
         case CRITERIA_TYPE_PRESTIGE_REACHED:
         case CRITERIA_TYPE_BE_SPELL_TARGET:
         case CRITERIA_TYPE_BE_SPELL_TARGET2:
@@ -672,6 +673,7 @@ void CriteriaHandler::UpdateCriteria(CriteriaTypes type, uint64 miscValue1 /*= 0
             SetCriteriaProgress(criteria, referencePlayer->GetMoney(), referencePlayer, PROGRESS_HIGHEST);
             break;
         case CRITERIA_TYPE_EARN_ACHIEVEMENT_POINTS:
+        case CRITERIA_TYPE_EARN_GUILD_ACHIEVEMENT_POINTS:
             if (!miscValue1)
                 continue;
             SetCriteriaProgress(criteria, miscValue1, referencePlayer, PROGRESS_ACCUMULATE);
@@ -745,10 +747,8 @@ void CriteriaHandler::UpdateCriteria(CriteriaTypes type, uint64 miscValue1 /*= 0
         case CRITERIA_TYPE_CRAFT_ITEMS_GUILD:
         case CRITERIA_TYPE_CATCH_FROM_POOL:
         case CRITERIA_TYPE_BUY_GUILD_BANK_SLOTS:
-        case CRITERIA_TYPE_EARN_GUILD_ACHIEVEMENT_POINTS:
         case CRITERIA_TYPE_WIN_RATED_BATTLEGROUND:
         case CRITERIA_TYPE_REACH_BG_RATING:
-        case CRITERIA_TYPE_BUY_GUILD_TABARD:
         case CRITERIA_TYPE_COMPLETE_QUESTS_GUILD:
         case CRITERIA_TYPE_HONORABLE_KILLS_GUILD:
         case CRITERIA_TYPE_KILL_CREATURE_TYPE_GUILD:
@@ -1197,6 +1197,8 @@ bool CriteriaHandler::IsCompletedCriteria(Criteria const* criteria, uint64 requi
     case CRITERIA_TYPE_GET_KILLING_BLOWS:
     case CRITERIA_TYPE_CURRENCY:
     case CRITERIA_TYPE_PLACE_GARRISON_BUILDING:
+    case CRITERIA_TYPE_BUY_GUILD_TABARD:
+    case CRITERIA_TYPE_EARN_GUILD_ACHIEVEMENT_POINTS:
     case CRITERIA_TYPE_APPEARANCE_UNLOCKED_BY_SLOT:
     case CRITERIA_TYPE_GAIN_PARAGON_REPUTATION:
     case CRITERIA_TYPE_EARN_HONOR_XP:
@@ -1375,6 +1377,8 @@ bool CriteriaHandler::RequirementsSatisfied(Criteria const* criteria, uint64 mis
     case CRITERIA_TYPE_COMPLETE_DAILY_QUEST_DAILY:
     case CRITERIA_TYPE_COMPLETE_QUEST_COUNT:
     case CRITERIA_TYPE_EARN_ACHIEVEMENT_POINTS:
+    case CRITERIA_TYPE_EARN_GUILD_ACHIEVEMENT_POINTS:
+    case CRITERIA_TYPE_BUY_GUILD_TABARD:
     case CRITERIA_TYPE_GAIN_EXALTED_REPUTATION:
     case CRITERIA_TYPE_GAIN_HONORED_REPUTATION:
     case CRITERIA_TYPE_GAIN_REVERED_REPUTATION:

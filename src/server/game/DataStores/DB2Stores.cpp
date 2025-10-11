@@ -37,6 +37,7 @@
 
 DB2Storage<AchievementEntry>                    sAchievementStore("Achievement.db2", AchievementLoadInfo::Instance());
 DB2Storage<AdventureJournalEntry>               sAdventureJournalStore("AdventureJournal.db2", AdventureJournalLoadInfo::Instance());
+DB2Storage<AdventureMapPOIEntry>                sAdventureMapPOIStore("AdventureMapPOI.db2", AdventureMapPOILoadInfo::Instance());
 DB2Storage<AnimKitEntry>                        sAnimKitStore("AnimKit.db2", AnimKitLoadInfo::Instance());
 DB2Storage<AreaGroupMemberEntry>                sAreaGroupMemberStore("AreaGroupMember.db2", AreaGroupMemberLoadInfo::Instance());
 DB2Storage<AreaTableEntry>                      sAreaTableStore("AreaTable.db2", AreaTableLoadInfo::Instance());
@@ -366,6 +367,7 @@ typedef std::unordered_set<uint32> ToyItemIdsContainer;
 typedef std::tuple<uint16, uint8, int32> WMOAreaTableKey;
 typedef std::map<WMOAreaTableKey, WMOAreaTableEntry const*> WMOAreaTableLookupContainer;
 typedef std::unordered_map<uint32, WorldMapAreaEntry const*> WorldMapAreaByAreaIDContainer;
+typedef std::unordered_map<uint32 /*SpellID*/, SkillLineAbilityEntry const*> SpellToSkillContainer;
 typedef std::vector<BattlePetSpeciesEntry const*> BattlePetSpeciesContainer;
 typedef std::vector<BattlePetSpeciesEntry const*> CreatureToSpeciesContainer;
 typedef std::unordered_map<uint32 /*SpellID*/, BattlePetSpeciesEntry const*> SpellToSpeciesContainer;
@@ -431,6 +433,7 @@ namespace
     SpellProcsPerMinuteModContainer _spellProcsPerMinuteMods;
     TalentsByPosition _talentsByPosition;
     ToyItemIdsContainer _toys;
+    SpellToSkillContainer _spellToSkillContainer;
     std::unordered_map<uint32, std::vector<TransmogSetEntry const*>> _transmogSetsByItemModifiedAppearance;
     std::unordered_map<uint32, std::vector<TransmogSetItemEntry const*>> _transmogSetItemsByTransmogSet;
     WMOAreaTableLookupContainer _wmoAreaTableLookup;
@@ -438,6 +441,7 @@ namespace
     BattlePetSpeciesContainer _battlePetSpeciesContainer;
     SpellToSpeciesContainer _spellToSpeciesContainer;
     CreatureToSpeciesContainer _creatureToSpeciesContainer;
+    std::unordered_map<uint32, uint32> _spellMiscBySpellIDContainer;
 }
 
 typedef std::vector<std::string> DB2StoreProblemList;
@@ -524,6 +528,7 @@ void DB2Manager::LoadStores(std::string const& dataPath, uint32 defaultLocale)
 
     LOAD_DB2(sAchievementStore);
     LOAD_DB2(sAdventureJournalStore);
+    LOAD_DB2(sAdventureMapPOIStore);
     LOAD_DB2(sAnimKitStore);
     LOAD_DB2(sAreaGroupMemberStore);
     LOAD_DB2(sAreaTableStore);
@@ -549,14 +554,14 @@ void DB2Manager::LoadStores(std::string const& dataPath, uint32 defaultLocale)
     LOAD_DB2(sBattlePetAbilityTurnStore);
     LOAD_DB2(sBattlePetBreedQualityStore);
     LOAD_DB2(sBattlePetBreedStateStore);
-    //LOAD_DB2(sBattlePetDisplayOverrideStore);
+    LOAD_DB2(sBattlePetDisplayOverrideStore);
     LOAD_DB2(sBattlePetEffectPropertiesStore);
-    //LOAD_DB2(sBattlePetNPCTeamMemberStore);
+    LOAD_DB2(sBattlePetNPCTeamMemberStore);
     LOAD_DB2(sBattlePetSpeciesStore);
     LOAD_DB2(sBattlePetSpeciesStateStore);
     LOAD_DB2(sBattlePetSpeciesXAbilityStore);
     LOAD_DB2(sBattlePetStateStore);
-    //LOAD_DB2(sBattlePetVisualStore);
+    LOAD_DB2(sBattlePetVisualStore);
     LOAD_DB2(sBattlemasterListStore);
     LOAD_DB2(sBroadcastTextStore);
     LOAD_DB2(sCfgRegionsStore);
@@ -819,6 +824,30 @@ void DB2Manager::LoadStores(std::string const& dataPath, uint32 defaultLocale)
     for (ArtifactPowerRankEntry const* artifactPowerRank : sArtifactPowerRankStore)
         _artifactPowerRanks[std::pair<uint32, uint8>{ artifactPowerRank->ArtifactPowerID, artifactPowerRank->RankIndex }] = artifactPowerRank;
 
+    for (SkillLineAbilityEntry const* skillLine : sSkillLineAbilityStore)
+    {
+        if (skillLine->SkillLine >= _skillLineAbilityContainer.size())
+            _skillLineAbilityContainer.resize(skillLine->SkillLine + 1);
+        _skillLineAbilityContainer[skillLine->SkillLine].push_back(skillLine);
+
+        _spellToSkillContainer[skillLine->Spell] = skillLine;
+
+        SpellMiscEntry const* spellMisc = sSpellMiscStore.LookupEntry(GetSpellMisc(skillLine->Spell));
+        if (!spellMisc)
+            continue;
+
+        if (spellMisc->Attributes[0] & SPELL_ATTR0_PASSIVE)
+            for (CreatureFamilyEntry const* cFamily : sCreatureFamilyStore)
+            {
+                if (skillLine->SkillLine != cFamily->SkillLine[0] && (!cFamily->SkillLine[1] || skillLine->SkillLine != cFamily->SkillLine[1]))
+                    continue;
+
+                if (skillLine->AcquireMethod != SKILL_LINE_ABILITY_LEARNED_ON_SKILL_LEARN)
+                    continue;
+
+                _petFamilySpells[cFamily->ID].insert(skillLine->Spell);
+            }
+    }
     for (CharacterFacialHairStylesEntry const* characterFacialStyle : sCharacterFacialHairStylesStore)
         _characterFacialHairStyles.emplace(characterFacialStyle->RaceID, characterFacialStyle->SexID, characterFacialStyle->VariationID);
 
@@ -1502,6 +1531,19 @@ ChrSpecializationEntry const* DB2Manager::GetDefaultChrSpecializationForClass(ui
         return itr->second;
 
     return nullptr;
+}
+
+uint32 DB2Manager::GetSpellMisc(uint32 spellID)
+{
+    auto data = _spellMiscBySpellIDContainer.find(spellID);
+    if (data != _spellMiscBySpellIDContainer.end())
+        return data->second;
+    return 0;
+}
+
+DB2Manager::PetFamilySpellsSet const* DB2Manager::GetPetFamilySpells(uint32 family)
+{
+    return Trinity::Containers::MapGetValuePtr(_petFamilySpells, family);
 }
 
 char const* DB2Manager::GetCreatureFamilyPetName(uint32 petfamily, uint32 locale)

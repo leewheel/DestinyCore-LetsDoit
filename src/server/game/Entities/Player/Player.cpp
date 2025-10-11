@@ -85,6 +85,7 @@
 #include "MiscPackets.h"
 #include "MotionMaster.h"
 #include "MovementPackets.h"
+#include "MoveSplineInitArgs.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
 #include "Opcodes.h"
@@ -6800,6 +6801,31 @@ void Player::RewardReputation(Quest const* quest)
     }
 }
 
+void Player::RewardGuildReputation(Quest const* quest)
+{
+    uint32 rep = 0;
+
+    switch (Trinity::GetExpansionForLevel(getLevel()))
+    {
+    case EXPANSION_CLASSIC:                 rep = 25;  break;
+    case EXPANSION_THE_BURNING_CRUSADE:     rep = 50;  break;
+    case EXPANSION_WRATH_OF_THE_LICH_KING:  rep = 75;  break;
+    case EXPANSION_CATACLYSM:               rep = 100; break;
+    case EXPANSION_MISTS_OF_PANDARIA:       rep = 150; break;
+    case EXPANSION_WARLORDS_OF_DRAENOR:     rep = 200; break;
+    case EXPANSION_LEGION:                  rep = 250; break;
+    default:                                rep = 0;   break;
+    }
+
+    rep = CalculateReputationGain(REPUTATION_SOURCE_QUEST, GetQuestLevel(quest), rep, GUILD_REPUTATION_ID, true);
+
+    if (GetsRecruitAFriendBonus(false))
+        rep = int32(rep * (1 + sWorld->getRate(RATE_REPUTATION_RECRUIT_A_FRIEND_BONUS)));
+
+    if (FactionEntry const* factionEntry = sFactionStore.LookupEntry(GUILD_REPUTATION_ID))
+        GetReputationMgr().ModifyReputation(factionEntry, rep);
+}
+
 void Player::UpdateHonorFields()
 {
     /// called when rewarding honor and at each save
@@ -7220,6 +7246,19 @@ void Player::SendCurrencies() const
     }
 
     GetSession()->SendPacket(packet.Write());
+}
+
+void Player::ModifyCurrencyFlag(uint32 id, uint8 flag)
+{
+    if (!id)
+        return;
+
+    if (_currencyStorage.find(id) == _currencyStorage.end())
+        return;
+
+    _currencyStorage[id].Flags = flag;
+    if (_currencyStorage[id].state != PLAYERCURRENCY_NEW)
+        _currencyStorage[id].state = PLAYERCURRENCY_CHANGED;
 }
 
 void Player::SendPvpRewards() const
@@ -8925,7 +8964,8 @@ bool Player::HasLootWorldObjectGUID(ObjectGuid const& lootWorldObjectGuid) const
     Called by remove insignia spell effect    */
 void Player::RemovedInsignia(Player* looterPlr)
 {
-    if (!GetBattlegroundId())
+    // If player is not in battleground and not in worldpvpzone
+    if (!GetBattlegroundId() && !IsInWorldPvpZone())
         return;
 
     // If not released spirit, do it !
@@ -9020,8 +9060,9 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type, bool aeLooting/* = fa
                     group->UpdateLooterGuid(go);
             }
 
-            if (GameObjectTemplateAddon const* addon = go->GetTemplateAddon())
-                loot->generateMoneyLoot(addon->mingold, addon->maxgold);
+            if (go->GetLootMode() > 0)
+                if (GameObjectTemplateAddon const* addon = go->GetTemplateAddon())
+                    loot->generateMoneyLoot(addon->mingold, addon->maxgold);
 
             if (loot_type == LOOT_FISHING)
                 go->getFishLoot(loot, this);
@@ -9128,14 +9169,21 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type, bool aeLooting/* = fa
 
         loot = &bones->loot;
 
-        if (!bones->lootForBody)
+        if (loot->loot_type == LOOT_NONE)
         {
-            bones->lootForBody = true;
             uint32 pLevel = bones->loot.gold;
             bones->loot.clear();
+
+            // For AV Achievement
             if (Battleground* bg = GetBattleground())
+            {
                 if (bg->GetTypeID(true) == BATTLEGROUND_AV)
-                    loot->FillLoot(1, LootTemplates_Creature, this, true);
+                    loot->FillLoot(PLAYER_CORPSE_LOOT_ENTRY, LootTemplates_Creature, this, true);
+            }
+            // For wintergrasp Quests
+            else if (GetZoneId() == AREA_WINTERGRASP)
+                loot->FillLoot(PLAYER_CORPSE_LOOT_ENTRY, LootTemplates_Creature, this, true);
+
             // It may need a better formula
             // Now it works like this: lvl10: ~6copper, lvl70: ~9silver
             bones->loot.gold = uint32(urand(50, 150) * 0.016f * std::pow(float(pLevel) / 5.76f, 2.5f) * sWorld->getRate(RATE_DROP_MONEY));
@@ -9192,6 +9240,22 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type, bool aeLooting/* = fa
         }
         else
         {
+            // exploit fix
+            if (!creature->HasFlag(OBJECT_DYNAMIC_FLAGS, UNIT_DYNFLAG_LOOTABLE))
+            {
+                SendLootError(loot->GetGUID(), guid, LOOT_ERROR_DIDNT_KILL);
+                return;
+            }
+
+            // the player whose group may loot the corpse
+            Player* recipient = creature->GetLootRecipient();
+            Group* recipientGroup = creature->GetLootRecipientGroup();
+            if (!recipient && !recipientGroup)
+            {
+                SendLootError(loot->GetGUID(), guid, LOOT_ERROR_DIDNT_KILL);
+                return;
+            }
+
             if (loot->loot_type == LOOT_NONE)
             {
                 // for creature, loot is filled when creature is killed.
@@ -9216,14 +9280,16 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type, bool aeLooting/* = fa
             if (loot->loot_type == LOOT_SKINNING)
             {
                 loot_type = LOOT_SKINNING;
-                permission = creature->GetSkinner() == GetGUID() ? OWNER_PERMISSION : NONE_PERMISSION;
+                permission = creature->GetLootRecipientGUID() == GetGUID() ? OWNER_PERMISSION : NONE_PERMISSION;
             }
             else if (loot_type == LOOT_SKINNING)
             {
                 loot->clear();
                 loot->FillLoot(creature->GetCreatureTemplate()->SkinLootId, LootTemplates_Skinning, this, true);
-                creature->SetSkinner(GetGUID());
                 permission = OWNER_PERMISSION;
+
+                // Set new loot recipient
+                creature->SetLootRecipient(this, false);
             }
             // set group rights only for loot_type != LOOT_SKINNING
             else
@@ -9300,12 +9366,12 @@ void Player::SendLoot(ObjectGuid guid, LootType loot_type, bool aeLooting/* = fa
         // add 'this' player as one of the players that are looting 'loot'
         loot->AddLooter(GetGUID());
         m_AELootView[loot->GetGUID()] = guid;
+
+        if (loot_type == LOOT_CORPSE && !guid.IsItem())
+            SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_LOOTING);
     }
     else
         SendLootError(loot->GetGUID(), guid, LOOT_ERROR_DIDNT_KILL);
-
-    if (loot_type == LOOT_CORPSE && !guid.IsItem())
-        SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_LOOTING);
 }
 
 void Player::SendLootError(ObjectGuid const& lootObj, ObjectGuid const& owner, LootError error) const
@@ -12280,6 +12346,19 @@ InventoryResult Player::CanUseItem(Item* pItem, bool not_loading) const
             if (getLevel() < pItem->GetRequiredLevel())
                 return EQUIP_ERR_CANT_EQUIP_LEVEL_I;
 
+            if (pItem->GetEntry() == 133755)
+            {
+                uint8 categoryID = ARTIFACT_CATEGORY_PRIMARY;
+                uint32 artifactID = pProto->GetArtifactID();
+
+                if (ArtifactEntry const* entry = sArtifactStore.LookupEntry(artifactID))
+                    categoryID = static_cast<ArtifactCategory>(entry->ArtifactCategoryID);
+
+                if (categoryID == ARTIFACT_CATEGORY_FISHING)
+                    pItem->ActivateFishArtifact(artifactID);
+                return EQUIP_ERR_OK;
+            }
+
             InventoryResult res = CanUseItem(pProto);
             if (res != EQUIP_ERR_OK)
                 return res;
@@ -15086,6 +15165,7 @@ void Player::PrepareGossipMenu(WorldObject* source, uint32 menuId /*= 0*/, bool 
                 case GOSSIP_OPTION_TABARDDESIGNER:
                 case GOSSIP_OPTION_AUCTIONEER:
                 case GOSSIP_OPTION_TRANSMOGRIFIER:
+                case GOSSIP_OPTION_ADVENTURE_MAP:
                     break;                                  // no checks
                 case GOSSIP_OPTION_OUTDOORPVP:
                     if (!sOutdoorPvPMgr->CanTalkTo(this, creature, itr->second))
@@ -15297,6 +15377,12 @@ void Player::OnGossipSelect(WorldObject* source, uint32 optionIndex, uint32 menu
         case GOSSIP_OPTION_TRANSMOGRIFIER:
             GetSession()->SendOpenTransmogrifier(guid);
             break;
+        case GOSSIP_OPTION_ADVENTURE_MAP:
+        {
+            uint32 uiMapId = sObjectMgr->GetAdventureMapUIByCreature(source->GetEntry());
+            GetSession()->SendPacket(WorldPackets::Garrison::ShowAdventureMap(source->GetGUID()).Write());
+            break;
+        }
     }
 
     ModifyMoney(-cost);
@@ -15689,6 +15775,7 @@ void Player::AddQuestAndCheckCompletion(Quest const* quest, Object* questGiver)
         case TYPEID_UNIT:
             sScriptMgr->OnQuestAccept(this, questGiver->ToCreature(), quest);
             questGiver->ToCreature()->AI()->sQuestAccept(this, quest);
+            m_lastQuestGiverGUID = questGiver->GetGUID();
             break;
         case TYPEID_ITEM:
         case TYPEID_CONTAINER:
@@ -15715,6 +15802,7 @@ void Player::AddQuestAndCheckCompletion(Quest const* quest, Object* questGiver)
         case TYPEID_GAMEOBJECT:
             sScriptMgr->OnQuestAccept(this, questGiver->ToGameObject(), quest);
             questGiver->ToGameObject()->AI()->QuestAccept(this, quest);
+            m_lastQuestGiverGUID = questGiver->GetGUID();
             break;
         default:
             break;
@@ -16201,6 +16289,7 @@ void Player::RewardQuest(Quest const* quest, uint32 reward, Object* questGiver, 
         UpdateSkillPro(skill, 1000, quest->GetRewardSkillPoints());
 
     RewardReputation(quest);
+    RewardGuildReputation(quest);
 
     uint16 log_slot = FindQuestSlot(quest_id);
     if (log_slot < MAX_QUEST_LOG_SIZE)
@@ -18224,6 +18313,11 @@ void Player::SendQuestGiverStatusMultiple()
     GetSession()->SendPacket(response.Write());
 }
 
+WorldObject* Player::GetLastQuestGiver() const
+{
+    return ObjectAccessor::GetWorldObject(*this, m_lastQuestGiverGUID);
+}
+
 bool Player::HasPvPForcingQuest() const
 {
     for (uint8 i = 0; i < MAX_QUEST_LOG_SIZE; ++i)
@@ -19292,7 +19386,7 @@ bool Player::isAllowedToLoot(const Creature* creature)
         return false;
 
     if (loot->loot_type == LOOT_SKINNING)
-        return creature->GetSkinner() == GetGUID();
+        return creature->GetLootRecipientGUID() == GetGUID();
 
     Group* thisGroup = GetGroup();
     if (!thisGroup)
@@ -23604,6 +23698,85 @@ void Player::ContinueTaxiFlight() const
     GetSession()->SendDoFlight(mountDisplayId, path, startNode);
 }
 
+void Player::TaxiFlightNearestNode()
+{
+    uint32 curloc = sObjectMgr->GetNearestTaxiNode(GetPositionX(), GetPositionY(), GetPositionZ(), GetMapId(), GetTeam());
+    if (!curloc)
+        return;
+
+    TaxiNodesEntry const* to = sTaxiNodesStore.LookupEntry(curloc);
+    if (!to)
+        return;
+
+    //if(to->ContinentID!= GetMapId())
+    //    return;
+
+    uint32 mountDisplayId = sObjectMgr->GetTaxiMountDisplayId(to->ID, GetTeam(), true);
+    if (!mountDisplayId)
+        return;
+
+    RemoveAurasByType(SPELL_AURA_MOUNTED);
+
+    // Prepare to flight start now
+    // stop combat at start taxi flight if any
+    CombatStop();
+
+    StopCastingCharm();
+    StopCastingBindSight();
+    ExitVehicle();
+
+    GetSession()->SendActivateTaxiReply(ERR_TAXIOK);
+
+    if (mountDisplayId)
+        Mount(mountDisplayId);
+
+    AddUnitState(UNIT_STATE_IN_FLIGHT);
+    SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_REMOVE_CLIENT_CONTROL | UNIT_FLAG_TAXI_FLIGHT);
+    AddUnitMovementFlag(MOVEMENTFLAG_FLYING);
+    AddUnitMovementFlag(MOVEMENTFLAG_CAN_FLY);
+    Movement::PointsArray path;
+    Position fromPos = GetPositionWithOffset({ -15.f, -15.f, 20.f });
+    path.push_back(GetPosition().GetVector3());
+    path.push_back(fromPos.GetVector3());
+    GetMotionMaster()->MoveSmoothPath(1, path, false);
+
+    Movement::PointsArray pathto;
+    Position toPos1 = Position(to->Pos.X, to->Pos.Y, to->Pos.Z, GetOrientation());
+    Position toPos = toPos1;
+    toPos.RelocateOffset({ -15.f, -15.f, 20.f });
+    pathto.push_back(toPos.GetVector3());
+    pathto.push_back(toPos1.GetVector3());
+
+    GetScheduler().Schedule(Milliseconds(4000), [this, to, toPos](TaskContext context)
+        {
+            m_taxi.ClearTaxiDestinations();
+            TeleportTo(to->ContinentID, toPos);
+        });
+    GetScheduler().Schedule(Milliseconds(5000), [this, pathto](TaskContext context)
+        {
+            AddUnitState(UNIT_STATE_IN_FLIGHT);
+            AddUnitMovementFlag(MOVEMENTFLAG_FLYING);
+            AddUnitMovementFlag(MOVEMENTFLAG_CAN_FLY);
+            GetMotionMaster()->MoveSmoothPath(2, pathto, false);
+        });
+    GetScheduler().Schedule(Milliseconds(9000), [this](TaskContext context)
+        {
+            // remove flag to prevent send object build movement packets for flight state and crash (movement generator already not at top of stack)
+            ClearUnitState(UNIT_STATE_IN_FLIGHT);
+            Dismount();
+            RemoveUnitFlag(UnitFlags(UNIT_FLAG_REMOVE_CLIENT_CONTROL | UNIT_FLAG_TAXI_FLIGHT));
+            RemoveUnitMovementFlag(MOVEMENTFLAG_FLYING);
+            RemoveUnitMovementFlag(MOVEMENTFLAG_CAN_FLY);
+            getHostileRefManager().setOnlineOfflineState(true);
+
+            StopMoving();
+            SetFallInformation(0, GetPositionZ());
+
+            RemoveFlag(PLAYER_FLAGS, PLAYER_FLAGS_TAXI_BENCHMARK);
+            RestoreDisplayId();
+        });
+}
+
 void Player::InitDataForForm(bool reapplyMods)
 {
     ShapeshiftForm form = GetShapeshiftForm();
@@ -26540,6 +26713,9 @@ void Player::RewardPlayerAndGroupAtEvent(uint32 creature_id, WorldObject* pRewar
             // quest objectives updated only for alive group member or dead but with not released body
             if (player->IsAlive()|| !player->GetCorpse())
                 player->KilledMonsterCredit(creature_id, creature_guid);
+
+            if (Scenario* scenario = GetScenario())
+                scenario->UpdateCriteria(CRITERIA_TYPE_KILL_CREATURE, creature_id, 1, 0, pRewardSource->ToUnit(), this);
         }
     }
     else                                                    // if (!group)
@@ -27448,6 +27624,53 @@ void Player::StoreLootItem(uint8 lootSlot, Loot* loot, AELootResult* aeResult/* 
     }
     else
         SendEquipError(msg, nullptr, nullptr, item->itemid);
+}
+
+void Player::ApplyOnItems(uint8 type, std::function<bool(Player*, Item*, uint8, uint8)>&& function)
+{
+    switch (type)
+    {
+    case 1:
+    {
+        for (uint32 i = INVENTORY_SLOT_ITEM_START; i < INVENTORY_SLOT_ITEM_START + GetInventorySlotCount(); i++)
+            if (Item* item = GetItemByPos(INVENTORY_SLOT_BAG_0, i))
+                if (!function(this, item, INVENTORY_SLOT_BAG_0, i))
+                    return;
+
+        for (uint32 i = INVENTORY_SLOT_BAG_START; i < INVENTORY_SLOT_BAG_END; ++i)
+            if (Bag* bag = GetBagByPos(i))
+                for (uint32 j = 0; j < bag->GetBagSize(); ++j)
+                    if (Item* item = GetItemByPos(i, j))
+                        if (!function(this, item, i, j))
+                            return;
+        break;
+    }
+    case 2:
+    {
+        for (uint32 i = BANK_SLOT_ITEM_START; i < BANK_SLOT_ITEM_END; i++)
+            if (Item* item = GetItemByPos(INVENTORY_SLOT_BAG_0, i))
+                if (!function(this, item, INVENTORY_SLOT_BAG_0, i))
+                    return;
+
+        for (uint32 i = BANK_SLOT_BAG_START; i < BANK_SLOT_BAG_END; ++i)
+            if (Bag* bag = GetBagByPos(i))
+                for (uint32 j = 0; j < bag->GetBagSize(); ++j)
+                    if (Item* item = GetItemByPos(i, j))
+                        if (!function(this, item, i, j))
+                            return;
+        break;
+    }
+    case 3:
+    {
+        for (uint32 i = REAGENT_SLOT_START; i < REAGENT_SLOT_END; ++i)
+            if (Item* item = GetItemByPos(INVENTORY_SLOT_BAG_0, i))
+                if (!function(this, item, INVENTORY_SLOT_BAG_0, i))
+                    return;
+        break;
+    }
+    default:
+        break;
+    }
 }
 
 void Player::LearnSpellHighestRank(uint32 spellid)
@@ -28447,6 +28670,17 @@ void Player::RemoveAtLoginFlag(AtLoginFlags flags, bool persist /*= false*/)
 
         CharacterDatabase.Execute(stmt);
     }
+}
+
+void Player::RemoveOnLogAuras()
+{
+    for (std::pair<uint32, SpellOnLogRemoveAura> spellOnLogRemoveAura : sSpellMgr->GetOnLogRemoveAuras())
+        if (HasAura(spellOnLogRemoveAura.first))
+        {
+            if (spellOnLogRemoveAura.second.RequiredAura && !HasAura(spellOnLogRemoveAura.second.RequiredAura))
+                continue;
+            RemoveAura(spellOnLogRemoveAura.first);
+        }
 }
 
 void Player::ResetMap()
@@ -29748,6 +29982,83 @@ void Player::SendShipmentCrafterUI(ObjectGuid guid, uint32 shipmentContainerID)
     SendDirectMessage(shipmentNpc.Write());
 }
 
+Position const notAllowPos[MAX_CLASSES] =
+{
+    {  },
+{ -838.f, 4282.f, 746.39715f, 0.9307f },
+{ 2286.05f, -5324.9799f, 90.41f, 2.32949f },
+{ 4801.908f, 5224.41f, 797.0137f, 5.2997f },
+{ -966.132f, 4445.333f, 735.74f, 0.5568f },
+{ -838.f, 4282.f, 746.39715f, 0.9307f },
+{ -838.f, 4282.f, 746.39715f, 0.9307f },
+{ -838.92f, 4315.865f, 744.8577f, 5.8394f },
+{ -838.f, 4282.f, 746.39715f, 0.9307f },
+{ -838.f, 4282.f, 746.39715f, 0.9307f },
+{ -838.f, 4282.f, 746.39715f, 0.9307f },
+{ 3709.797f, 7110.2963f, 24.266f, 0.4595f },
+{ -854.198f, 4239.6f, 750.f, 1.244865f }
+};
+
+void Player::CheckClassHallAllowArea()
+{
+    if (!IsAlive())
+        return;
+
+    bool allowIn = false;
+    uint8 classMode = 0;
+    switch (GetAreaId())
+    {
+    case 7813:
+        classMode = CLASS_WARRIOR;
+        break;
+    case 7638:
+        classMode = CLASS_PALADIN;
+        break;
+    case 7877:
+        classMode = CLASS_HUNTER;
+        break;
+    case 8011:
+        classMode = CLASS_ROGUE;
+        break;
+    case 7834:
+        classMode = CLASS_PRIEST;
+        break;
+    case 7679:
+        classMode = CLASS_DEATH_KNIGHT;
+        break;
+    case 7752:
+    case 7753:
+        classMode = CLASS_SHAMAN;
+        break;
+    case 7879:
+        classMode = CLASS_MAGE;
+        break;
+    case 7875:
+        classMode = CLASS_WARLOCK;
+        break;
+    case 7903:
+        classMode = CLASS_MONK;
+        break;
+    case 7846:
+    case 8076:
+    case 8065:
+        classMode = CLASS_DRUID;
+        break;
+    case 8023:
+        classMode = CLASS_DEMON_HUNTER;
+        break;
+    default:
+        return;
+        break;
+    }
+    if (getClass() == classMode)
+        allowIn = true;
+
+    uint32 mapid = (classMode == CLASS_PALADIN) ? 0 : 1220;
+    if (!allowIn)
+        TeleportTo(mapid, notAllowPos[classMode].GetPositionX(), notAllowPos[classMode].GetPositionY(), notAllowPos[classMode].GetPositionZ(), notAllowPos[classMode].GetOrientation(), 0, 0);
+}
+
 void Player::SendMovementSetCollisionHeight(float height)
 {
     WorldPackets::Movement::MoveSetCollisionHeight setCollisionHeight;
@@ -30866,4 +31177,251 @@ void Player::SendDisplayToast(uint32 entry, uint32 questId, uint32 count, Displa
         displayToast.bonusListIDs = itembonus;
         SendDirectMessage(displayToast.Write());
     }
+}
+
+void Player::GetLootFromCreature(Creature* creature, bool CheckDifficulty)
+{
+    //Gold
+    ModifyMoney(100000);
+
+    if (!GetMapId())
+        return;
+
+    if (roll_chance_i(1))
+        GetLegendItemLootFromCreature();
+
+    Loot* loot = &creature->loot;
+    loot->clear();
+    if (uint32 lootid = creature->GetCreatureTemplate()->lootid)
+        loot->FillLoot(lootid, LootTemplates_Creature, this, false, false, creature->GetLootMode(), creature);
+
+    std::vector<ItemTemplate const*> stuffLoots;
+    uint8 mapDifficultyMask = GetMap()->GetEncounterDifficultyMask();
+    if (uint32 journalEncounterId = sObjectMgr->GetCreatureTemplateJournalId(creature->GetCreatureTemplate()->Entry))
+    {
+        if (auto items = sDB2Manager.GetJournalItemsByEncounter(journalEncounterId))
+        {
+            std::vector<JournalEncounterItemEntry const*> potentialItems;
+            for (JournalEncounterItemEntry const* item : *items)
+            {
+                if (CheckDifficulty)
+                {
+                    if (item->IsValidDifficultyMask(mapDifficultyMask) &&
+                        (sDB2Manager.HasItemContext(item->ItemID, loot->GetItemContext()) ||
+                            !sDB2Manager.HasItemContext(item->ItemID)))
+                        potentialItems.push_back(item);
+                }
+                else
+                    potentialItems.push_back(item);
+            }
+
+            for (JournalEncounterItemEntry const* item : potentialItems)
+            {
+                ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(item->ItemID);
+                if (!itemTemplate)
+                    continue;
+
+                if (!itemTemplate->IsUsableByLootSpecialization(this, false))
+                    continue;
+
+                if (itemTemplate->GetInventoryType() != INVTYPE_NON_EQUIP && item->IsValidDifficultyMask(mapDifficultyMask))
+                    stuffLoots.push_back(itemTemplate);
+            }
+        }
+    }
+
+    if (stuffLoots.empty())
+        return;
+
+    ItemTemplate const* randomStuffItem = Trinity::Containers::SelectRandomContainerElement(stuffLoots);
+    if (!randomStuffItem)
+        return;
+
+    uint32 itemId = randomStuffItem->GetId();
+    ItemPosCountVec dest;
+
+    bool mailed = CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemId, 1) != EQUIP_ERR_OK;
+
+    uint8 _context = loot->GetItemContext();
+    //timewarped-badge
+    if (LFGDungeonsEntry const* dungeonEntry = sLFGMgr->GetPlayerLFGDungeonEntry(GetGUID()))
+        if (dungeonEntry->Flags & lfg::LfgFlags::LFG_FLAG_TIMEWALKER)
+            _context = ItemContext::TimeWalker;
+    if (_context == ItemContext::TimeWalker)//GetMap()->IsTimeWalking()
+        ModifyCurrency(CURRENCY_TYPE_TIMEWARPED_BADGE, 10);
+
+    std::vector<int32> bonusListIds = sDB2Manager.GetItemBonusTreeVector(itemId, _context);
+    bool isroll = false;
+    //taitan
+    if (roll_chance_i(25))
+    {
+        isroll = true;
+        bonusListIds.push_back(1487);
+    }
+    else if (roll_chance_i(25))
+    {
+        isroll = true;
+        bonusListIds.push_back(3475);
+    }
+    else if (roll_chance_i(25))
+    {
+        isroll = true;
+        bonusListIds.push_back(499);
+    }
+
+    if (mailed)
+        SendItemRetrievalMail(itemId, 1, GenerateItemRandomPropertyId(itemId), bonusListIds);
+    else
+        StoreNewItem(dest, itemId, true, GenerateItemRandomPropertyId(itemId), GuidSet(), 0, bonusListIds);
+
+    //Item* pItem = StoreNewItem(dest, itemId, true, GenerateItemRandomPropertyId(itemId), GuidSet(), 0, bonusListIds);
+    //SendNewItem(pItem, 1, true, false, true);
+
+    SendDisplayToast(itemId, 0, 1, DisplayToastMethod::DISPLAY_TOAST_METHOD_LOOT, ToastTypes::TOAST_TYPE_ITEM, isroll, mailed, bonusListIds);
+}
+
+uint32 LegendItems[] = { 132357,132365,132366,132367,132369,132374,132375,132376,132378,132379,132381,132393,132394,132406,132407,132409,132410,132411,132413,132436,132437,132441,132442,132443,132444,132445,132447,132448,132449,132450,132451,132452,132453,132454,132455,132456,132457,132458,132459,132460,132461,132466,132861,132863,132864,133800,133970,133971,133973,133974,133976,133977,137014,137015,137016,137017,137018,137019,137020,137021,137022,137023,137024,137025,137026,137027,137028,137029,137030,137031,137032,137033,137034,137035,137036,137037,137038,137039,137040,137041,137042,137043,137044,137045,137046,137047,137048,137049,137050,137051,137052,137053,137054,137055,137056,137057,137058,137059,137060,137061,137062,137063,137064,137065,137066,137067,137068,137069,137070,137071,137072,137073,137074,137075,137076,137077,137078,137079,137080,137081,137082,137083,137084,137085,137086,137087,137088,137089,137090,137091,137092,137094,137095,137096,137097,137098,137099,137100,137101,137102,137103,137104,137105,137107,137108,137109,137220,137223,137227,137276,137382,137616,138117,138140,138854,138879,138949,140846,141321,141353,143728,143732,144236,144239,144242,144244,144247,144249,144258,144259,144260,144273,144274,144275,144277,144279,144280,144281,144292,144293,144295,144303,144326,144340,144354,144355,144358,144361,144364,144369,144385,144432,144438,147294,147295,147296,147297,147298,147299,147300,147301,147302,147303,147304,147305,150936,151636,151639,151640,151641,151642,151643,151644,151646,151647,151649,151650,151782,151783,151784,151785,151786,151787,151788,151795,151796,151798,151799,151800,151801,151802,151803,151805,151807,151808,151809,151810,151811,151812,151813,151814,151815,151817,151818,151819,151821,151822,151823,151824,154879 };
+
+void Player::GetLegendItemLootFromCreature()
+{
+    if (getLevel() < 102 || getLevel() > 113)
+        return;
+
+    std::vector<uint32> l_LegendItems;
+    std::vector<ItemTemplate const*> stuffLoots;
+
+#define MakeVector(a) std::vector<uint32>(a, a + (sizeof(a) / sizeof(a[0])))
+    l_LegendItems = MakeVector(LegendItems);
+#undef MakeVector
+
+    for (auto it : l_LegendItems)
+    {
+        ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(it);
+        if (!itemTemplate)
+            continue;
+
+        if (!itemTemplate->IsUsableByLootSpecialization(this, false))
+            continue;
+
+        if (HasItemCount(itemTemplate->GetId(), 1))
+            continue;
+
+        if (itemTemplate->GetInventoryType() != INVTYPE_NON_EQUIP)
+            stuffLoots.push_back(itemTemplate);
+    }
+
+    if (stuffLoots.empty())
+        return;
+
+    ItemTemplate const* randomStuffItem = Trinity::Containers::SelectRandomContainerElement(stuffLoots);
+    if (!randomStuffItem)
+        return;
+
+    uint32 itemId = randomStuffItem->GetId();
+    ItemPosCountVec dest;
+
+    bool mailed = CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemId, 1) != EQUIP_ERR_OK;
+
+    std::vector<int32> bonusListIds;
+    bonusListIds.push_back(3630);
+    if (mailed)
+        SendItemRetrievalMail(itemId, 1, GenerateItemRandomPropertyId(itemId), bonusListIds);
+    else
+        StoreNewItem(dest, itemId, true, GenerateItemRandomPropertyId(itemId), GuidSet(), 0, bonusListIds);
+
+    SendDisplayToast(itemId, 0, 1, DisplayToastMethod::DISPLAY_TOAST_METHOD_LOOT, ToastTypes::TOAST_TYPE_ITEM, false, mailed, bonusListIds);
+}
+
+void Player::GetLootFromCreatureEncounterId(Creature* creature, uint32 encounterId)
+{
+    if (!GetMapId())
+        return;
+
+    //Gold
+    ModifyMoney(urand(100000, 250000));
+
+    if (roll_chance_i(1))
+        GetLegendItemLootFromCreature();
+
+    Loot* loot = &creature->loot;
+    loot->clear();
+    if (uint32 lootid = creature->GetCreatureTemplate()->lootid)
+        loot->FillLoot(lootid, LootTemplates_Creature, this, false, false, creature->GetLootMode(), creature);
+
+    std::vector<ItemTemplate const*> stuffLoots;
+    uint8 mapDifficultyMask = GetMap()->GetEncounterDifficultyMask();
+
+    if (auto items = sDB2Manager.GetJournalItemsByEncounter(encounterId))
+    {
+        std::vector<JournalEncounterItemEntry const*> potentialItems;
+        for (JournalEncounterItemEntry const* item : *items)
+            // if (item->IsValidDifficultyMask(mapDifficultyMask) &&
+            //     (sDB2Manager.HasItemContext(item->ItemID, loot->GetItemContext()) ||
+           //          !sDB2Manager.HasItemContext(item->ItemID)))
+            potentialItems.push_back(item);
+        for (JournalEncounterItemEntry const* item : potentialItems)
+        {
+            ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(item->ItemID);
+            if (!itemTemplate)
+                continue;
+
+            if (!itemTemplate->IsUsableByLootSpecialization(this, false))
+                continue;
+
+            if (!itemTemplate->IsUsableByLootSpecialization(this, false))
+                continue;
+
+            if (itemTemplate->GetInventoryType() != INVTYPE_NON_EQUIP && item->IsValidDifficultyMask(mapDifficultyMask))
+                stuffLoots.push_back(itemTemplate);
+        }
+    }
+
+    if (stuffLoots.empty())
+        return;
+
+    ItemTemplate const* randomStuffItem = Trinity::Containers::SelectRandomContainerElement(stuffLoots);
+    if (!randomStuffItem)
+        return;
+
+    uint32 itemId = randomStuffItem->GetId();
+    ItemPosCountVec dest;
+
+    bool mailed = CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemId, 1) != EQUIP_ERR_OK;
+
+    uint8 _context = loot->GetItemContext();
+    //timewarped-badge
+    if (LFGDungeonsEntry const* dungeonEntry = sLFGMgr->GetPlayerLFGDungeonEntry(GetGUID()))
+        if (dungeonEntry->Flags & lfg::LfgFlags::LFG_FLAG_TIMEWALKER)
+            _context = ItemContext::TimeWalker;
+    if (_context == ItemContext::TimeWalker)//GetMap()->IsTimeWalking()
+        ModifyCurrency(CURRENCY_TYPE_TIMEWARPED_BADGE, 10);
+
+    std::vector<int32> bonusListIds = sDB2Manager.GetItemBonusTreeVector(itemId, _context);
+    bool isroll = false;
+    //taitan
+    if (roll_chance_i(25))
+    {
+        isroll = true;
+        bonusListIds.push_back(1487);
+    }
+    else if (roll_chance_i(25))
+    {
+        isroll = true;
+        bonusListIds.push_back(3475);
+    }
+    else if (roll_chance_i(25))
+    {
+        isroll = true;
+        bonusListIds.push_back(499);
+    }
+
+    if (mailed)
+        SendItemRetrievalMail(itemId, 1, GenerateItemRandomPropertyId(itemId), bonusListIds);
+    else
+        StoreNewItem(dest, itemId, true, GenerateItemRandomPropertyId(itemId), GuidSet(), 0, bonusListIds);
+
+    //Item* pItem = StoreNewItem(dest, itemId, true, GenerateItemRandomPropertyId(itemId), GuidSet(), 0, bonusListIds);
+    //SendNewItem(pItem, 1, true, false, true);
+
+    SendDisplayToast(itemId, 0, 1, DisplayToastMethod::DISPLAY_TOAST_METHOD_LOOT, ToastTypes::TOAST_TYPE_ITEM, isroll, mailed, bonusListIds);
 }

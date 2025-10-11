@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -37,8 +37,8 @@
 * - Groups, Roles and Permissions can be assigned by realm
 */
 
-#ifndef _RBAC_H
-#define _RBAC_H
+#ifndef RBAC_H
+#define RBAC_H
 
 #include "Define.h"
 #include "DatabaseEnvFwd.h"
@@ -783,6 +783,7 @@ enum RBACPermissions
     // custom permissions 1000+
     RBAC_PERM_COMMAND_INSTANCE_COMPLETE_SCENARIO             = 1000,
     RBAC_PERM_COMMAND_INSTANCE_COMPLETE_SCENARIO_STEP        = 1001,
+    RBAC_PERM_COMMAND_RELOAD_ON_LOG_REMOVE_AURAS             = 1003,
 
     RBAC_PREM_COMMAND_RESETCUSTOMGOSSIP                      = 1500,
 	RBAC_PREM_COMMAND_PBOTACCOUNT                            = 1501,

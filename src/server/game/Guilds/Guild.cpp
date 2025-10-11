@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -39,6 +38,7 @@
 #include "SocialMgr.h"
 #include "World.h"
 #include "WorldSession.h"
+#include "ReputationMgr.h"
 
 size_t const MAX_GUILD_BANK_TAB_TEXT_LEN = 500;
 
@@ -508,6 +508,11 @@ void Guild::BankTab::SendText(Guild const* guild, WorldSession* session) const
     }
 }
 
+void Guild::Member::ProfessionInfo::GenerateRecipesMask(std::set<uint32> const& spells)
+{
+    knownRecipes.GenerateMask(skillId, spells);
+}
+
 Guild::Member::Member(ObjectGuid::LowType guildId, ObjectGuid guid, uint8 rankId) :
     m_guildId(guildId),
     m_guid(guid),
@@ -704,6 +709,17 @@ void Guild::Member::ResetValues(bool weekly /* = false*/)
         m_weekActivity = 0;
         m_weekReputation = 0;
     }
+}
+
+void Guild::Member::SetReputation(int32 val)
+{
+    m_totalReputation = val;
+
+    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_REP_GUILD_MEMBER_REPUTATION);
+    stmt->setUInt32(0, m_guid.GetCounter());
+    stmt->setUInt32(1, m_guildId);
+    stmt->setUInt32(2, m_totalReputation);
+    CharacterDatabase.Execute(stmt);
 }
 
 Player* Guild::Member::FindPlayer() const
@@ -1928,6 +1944,26 @@ void Guild::HandleSetMemberRank(WorldSession* session, ObjectGuid targetGuid, Ob
     SendGuildRanksUpdate(setterGuid, targetGuid, rank);
 }
 
+void Guild::HandleShiftRank(WorldSession* /*session*/, uint32 id, bool up)
+{
+    uint32 nextID = up ? id - 1 : id + 1;
+
+    RankInfo* rankinfo = GetRankInfo(id);
+    RankInfo* rankinfo2 = GetRankInfo(nextID);
+
+    if (!rankinfo || !rankinfo2)
+        return;
+
+    RankInfo tmp = NULL;
+    tmp = *rankinfo2;
+    rankinfo2->SetName(rankinfo->GetName());
+    rankinfo2->SetRights(rankinfo->GetRights());
+    rankinfo->SetName(tmp.GetName());
+    rankinfo->SetRights(tmp.GetRights());
+
+    SendGuildEventRanksUpdated();
+}
+
 void Guild::HandleAddNewRank(WorldSession* session, std::string const& name)
 {
     uint8 size = _GetRanksSize();
@@ -2061,6 +2097,11 @@ void Guild::HandleMemberLogout(WorldSession* session)
 
     SendEventPresenceChanged(session, false, true);
     SaveToDB();
+}
+
+void Guild::SendGuildEventRanksUpdated()
+{
+    BroadcastPacket(WorldPackets::Guild::GuildEventRanksUpdated().Write());
 }
 
 void Guild::HandleDelete(WorldSession* session)
@@ -2349,6 +2390,78 @@ void Guild::SendEventPresenceChanged(WorldSession* session, bool loggedOn, bool 
         BroadcastPacket(eventPacket.Write());
     else
         session->SendPacket(eventPacket.Write());
+}
+
+Guild::KnownRecipesMap const& Guild::GetGuildRecipes()
+{
+    std::lock_guard<std::recursive_mutex> guard(m_guildRecipeslock);
+    return _guildRecipes;
+}
+
+Guild::KnownRecipes& Guild::GetGuildRecipes(uint32 skillId)
+{
+    std::lock_guard<std::recursive_mutex> guard(m_guildRecipeslock);
+    return _guildRecipes[skillId];
+}
+
+void Guild::SendGuildMembersForRecipeResponse(WorldSession* session, uint32 skillId, uint32 spellId)
+{
+    uint32 index = 0;
+    bool found = false;
+    for (SkillLineAbilityEntry const* entry : sDB2Manager._skillLineAbilityContainer[skillId])
+    {
+        ++index;
+        if (entry->Spell == spellId)
+        {
+            found = true;
+            break;
+        }
+    }
+
+    if (!found || index / 8 > KNOW_RECIPES_MASK_SIZE)
+        return;
+
+    GuidSet guids;
+    for (auto const& v : m_members)
+    {
+        for (uint32 i = 0; i < MAX_GUILD_PROFESSIONS; ++i)
+        {
+            Member::ProfessionInfo const& info = v.second->GetProfessionInfo(i);
+            if (info.skillId == skillId && info.knownRecipes.recipesMask[index / 8] & (1 << (index % 8)))
+                guids.insert(v.second->GetGUID());
+        }
+    }
+
+    WorldPackets::Guild::QueryGuildMembersForRecipeReponse response;
+    response.SkillLineID = skillId;
+    response.SpellID = spellId;
+    for (auto const& guid : guids)
+        response.Member.emplace_back(guid);
+    session->GetPlayer()->SendDirectMessage(response.Write());
+}
+
+void Guild::SendGuildMemberRecipesResponse(WorldSession* session, ObjectGuid playerGuid, uint32 skillId)
+{
+    Member* member = GetMember(playerGuid);
+    if (!member)
+        return;
+
+    for (uint32 i = 0; i < MAX_GUILD_PROFESSIONS; ++i)
+    {
+        Member::ProfessionInfo const& info = member->GetProfessionInfo(i);
+        if (info.skillId == skillId)
+        {
+            WorldPackets::Guild::GuildMemberRecipes packet;
+            packet.Member = playerGuid;
+            packet.SkillLineID = info.skillId;
+            packet.SkillRank = info.skillRank;
+            packet.SkillStep = info.skillValue;
+            for (uint16 x = 0; x < KNOW_RECIPES_MASK_SIZE; ++x)
+                packet.SkillLineBitArray[x] = info.knownRecipes.recipesMask[x];
+            session->GetPlayer()->SendDirectMessage(packet.Write());
+            return;
+        }
+    }
 }
 
 // Loading methods
@@ -2727,6 +2840,42 @@ bool Guild::AddMember(CharacterDatabaseTransaction& trans, ObjectGuid guid, uint
         m_members[guid] = member;
     }
 
+    CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_GUILD_MEMBER_REPUTATION);
+    stmt->setInt32(0, guid.GetCounter());
+    PreparedQueryResult result = CharacterDatabase.Query(stmt);
+    if (result)
+    {
+        Field* fields = result->Fetch();
+        uint32 guild = fields[0].GetUInt32();
+        if (guild != GetId())
+        {
+            if (player)
+            {
+                int32 val = 0;
+                if (FactionEntry const* faction = sFactionStore.LookupEntry(GUILD_REPUTATION_ID))
+                {
+                    ReputationRank rank = player->GetReputationMgr().GetRank(faction);
+                    for (int32 r = REP_NEUTRAL; r < rank; ++r)
+                        val += ReputationMgr::PointsInRank[r];
+
+                    player->GetReputationMgr().SetReputation(faction, val);
+                    member->SetReputation(player->GetReputationMgr().GetReputation(faction));
+                }
+            }
+            else
+            {
+                // FIXME
+            }
+        }
+    }
+    else
+    {
+        if (player)
+            if (FactionEntry const* faction = sFactionStore.LookupEntry(GUILD_REPUTATION_ID))
+                player->GetReputationMgr().SetVisible(faction);
+        member->SetReputation(0);
+    }
+
     member->SaveToDB(trans);
 
     _UpdateAccountsNumber();
@@ -2796,6 +2945,9 @@ void Guild::DeleteMember(CharacterDatabaseTransaction& trans, ObjectGuid guid, b
 
         for (GuildPerkSpellsEntry const* entry : sGuildPerkSpellsStore)
             player->RemoveSpell(entry->SpellID, false, false);
+
+        if (FactionEntry const* factionEntry = sFactionStore.LookupEntry(GUILD_REPUTATION_ID))
+            player->GetReputationMgr().SetReputation(factionEntry, 0);
     }
 
     Guild::_DeleteMemberFromDB(trans, guid.GetCounter());
@@ -3503,6 +3655,20 @@ void Guild::UpdateCriteria(CriteriaTypes type, uint64 miscValue1, uint64 miscVal
     m_achievementMgr.UpdateCriteria(type, miscValue1, miscValue2, miscValue3, unit, player);
 }
 
+void Guild::RewardReputation(Player* player, float val)
+{
+    if (auto member = GetMember(player->GetGUID()))
+    {
+        if (FactionEntry const* factionEntry = sFactionStore.LookupEntry(GUILD_REPUTATION_ID))
+        {
+            // Or just multipla
+            AddPct(val, player->GetTotalAuraModifier(SPELL_AURA_MOD_REPUTATION_GAIN));
+            player->GetReputationMgr().ModifyReputation(factionEntry, val);
+            member->SetReputation(player->GetReputationMgr().GetReputation(GUILD_REPUTATION_ID));
+        }
+    }
+}
+
 void Guild::HandleNewsSetSticky(WorldSession* session, uint32 newsId, bool sticky) const
 {
     GuildLog* logs = m_newsLog->GetGuildLog();
@@ -3527,4 +3693,71 @@ void Guild::HandleNewsSetSticky(WorldSession* session, uint32 newsId, bool stick
     newsPacket.NewsEvents.reserve(1);
     news->WritePacket(newsPacket);
     session->SendPacket(newsPacket.Write());
+}
+
+void Guild::KnownRecipes::GenerateMask(uint32 skillId, std::set<uint32> const& spells)
+{
+    Clear();
+
+    uint32 index = 0;
+    for (SkillLineAbilityEntry const* entry : sDB2Manager._skillLineAbilityContainer[skillId])
+    {
+        ++index;
+        if (spells.find(entry->Spell) == spells.end())
+            continue;
+
+        if (index / 8 > KNOW_RECIPES_MASK_SIZE)
+            break;
+
+        recipesMask[index / 8] |= 1 << (index % 8);
+    }
+}
+
+std::string Guild::KnownRecipes::GetMaskForSave() const
+{
+    std::stringstream ss;
+    for (auto i : recipesMask)
+        ss << uint32(i) << " ";
+
+    return ss.str();
+}
+
+void Guild::KnownRecipes::LoadFromString(std::string const& str)
+{
+    Clear();
+
+    Tokenizer tok(str, ' ');
+    for (size_t i = 0; i < tok.size(); ++i)
+        recipesMask[i] = atoi(tok[i]);
+}
+
+Guild::Member::RemainingValue::RemainingValue() : value(0), resetTime(0)
+{
+}
+
+Guild::Member::ProfessionInfo::ProfessionInfo(uint32 _skillId, uint32 _skillValue, uint32 _skillRank) : skillId(_skillId), skillValue(_skillValue), skillRank(_skillRank)
+{
+}
+
+Guild::Member::ProfessionInfo::ProfessionInfo() : skillId(0), skillValue(0), skillRank(0)
+{
+}
+
+Guild::KnownRecipes::KnownRecipes()
+{
+    Clear();
+}
+
+void Guild::KnownRecipes::Clear()
+{
+    memset(recipesMask, 0, sizeof(recipesMask));
+}
+
+bool Guild::KnownRecipes::IsEmpty() const
+{
+    for (auto i : recipesMask)
+        if (i)
+            return false;
+
+    return true;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,8 +15,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef OUTDOOR_PVP_H_
-#define OUTDOOR_PVP_H_
+#ifndef OUTDOORPVP_H_
+#define OUTDOORPVP_H_
 
 #include "SharedDefines.h"
 #include "ZoneScript.h"
@@ -30,10 +30,15 @@ enum OutdoorPvPTypes
     OUTDOOR_PVP_NA = 2,
     OUTDOOR_PVP_TF = 3,
     OUTDOOR_PVP_ZM = 4,
-    OUTDOOR_PVP_SI = 5
-};
+    OUTDOOR_PVP_SI = 5,
+    OUTDOOR_PVP_ASHRAN = 6,
+    OUTDOOR_PVP_TARRENMILL = 7,
+    OUTDOOR_PVP_RG = 8,
+    OUTDOOR_PVP_SENTINAX = 9,
+    OUTDOOR_PVP_ARGUS_INVASION = 10,
 
-#define MAX_OUTDOORPVP_TYPES 6
+    MAX_OUTDOORPVP_TYPES
+};
 
 enum ObjectiveStates
 {
@@ -269,6 +274,8 @@ class TC_GAME_API OutdoorPvP : public ZoneScript
         void SendDefenseMessage(uint32 zoneId, uint32 id);
 
         Map* GetMap() const { return m_map; }
+
+        virtual void HandleGameEventStart(uint32 eventId) {}
 
     protected:
 

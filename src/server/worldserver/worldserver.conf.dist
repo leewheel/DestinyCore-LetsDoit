@@ -418,7 +418,7 @@ DisconnectToleranceInterval = 0
 #        Default:     0 - (Disabled)
 #                     1 - (Enabled)
 
-mmap.enablePathFinding = 0
+mmap.enablePathFinding = 1
 
 #
 #    vmap.enableLOS
@@ -4498,6 +4498,42 @@ pbot = 1
 #
 
 pbot_hp = 1
+
+#
+# LFG Queue Extra Players
+#
+#   LFGnumPlayer_Add
+#        Description: Sets the number of additional players considered when checking LFG queue compatibility.
+#                     0 = Disabled, only real queued players are counted (default)
+#                     >0 = Adds this number to the current player count during compatibility checks
+#        Default:     0
+#
+
+LFGnumPlayer_Add = 0
+
+#
+# PlayerBot Global Enable
+#
+#   pbotall
+#        Description: Enables or disables the automatic spawning of PlayerBots in the server.
+#                     0 = Disabled, no new PlayerBots will be added
+#                     1 = Enabled, PlayerBots can join the LFG queue (default)
+#        Default:     1
+#
+
+pbotall = 1
+
+#
+# PlayerBot Maximum Online Limit
+#
+#   pbotasl
+#        Description: Sets the maximum number of PlayerBots allowed to be online at the same time.
+#                     0 = No limit
+#                     >0 = Maximum number of PlayerBots allowed simultaneously (default 88)
+#        Default:     88
+#
+
+pbotasl = 88
 
 #
 ####################################################################################################

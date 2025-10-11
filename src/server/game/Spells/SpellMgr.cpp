@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -615,6 +614,29 @@ SpellAreaForAreaMapBounds SpellMgr::GetSpellAreaForAreaMapBounds(uint32 area_id)
 SpellAreaForQuestAreaMapBounds SpellMgr::GetSpellAreaForQuestAreaMapBounds(uint32 area_id, uint32 quest_id) const
 {
     return mSpellAreaForQuestAreaMap.equal_range(std::pair<uint32, uint32>(area_id, quest_id));
+}
+
+float SpellMgr::GetSpellBonusCoeffFromAP(uint32 spell_id) const
+{
+    auto itr = mSpellsApCoeffData.find(spell_id);
+    if (itr == mSpellsApCoeffData.end())
+        return 0;
+    else
+        return itr->second;
+}
+
+float SpellMgr::GetSpellBonusCoeffFromSP(uint32 spell_id) const
+{
+    auto itr = mSpellsSpCoeffData.find(spell_id);
+    if (itr == mSpellsSpCoeffData.end())
+        return 0;
+    else
+        return itr->second;
+}
+
+SpellOnLogRemoveAuraMap SpellMgr::GetOnLogRemoveAuras() const
+{
+    return mSpellsOnLogRemoveAurasData;
 }
 
 bool SpellArea::IsFitToRequirements(Player const* player, uint32 newZone, uint32 newArea) const
@@ -2251,6 +2273,97 @@ void SpellMgr::LoadSpellAreas()
     TC_LOG_INFO("server.loading", ">> Loaded %u spell area requirements in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
 }
 
+void SpellMgr::LoadSpellBonusData()
+{
+    uint32 oldMSTime = getMSTime();
+
+    mSpellsApCoeffData.clear();                                   // need for reload case
+    mSpellsSpCoeffData.clear();                                   // need for reload case
+
+    //                                                   0        1
+    QueryResult result = WorldDatabase.Query("SELECT spell_id, ap_coeff, sp_coeff from spell_bonus_data");
+
+    if (!result)
+    {
+        TC_LOG_INFO("server.loading", ">> Loaded 0 spell bonus data records. DB table `spell_bonus_data` is empty.");
+
+        return;
+    }
+
+    uint32 count = 0;
+    do
+    {
+        Field* fields = result->Fetch();
+
+        uint32 spell_id = fields[0].GetUInt32();
+        float ap_coeff = fields[1].GetFloat();
+        float sp_coeff = fields[2].GetFloat();
+
+        // check if chain is made with valid first spell
+        SpellInfo const* spell = GetSpellInfo(spell_id);
+        if (!spell)
+        {
+            TC_LOG_ERROR("sql.sql", "spell_id %u in `spell_bonus_data` table could not be found in dbc, skipped.", spell_id);
+            continue;
+        }
+
+        if (ap_coeff)
+            mSpellsApCoeffData.emplace(spell_id, ap_coeff);
+        if (sp_coeff)
+            mSpellsSpCoeffData.emplace(spell_id, sp_coeff);
+        ++count;
+    } while (result->NextRow());
+
+    TC_LOG_INFO("server.loading", ">> Loaded %u spell bonus data records in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
+}
+
+void SpellMgr::LoadSpellOnLogRemoveAurasData()
+{
+    uint32 oldMSTime = getMSTime();
+
+    mSpellsOnLogRemoveAurasData.clear();                                   // need for reload case
+
+    //                                                   0        1
+    QueryResult result = WorldDatabase.Query("SELECT spell_id, required_aura from spell_on_log_remove_aura");
+
+    if (!result)
+    {
+        TC_LOG_INFO("server.loading", ">> Loaded 0 spell on log remove aura records. DB table `spell_on_log_remove_aura` is empty.");
+
+        return;
+    }
+
+    uint32 count = 0;
+    do
+    {
+        Field* fields = result->Fetch();
+
+        SpellOnLogRemoveAura spellOnLogRemoveAura;
+
+        spellOnLogRemoveAura.Spell = fields[0].GetUInt32();
+        spellOnLogRemoveAura.RequiredAura = fields[1].GetUInt32();
+
+        SpellInfo const* spell = GetSpellInfo(spellOnLogRemoveAura.Spell);
+        if (!spell)
+        {
+            TC_LOG_ERROR("sql.sql", "spell_id %u in `spell_on_log_remove_aura` table could not be found in dbc, skipped.", spellOnLogRemoveAura.Spell);
+            continue;
+        }
+
+        if (spellOnLogRemoveAura.RequiredAura)
+            if (!GetSpellInfo(spellOnLogRemoveAura.RequiredAura))
+            {
+                TC_LOG_ERROR("sql.sql", "required_aura %u in `spell_on_log_remove_aura` table could not be found in dbc, skipped.", spellOnLogRemoveAura.RequiredAura);
+                continue;
+            }
+
+        mSpellsOnLogRemoveAurasData.insert(std::pair<uint32, SpellOnLogRemoveAura>(spellOnLogRemoveAura.Spell, spellOnLogRemoveAura));
+        ++count;
+    } while (result->NextRow());
+
+    TC_LOG_INFO("server.loading", ">> Loaded %u spell on log remove aura records in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
+}
+
 typedef std::vector<SpellEffectEntry const*> SpellEffectVector;
 
 void SpellMgr::LoadSpellInfoStore()
@@ -3061,6 +3174,12 @@ void SpellMgr::LoadSpellInfoCorrections()
     });
     // ENDOF ULDUAR SPELLS
 
+    // summon-wind-rider
+    ApplySpellFix({ 65478 }, [](SpellInfo* spellInfo)
+        {
+            const_cast<SpellEffectInfo*>(spellInfo->GetEffect(EFFECT_0))->MiscValueB = 161;
+        });
+
     //
     // TRIAL OF THE CRUSADER SPELLS
     //
@@ -3198,6 +3317,13 @@ void SpellMgr::LoadSpellInfoCorrections()
     ApplySpellFix({ 69846 }, [](SpellInfo* spellInfo)
     {
         spellInfo->Speed = 0.0f;    // This spell's summon happens instantly
+    });
+
+    // Chilled to the Bone
+    ApplySpellFix({ 70106 }, [](SpellInfo* spellInfo)
+    {
+        spellInfo->AttributesEx3 |= SPELL_ATTR3_NO_DONE_BONUS;
+        spellInfo->AttributesEx6 |= SPELL_ATTR6_NO_DONE_PCT_DAMAGE_MODS;
     });
 
     // Ice Lock

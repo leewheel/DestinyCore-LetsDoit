@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1336,6 +1335,90 @@ public:
     }
 };
 
+/*www.wowhead.com/item=147432/champion-equipment*/
+class loot_item_champion_equipment_147432 : public ItemScript
+{
+public:
+    loot_item_champion_equipment_147432() : ItemScript("loot_item_champion_equipment_147432") { }
+
+    bool OnOpen(Player* player, Item* item) override
+    {
+        /*
+        ItemTemplate const* proto = item->GetTemplate();
+        LootTemplate const* lootTemplate = LootTemplates_Item.GetLootFor(proto->GetId());
+        if (!lootTemplate)
+            return true;
+        uint32 itemID = 0;
+        std::unordered_map<uint32, std::vector<int32>> lootTable;
+        //std::unordered_map<uint32, std::vector<int32>> items;
+        lootTemplate->FillAutoAssignationLoot(lootTable);
+        */
+        std::vector<uint32> items;
+
+        items.push_back(147552);
+        items.push_back(147553);
+        items.push_back(147554);
+        items.push_back(147555);
+        items.push_back(147556);
+        items.push_back(147557);
+        items.push_back(147558);
+        items.push_back(147559);
+
+        // Process items
+        Trinity::Containers::RandomShuffle(items);
+
+        for (auto itemId : items)
+        {
+            ItemTemplate const* proto = sObjectMgr->GetItemTemplate(itemId);
+
+            std::vector<int32> bonusLists;
+
+            ItemPosCountVec dest;
+            bool mailed = player->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemId, 1) != EQUIP_ERR_OK;
+            player->SendDisplayToast(itemId, 0, 1, DISPLAY_TOAST_METHOD_CURRENCY_OR_ITEM, TOAST_TYPE_ITEM, false, mailed, bonusLists);
+            if (mailed)
+                player->SendItemRetrievalMail(itemId, 1, GenerateItemRandomPropertyId(itemId), bonusLists);
+            else
+                player->StoreNewItem(dest, itemId, true);
+
+            break;
+        }
+        player->DestroyItem(item->GetBagSlot(), item->GetSlot(), true);
+        return true;
+    }
+};
+
+//262946
+class spell_synthesize_legendary : public SpellScriptLoader
+{
+public:
+    spell_synthesize_legendary() : SpellScriptLoader("spell_synthesize_legendary") { }
+
+    class spell_synthesize_legendary_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_synthesize_legendary_SpellScript);
+
+        void HandleAfterHit()
+        {
+            if (GetCaster() && GetCaster()->ToPlayer())
+            {
+                GetCaster()->ToPlayer()->GetLegendItemLootFromCreature();
+            }
+        }
+
+        void Register() override
+        {
+            AfterHit += SpellHitFn(spell_synthesize_legendary_SpellScript::HandleAfterHit);
+        }
+    };
+
+    SpellScript* GetSpellScript() const override
+    {
+        return new spell_synthesize_legendary_SpellScript();
+    }
+};
+
+
 void AddSC_item_scripts()
 {
     new item_only_for_flight();
@@ -1361,4 +1444,6 @@ void AddSC_item_scripts()
     new spell_draenor_profession();
     //new item_script_challengers_strongbox();
     new loot_item_shoulders_of_the_foregone_protector();
+    new loot_item_champion_equipment_147432();
+    new spell_synthesize_legendary();
 }

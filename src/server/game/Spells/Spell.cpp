@@ -544,6 +544,7 @@ SpellValue::SpellValue(Difficulty diff, SpellInfo const* proto)
     MaxAffectedTargets = proto->MaxAffectedTargets;
     RadiusMod = 1.0f;
     AuraStackAmount = 1;
+    Duration = 0;
 }
 
 void SpellInterruptCondition::ClearInterruptCondition()
@@ -1476,6 +1477,13 @@ void Spell::SelectImplicitCasterDestTargets(SpellEffIndex effIndex, SpellImplici
             dest = SpellDestination(x, y, liquidLevel, m_caster->GetOrientation());
             break;
         }
+        case TARGET_DEST_LAST_QUEST_GIVER:
+        {
+            if (Player* casterPlayer = m_caster->ToPlayer())
+                if (WorldObject* target = casterPlayer->GetLastQuestGiver())
+                    dest = SpellDestination(*target);
+            break;
+        }
         default:
         {
             if (SpellEffectInfo const* effect = GetEffect(effIndex))
@@ -1637,6 +1645,13 @@ void Spell::SelectImplicitCasterObjectTargets(SpellEffIndex effIndex, SpellImpli
             if (m_caster->IsVehicle())
                 target = m_caster->GetVehicleKit()->GetPassenger(targetType.GetTarget() - TARGET_UNIT_PASSENGER_0);
             break;
+        case TARGET_UNIT_CASTER_LOOT_RECIPIENTS:
+            if (Creature* casterCreature = m_caster->ToCreature())
+            {
+                if (Player* player = casterCreature->GetLootRecipient())
+                    AddUnitTarget(player, 1 << effIndex, checkIfValid);
+            }
+            return;
         default:
             break;
     }
@@ -1704,6 +1719,19 @@ void Spell::SelectImplicitChainTargets(SpellEffIndex effIndex, SpellImplicitTarg
     uint32 maxTargets = effect->ChainTargets;
     if (Player* modOwner = m_caster->GetSpellModOwner())
         modOwner->ApplySpellMod(m_spellInfo->Id, SPELLMOD_JUMP_TARGETS, maxTargets, this);
+
+    // remove other single target auras
+    for (Aura* aura : m_caster->GetSingleCastAuras())
+    {
+        if (aura->GetId() == 80240)
+        {
+            Unit::AuraApplicationList applications;
+            aura->GetApplicationList(applications);
+            if (!applications.empty())
+                AddUnitTarget(applications.front()->GetTarget(), effMask, false);
+        }
+
+    }
 
     if (maxTargets > 1)
     {
@@ -2946,6 +2974,10 @@ SpellMissInfo Spell::DoSpellHitOnUnit(Unit* unit, uint32 effectMask, bool scaleA
                                 duration = int32(origDuration * m_originalCaster->GetFloatValue(UNIT_MOD_CAST_SPEED));
                         }
                     }
+
+                    // Set duration to desired value
+                    if (m_spellValue->Duration > 0)
+                        duration = m_spellValue->Duration;
 
                     if (duration != m_spellAura->GetMaxDuration())
                     {
@@ -7424,18 +7456,49 @@ bool Spell::CheckEffectTarget(Unit const* target, SpellEffectInfo const* effect,
 
     /// @todo shit below shouldn't be here, but it's temporary
     //Check targets for LOS visibility
-    if (losPosition)
-        return target->IsWithinLOS(losPosition->GetPositionX(), losPosition->GetPositionY(), losPosition->GetPositionZ(), VMAP::ModelIgnoreFlags::M2);
-    else
+    switch (effect->Effect)
     {
-        // Get GO cast coordinates if original caster -> GO
-        WorldObject* caster = NULL;
-        if (m_originalCasterGUID.IsGameObject())
-            caster = m_caster->GetMap()->GetGameObject(m_originalCasterGUID);
-        if (!caster)
-            caster = m_caster;
-        if (target != m_caster && !target->IsWithinLOSInMap(caster, VMAP::ModelIgnoreFlags::M2))
-            return false;
+        case SPELL_EFFECT_SKIN_PLAYER_CORPSE:
+        {
+            if (!m_targets.GetCorpseTargetGUID())
+            {
+                if (target->IsWithinLOSInMap(m_caster, VMAP::ModelIgnoreFlags::M2) && target->HasUnitFlag(UNIT_FLAG_SKINNABLE))
+                    return true;
+        
+                return false;
+            }
+        
+            Corpse* corpse = ObjectAccessor::GetCorpse(*m_caster, m_targets.GetCorpseTargetGUID());
+            if (!corpse)
+                return false;
+        
+            if (target->GetGUID() != corpse->GetOwnerGUID())
+                return false;
+        
+            if (!corpse->HasFlag(CORPSE_FIELD_DYNAMIC_FLAGS, CORPSE_DYNFLAG_LOOTABLE))
+                return false;
+        
+            if (!corpse->IsWithinLOSInMap(m_caster, VMAP::ModelIgnoreFlags::M2))
+                return false;
+        
+            break;
+        }
+        default:
+        {
+            if (losPosition)
+                return target->IsWithinLOS(losPosition->GetPositionX(), losPosition->GetPositionY(), losPosition->GetPositionZ(), VMAP::ModelIgnoreFlags::M2);
+            else
+            {
+                // Get GO cast coordinates if original caster -> GO
+                WorldObject* caster = NULL;
+                if (m_originalCasterGUID.IsGameObject())
+                    caster = m_caster->GetMap()->GetGameObject(m_originalCasterGUID);
+                if (!caster)
+                    caster = m_caster;
+                if (target != m_caster && !target->IsWithinLOSInMap(caster, VMAP::ModelIgnoreFlags::M2))
+                    return false;
+            }
+        }
     }
 
     return true;
@@ -7803,6 +7866,9 @@ void Spell::SetSpellValue(SpellValueMod mod, int32 value)
             break;
         case SPELLVALUE_AURA_STACK:
             m_spellValue->AuraStackAmount = uint8(value);
+            break;
+        case SPELLVALUE_DURATION:
+            m_spellValue->Duration = (uint32)value;
             break;
         default:
             break;

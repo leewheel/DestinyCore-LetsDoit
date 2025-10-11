@@ -204,9 +204,15 @@ namespace WorldPackets
     {
         class StartRequest;
         class ChangePlayerDifficultyResult;
+        class RequestLeaders;
         class Start;
         class Reset;
         class UpdateDeathCount;
+        class RequestMapStats;
+        class GetChallengeModeRewards;
+        class ChallengeModeRewards;
+        class ResetChallengeMode;
+        class ResetChallengeModeCheat;
     }
 
     namespace Character
@@ -240,6 +246,7 @@ namespace WorldPackets
         class SetFactionInactive;
         class SetWatchedFaction;
         class SetPlayerDeclinedNames;
+        class SetCurrencyFlags;
 
         enum class LoginFailureReason : uint8;
     }
@@ -427,12 +434,17 @@ namespace WorldPackets
         class RequestGuildPartyState;
         class RequestGuildRewardsList;
         class GuildQueryNews;
+        class GuildShiftRank;
         class GuildNewsUpdateSticky;
         class GuildReplaceGuildMaster;
         class GuildSetGuildMaster;
         class GuildChallengeUpdateRequest;
         class SaveGuildEmblem;
         class GuildSetAchievementTracking;
+        class GuildAutoDeclineInvitation;
+        class QueryRecipes;
+        class QueryGuildMembersForRecipe;
+        class QueryMemberRecipes;
     }
 
     namespace GuildFinder
@@ -588,6 +600,7 @@ namespace WorldPackets
         class StartTimer;
         class StartElapsedTimer;
         class OpenAlliedRaceDetailsGiver;
+        class ShowTradeSkill;
     }
 
     namespace Movement
@@ -711,6 +724,7 @@ namespace WorldPackets
         class QuestGiverHello;
         class QueryQuestInfo;
         class QuestGiverChooseReward;
+        class QuestGiverCloseQuest;
         class QuestGiverCompleteQuest;
         class QuestGiverRequestReward;
         class QuestGiverQueryQuest;
@@ -785,6 +799,7 @@ namespace WorldPackets
         class MissileTrajectoryCollision;
         class UpdateMissileTrajectory;
         class UpdateSpellVisual;
+        class UnlearnSpecialization;
     }
 
     namespace Talent
@@ -1412,6 +1427,7 @@ class TC_GAME_API WorldSession
         void HandleInitiateRolePoll(WorldPackets::Party::InitiateRolePoll& packet);
         void HandleSetEveryoneIsAssistant(WorldPackets::Party::SetEveryoneIsAssistant& packet);
         void HandleClearRaidMarker(WorldPackets::Party::ClearRaidMarker& packet);
+        void HandleShowTradeSkill(WorldPackets::Misc::ShowTradeSkill& packet);
 
         void HandleDeclinePetition(WorldPackets::Petition::DeclinePetition& packet);
         void HandleOfferPetition(WorldPackets::Petition::OfferPetition& packet);
@@ -1437,6 +1453,7 @@ class TC_GAME_API WorldSession
         void HandleGuildDelete(WorldPackets::Guild::GuildDelete& packet);
         void HandleGuildReplaceGuildMaster(WorldPackets::Guild::GuildReplaceGuildMaster& replaceGuildMaster);
         void HandleGuildSetAchievementTracking(WorldPackets::Guild::GuildSetAchievementTracking& packet);
+        void HandleGuildAutoDeclineInvitation(WorldPackets::Guild::GuildAutoDeclineInvitation& packet);
         void HandleGuildGetAchievementMembers(WorldPackets::Achievement::GuildGetAchievementMembers& getAchievementMembers);
         void HandleGuildSetGuildMaster(WorldPackets::Guild::GuildSetGuildMaster& packet);
         void HandleGuildUpdateMotdText(WorldPackets::Guild::GuildUpdateMotdText& packet);
@@ -1444,6 +1461,7 @@ class TC_GAME_API WorldSession
         void HandleGuildSetMemberNote(WorldPackets::Guild::GuildSetMemberNote& packet);
         void HandleGuildGetRanks(WorldPackets::Guild::GuildGetRanks& packet);
         void HandleGuildQueryNews(WorldPackets::Guild::GuildQueryNews& newsQuery);
+        void HandleShiftRank(WorldPackets::Guild::GuildShiftRank& packet);
         void HandleGuildSetRankPermissions(WorldPackets::Guild::GuildSetRankPermissions& packet);
         void HandleGuildAddRank(WorldPackets::Guild::GuildAddRank& packet);
         void HandleGuildDeleteRank(WorldPackets::Guild::GuildDeleteRank& packet);
@@ -1452,6 +1470,9 @@ class TC_GAME_API WorldSession
         void HandleGuildRequestPartyState(WorldPackets::Guild::RequestGuildPartyState& packet);
         void HandleGuildChallengeUpdateRequest(WorldPackets::Guild::GuildChallengeUpdateRequest& packet);
         void HandleDeclineGuildInvites(WorldPackets::Guild::DeclineGuildInvites& packet);
+        void HandleQueryRecipes(WorldPackets::Guild::QueryRecipes& packet);
+        void HandleQueryGuildMembersForRecipe(WorldPackets::Guild::QueryGuildMembersForRecipe& packet);
+        void HandleQyeryMemberRecipes(WorldPackets::Guild::QueryMemberRecipes& packet);
 
         void HandleGuildFinderAddRecruit(WorldPackets::GuildFinder::LFGuildAddRecruit& lfGuildAddRecruit);
         void HandleGuildFinderBrowse(WorldPackets::GuildFinder::LFGuildBrowse& lfGuildBrowse);
@@ -1565,6 +1586,7 @@ class TC_GAME_API WorldSession
         void HandleCancelAuraOpcode(WorldPackets::Spells::CancelAura& cancelAura);
         void HandleCancelGrowthAuraOpcode(WorldPackets::Spells::CancelGrowthAura& cancelGrowthAura);
         void HandleCancelMountAuraOpcode(WorldPackets::Spells::CancelMountAura& cancelMountAura);
+        void HandleUnlearnSpecialization(WorldPackets::Spells::UnlearnSpecialization& packet);
         void HandleCancelAutoRepeatSpellOpcode(WorldPackets::Spells::CancelAutoRepeatSpell& cancelAutoRepeatSpell);
         void HandleUpdateSpellVisualOpcode(WorldPackets::Spells::UpdateSpellVisual& packet);
         void HandleMissileTrajectoryCollision(WorldPackets::Spells::MissileTrajectoryCollision& packet);
@@ -1592,6 +1614,7 @@ class TC_GAME_API WorldSession
         void HandleQuestLogRemoveQuest(WorldPackets::Quest::QuestLogRemoveQuest& packet);
         void HandleQuestConfirmAccept(WorldPackets::Quest::QuestConfirmAccept& packet);
         void HandleQuestgiverCompleteQuest(WorldPackets::Quest::QuestGiverCompleteQuest& packet);
+        void HandleQuestgiverCloseQuest(WorldPackets::Quest::QuestGiverCloseQuest& questGiverCloseQuest);
         void HandlePushQuestToParty(WorldPackets::Quest::PushQuestToParty& packet);
         void HandleQuestPushResult(WorldPackets::Quest::QuestPushResult& packet);
         void HandleRequestWorldQuestUpdate(WorldPackets::Quest::RequestWorldQuestUpdate& packet);
@@ -1986,6 +2009,14 @@ class TC_GAME_API WorldSession
 
         // Challenge Modes
         void HandleChallengeModeStart(WorldPackets::ChallengeMode::StartRequest& /*start*/);
+        void HandleRequestLeaders(WorldPackets::ChallengeMode::RequestLeaders& packet);
+        void HandleChallengeModeRequestMapStatsOpcode(WorldPackets::ChallengeMode::RequestMapStats& request);
+        void HandleChallengeModeRewards(WorldPackets::ChallengeMode::GetChallengeModeRewards& getRewards);
+        void HandleResetChallengeMode(WorldPackets::ChallengeMode::ResetChallengeMode& packet);
+        void HandleResetChallengeModeCheat(WorldPackets::ChallengeMode::ResetChallengeModeCheat& packet);
+
+        // Currency
+        void HandleSetCurrencyFlags(WorldPackets::Character::SetCurrencyFlags& packet);
 
         union ConnectToKey
         {

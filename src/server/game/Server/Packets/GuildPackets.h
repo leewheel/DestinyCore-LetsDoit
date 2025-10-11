@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,8 +15,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef GuildPackets_h__
-#define GuildPackets_h__
+#ifndef GUILDPACKETS_H
+#define GUILDPACKETS_H
 
 #include "Packet.h"
 #include "ItemPacketsCommon.h"
@@ -627,6 +627,44 @@ namespace WorldPackets
             std::string NewName;
         };
 
+        class QueryGuildMembersForRecipeReponse final : public ServerPacket
+        {
+        public:
+            QueryGuildMembersForRecipeReponse() : ServerPacket(SMSG_GUILD_MEMBERS_WITH_RECIPE, 12) {}
+
+            WorldPacket const* Write() override;
+
+            GuidList Member;
+            uint32 SpellID = 0;
+            uint32 SkillLineID = 0;
+        };
+
+        class GuildMemberRecipes final : public ServerPacket
+        {
+        public:
+            GuildMemberRecipes() : ServerPacket(SMSG_GUILD_MEMBER_RECIPES, 16 + 12 + 300) {}
+
+            WorldPacket const* Write() override;
+
+            ObjectGuid Member;
+            uint32 SkillLineID = 0;
+            uint32 SkillRank = 0;
+            uint32 SkillStep = 0;
+            std::array<uint8, KNOW_RECIPES_MASK_SIZE> SkillLineBitArray;
+        };
+
+        class GuildInviteDeclined final : public ServerPacket
+        {
+        public:
+            GuildInviteDeclined() : ServerPacket(SMSG_GUILD_INVITE_DECLINED, 8) {}
+
+            WorldPacket const* Write() override;
+
+            uint32 VirtualRealmAddress = 0;
+            std::string Name;
+            bool AutoDecline = false;
+        };
+
         class GuildFlaggedForRename final : public ServerPacket
         {
         public:
@@ -1081,6 +1119,41 @@ namespace WorldPackets
             int32 Error = 0;
         };
 
+        class QueryRecipes final : public ClientPacket
+        {
+        public:
+            QueryRecipes(WorldPacket&& packet) : ClientPacket(CMSG_GUILD_QUERY_RECIPES, std::move(packet)) { }
+
+            void Read() override;
+
+            ObjectGuid GuildGUID;
+        };
+
+        class QueryMemberRecipes final : public ClientPacket
+        {
+        public:
+            QueryMemberRecipes(WorldPacket&& packet) : ClientPacket(CMSG_GUILD_QUERY_MEMBER_RECIPES, std::move(packet)) { }
+
+            void Read() override;
+
+            ObjectGuid GuildMember;
+            ObjectGuid GuildGUID;
+            uint32 SkillLineID = 0;
+        };
+
+        class QueryGuildMembersForRecipe final : public ClientPacket
+        {
+        public:
+            QueryGuildMembersForRecipe(WorldPacket&& packet) : ClientPacket(CMSG_GUILD_QUERY_MEMBERS_FOR_RECIPE, std::move(packet)) { }
+
+            void Read() override;
+
+            ObjectGuid GuildGUID;
+            uint32 SkillLineID = 0;
+            uint32 SpellID = 0;
+            uint32 UniqueBit = 0;
+        };
+
         class GuildSetAchievementTracking final : public ClientPacket
         {
         public:
@@ -1100,6 +1173,24 @@ namespace WorldPackets
 
             ObjectGuid GuildGUID;
             std::string GuildName;
+        };
+
+        class GuildReputationReactionChanged final : public ServerPacket
+        {
+        public:
+            GuildReputationReactionChanged() : ServerPacket(SMSG_GUILD_REPUTATION_REACTION_CHANGED, 16) {}
+
+            WorldPacket const* Write() override;
+
+            ObjectGuid MemberGUID;
+        };
+
+        class GuildAutoDeclineInvitation final : public ClientPacket
+        {
+        public:
+            GuildAutoDeclineInvitation(WorldPacket&& packet) : ClientPacket(CMSG_GUILD_AUTO_DECLINE_INVITATION, std::move(packet)) { }
+
+            void Read() override { }
         };
     }
 }

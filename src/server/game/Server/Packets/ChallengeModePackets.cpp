@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 AshamaneProject <https://github.com/AshamaneProject>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,6 +16,26 @@
  */
 
 #include "ChallengeModePackets.h"
+#include "WowTime.hpp"
+
+ByteBuffer& operator<<(ByteBuffer& data, WorldPackets::ChallengeMode::ModeAttempt const& modeAttempt)
+{
+    data << modeAttempt.InstanceRealmAddress;
+    data << modeAttempt.AttemptID;
+    data << modeAttempt.CompletionTime;
+    data << MS::Utilities::WowTime::Encode(modeAttempt.CompletionDate);
+    data << modeAttempt.MedalEarned;
+    data << static_cast<uint32>(modeAttempt.Members.size());
+    for (auto const& map : modeAttempt.Members)
+    {
+        data << map.VirtualRealmAddress;
+        data << map.NativeRealmAddress;
+        data << map.Guid;
+        data << map.SpecializationID;
+    }
+
+    return data;
+}
 
 void WorldPackets::ChallengeMode::StartRequest::Read()
 {
@@ -43,6 +63,33 @@ WorldPacket const* WorldPackets::ChallengeMode::ChangePlayerDifficultyResult::Wr
             break;
         }
     }
+
+    return &_worldPacket;
+}
+
+void WorldPackets::ChallengeMode::RequestLeaders::Read()
+{
+    _worldPacket >> MapId;
+    _worldPacket >> ChallengeID;
+    LastGuildUpdate = _worldPacket.read<uint32>();
+    LastRealmUpdate = _worldPacket.read<uint32>();
+}
+
+WorldPacket const* WorldPackets::ChallengeMode::RequestLeadersResult::Write()
+{
+    _worldPacket << MapID;
+    _worldPacket << ChallengeID;
+    _worldPacket << MS::Utilities::WowTime::Encode(LastGuildUpdate);
+    _worldPacket << MS::Utilities::WowTime::Encode(LastRealmUpdate);
+
+    _worldPacket << static_cast<uint32>(GuildLeaders.size());
+    _worldPacket << static_cast<uint32>(RealmLeaders.size());
+
+    for (auto const& guildLeaders : GuildLeaders)
+        _worldPacket << guildLeaders;
+
+    for (auto const& realmLeaders : RealmLeaders)
+        _worldPacket << realmLeaders;
 
     return &_worldPacket;
 }
@@ -90,6 +137,26 @@ WorldPacket const* WorldPackets::ChallengeMode::Complete::Write()
     return &_worldPacket;
 }
 
+ByteBuffer& operator<<(ByteBuffer& data, WorldPackets::ChallengeMode::ChallengeModeMap const& challengeModeMap)
+{
+    data << challengeModeMap.MapId;
+    data << challengeModeMap.ChallengeID;
+    data << challengeModeMap.BestCompletionMilliseconds;
+    data << challengeModeMap.LastCompletionMilliseconds;
+    data << challengeModeMap.CompletedChallengeLevel;
+    data.AppendPackedTime(challengeModeMap.BestMedalDate);
+
+    data << static_cast<uint32>(challengeModeMap.BestSpecID.size());
+
+    for (auto const& v : challengeModeMap.Affixes)
+        data << v;
+
+    for (auto const& map : challengeModeMap.BestSpecID)
+        data << map;
+
+    return data;
+}
+
 WorldPacket const* WorldPackets::ChallengeMode::NewPlayerRecord::Write()
 {
     _worldPacket << (uint32)MapId;
@@ -98,3 +165,26 @@ WorldPacket const* WorldPackets::ChallengeMode::NewPlayerRecord::Write()
 
     return &_worldPacket;
 }
+
+WorldPacket const* WorldPackets::ChallengeMode::AllMapStats::Write()
+{
+    _worldPacket << static_cast<uint32>(ChallengeModeMaps.size());
+    for (auto const& map : ChallengeModeMaps)
+        _worldPacket << map;
+
+    return &_worldPacket;
+}
+
+void WorldPackets::ChallengeMode::RequestMapStats::Read() {}
+
+WorldPacket const* WorldPackets::ChallengeMode::ChallengeModeRewards::Write()
+{
+    _worldPacket.WriteBit(IsWeeklyRewardAvailable);
+    _worldPacket << (uint32)LastWeekHighestKeyCompleted;
+    _worldPacket << (uint32)LastWeekMapChallengeKeyEntry;
+    _worldPacket << (uint32)CurrentWeekHighestKeyCompleted;
+
+    return &_worldPacket;
+}
+
+void WorldPackets::ChallengeMode::GetChallengeModeRewards::Read() {}

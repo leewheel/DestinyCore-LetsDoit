@@ -419,7 +419,7 @@ enum PlayerFlags
     PLAYER_FLAGS_GM                     = 0x00000008,
     PLAYER_FLAGS_GHOST                  = 0x00000010,
     PLAYER_FLAGS_RESTING                = 0x00000020,
-    PLAYER_FLAGS_UNK6                   = 0x00000040,
+    PLAYER_FLAGS_VOICE_CHAT             = 0x00000040,
     PLAYER_FLAGS_UNK7                   = 0x00000080,       // pre-3.0.3 PLAYER_FLAGS_FFA_PVP flag for FFA PVP state
     PLAYER_FLAGS_CONTESTED_PVP          = 0x00000100,       // Player has been involved in a PvP combat and will be attacked by contested guards
     PLAYER_FLAGS_IN_PVP                 = 0x00000200,
@@ -466,6 +466,7 @@ enum PlayerLocalFlags
     PLAYER_LOCAL_FLAG_USING_PARTY_GARRISON          = 0x00000100,
     PLAYER_LOCAL_FLAG_CAN_USE_OBJECTS_MOUNTED       = 0x00000200,
     PLAYER_LOCAL_FLAG_CAN_VISIT_PARTY_GARRISON      = 0x00000400,
+    PLAYER_LOCAL_FLAG_WAR_MODE                      = 0x00000800,
     PLAYER_LOCAL_FLAG_ACCOUNT_SECURED               = 0x00001000,   // Script_IsAccountSecured
 };
 
@@ -942,6 +943,20 @@ enum PlayerCommandStates
     CHEAT_ALL       = CHEAT_GOD | CHEAT_CASTTIME | CHEAT_COOLDOWN | CHEAT_POWER
 };
 
+enum PlayerCheckQuestStates : uint32
+{
+    CHECK_QUEST_NONE = 1,
+    CHECK_QUEST_COMPLETE = 2,
+    CHECK_QUEST_TAKEN = 8,
+    CHECK_QUEST_FAIL = 32,
+    CHECK_QUEST_REWARDED = 64,
+    CHECK_QUEST_TAKEN_AND_COMPLETE = CHECK_QUEST_TAKEN | CHECK_QUEST_COMPLETE, // 10
+    CHECK_QUEST_NOT_REWARDED = CHECK_QUEST_NONE | CHECK_QUEST_COMPLETE | CHECK_QUEST_TAKEN,// 11
+    CHECK_QUEST_COMPLETE_AND_REWARDED = CHECK_QUEST_COMPLETE | CHECK_QUEST_REWARDED,// 66
+    CHECK_QUEST_TAKEN_AND_COMPLETE_AND_REWARDED = CHECK_QUEST_REWARDED | CHECK_QUEST_COMPLETE | CHECK_QUEST_TAKEN, // 74
+    CHECK_QUEST_ALL = CHECK_QUEST_NONE | CHECK_QUEST_TAKEN_AND_COMPLETE_AND_REWARDED, // 75
+};
+
 enum PlayerLogXPReason : uint8
 {
     LOG_XP_REASON_KILL    = 0,
@@ -1232,6 +1247,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         bool ActivateTaxiPathTo(uint32 taxi_path_id, uint32 spellid = 0);
         void CleanupAfterTaxiFlight();
         void ContinueTaxiFlight() const;
+        void TaxiFlightNearestNode();
                                                             // mount_id can be used in scripting calls
         bool isAcceptWhispers() const { return (m_ExtraFlags & PLAYER_EXTRA_ACCEPT_WHISPERS) != 0; }
         void SetAcceptWhispers(bool on) { if (on) m_ExtraFlags |= PLAYER_EXTRA_ACCEPT_WHISPERS; else m_ExtraFlags &= ~PLAYER_EXTRA_ACCEPT_WHISPERS; }
@@ -1368,6 +1384,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         void AutoStoreLoot(uint8 bag, uint8 slot, uint32 loot_id, LootStore const& store, bool broadcast = false, bool specOnly = false, ToastDisplayMethod toastMethod = ToastDisplayMethod(0));
         void AutoStoreLoot(uint32 loot_id, LootStore const& store, bool broadcast = false, bool specOnly = false, ToastDisplayMethod toastMethod = ToastDisplayMethod(0)) { AutoStoreLoot(NULL_BAG, NULL_SLOT, loot_id, store, broadcast, specOnly, toastMethod); }
         void StoreLootItem(uint8 lootSlot, Loot* loot, AELootResult* aeResult = nullptr);
+        void ApplyOnItems(uint8 type, std::function<bool(Player*, Item*, uint8, uint8)>&& function);
 
         InventoryResult CanTakeMoreSimilarItems(uint32 entry, uint32 count, Item* pItem, uint32* no_space_count = nullptr, uint32* offendingItemId = nullptr) const;
         InventoryResult CanStoreItem(uint8 bag, uint8 slot, ItemPosCountVec& dest, uint32 entry, uint32 count, Item* pItem = nullptr, bool swap = false, uint32* no_space_count = nullptr, bool removeFromBank = false) const;
@@ -1398,6 +1415,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         void SetCurrency(uint32 id, uint32 count, bool printLog = true);
         void ResetCurrencyWeekCap();
         uint32 CalculateCurrencyWeekCap(uint32 id) const;
+        void ModifyCurrencyFlag(uint32 id, uint8 flag);
 
         /**
           * @name   ModifyCurrency
@@ -1554,6 +1572,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         bool GiveQuestSourceItem(Quest const* quest);
         bool TakeQuestSourceItem(uint32 questId, bool msg);
         bool GetQuestRewardStatus(uint32 quest_id) const;
+        bool CheckQuestStatus(uint32 quest_id, uint32 mask) const { return  mask & (1 << GetQuestStatus(quest_id)); }
         QuestStatus GetQuestStatus(uint32 quest_id) const;
         std::string GetQuestStatusString(QuestStatus status) const;
         void SetQuestStatus(uint32 questId, QuestStatus status, bool update = true);
@@ -1627,6 +1646,9 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
 
         uint32 GetInGameTime() const { return m_ingametime; }
         void SetInGameTime(uint32 time) { m_ingametime = time; }
+
+        ObjectGuid GetLastQuestGiverGUID() const { return m_lastQuestGiverGUID; }
+        WorldObject* GetLastQuestGiver() const;
 
         void AddTimedQuest(uint32 questId) { m_timedquests.insert(questId); }
         void RemoveTimedQuest(uint32 questId) { m_timedquests.erase(questId); }
@@ -1943,6 +1965,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         void SetGuildLevel(uint32 level) { SetUInt32Value(PLAYER_GUILDLEVEL, level); }
         uint32 GetGuildLevel() const { return GetUInt32Value(PLAYER_GUILDLEVEL); }
         void SetGuildIdInvited(ObjectGuid::LowType GuildId) { m_GuildIdInvited = GuildId; }
+        ObjectGuid GetGuildInviterGuid() const { return m_GuildInviterGuid; }
         ObjectGuid::LowType GetGuildId() const { return GetUInt64Value(OBJECT_FIELD_DATA); /* return only lower part */ }
         Guild* GetGuild();
         Guild const* GetGuild() const;
@@ -2176,6 +2199,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         ReputationRank GetReputationRank(uint32 faction_id) const;
         void RewardReputation(Unit* victim, float rate);
         void RewardReputation(Quest const* quest);
+        void RewardGuildReputation(Quest const* quest);
 
         int32 CalculateReputationGain(ReputationSource source, uint32 creatureOrQuestLevel, int32 rep, int32 faction, bool noQuestBonus = false);
 
@@ -2420,6 +2444,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         bool HasAtLoginFlag(AtLoginFlags f) const { return (m_atLoginFlags & f) != 0; }
         void SetAtLoginFlag(AtLoginFlags f) { m_atLoginFlags |= f; }
         void RemoveAtLoginFlag(AtLoginFlags flags, bool persist = false);
+        void RemoveOnLogAuras();
 
         bool isUsingLfg() const;
         bool inRandomLfgDungeon() const;
@@ -2441,6 +2466,10 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         uint8 GetItemLimitCategoryQuantity(ItemLimitCategoryEntry const* limitEntry) const;
         void ShowNeutralPlayerFactionSelectUI();
         void SendDisplayToast(uint32 entry, uint32 questId, uint32 count, DisplayToastMethod method, ToastTypes type, bool bonusRoll, bool mailed, std::vector<int32> bonus = {});
+
+        void GetLootFromCreature(Creature* creature, bool CheckDifficulty = true);
+        void GetLegendItemLootFromCreature();
+        void GetLootFromCreatureEncounterId(Creature* creature, uint32 encounterId);
 
         void SetEffectiveLevelAndMaxItemLevel(uint32 effectiveLevel, uint32 maxItemLevel);
 
@@ -2618,6 +2647,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         void GetGarrisonOpenTalentNpc(ObjectGuid guid);
         void SendFollowerRecruitmentUI(ObjectGuid guid);
         void SendShipmentCrafterUI(ObjectGuid guid, uint32 shipmentContainerID);
+        void CheckClassHallAllowArea();
         // End Garrisons
 
         // Arena
@@ -2896,6 +2926,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         SkillStatusMap mSkillStatus;
 
         ObjectGuid::LowType m_GuildIdInvited;
+        ObjectGuid m_GuildInviterGuid;
 
         PlayerMails m_mail;
         PlayerSpellMap m_spells;
@@ -3094,6 +3125,8 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         bool _usePvpItemLevels;
 
         ArchaeologyPlayerMgr m_archaeologyPlayerMgr;
+
+        ObjectGuid m_lastQuestGiverGUID;
 };
 
 TC_GAME_API void AddItemsSetItem(Player* player, Item* item);

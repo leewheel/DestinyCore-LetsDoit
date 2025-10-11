@@ -589,3 +589,9 @@ WorldPacket const * WorldPackets::Character::SetPlayerDeclinedNamesResult::Write
 
     return &_worldPacket;
 }
+
+void WorldPackets::Character::SetCurrencyFlags::Read()
+{
+    _worldPacket >> CurrencyID;
+    _worldPacket >> Flags;
+}
