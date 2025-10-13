@@ -30103,9 +30103,57 @@ void Player::SendPlayerChoice(ObjectGuid sender, int32 choiceId)
     displayPlayerChoice.CloseChoiceFrame = false;
     displayPlayerChoice.HideWarboardHeader = playerChoice->HideWarboardHeader;
 
+    std::vector<PlayerChoiceResponse> playerChoiceResponses;
     for (std::size_t i = 0; i < playerChoice->Responses.size(); ++i)
     {
-        PlayerChoiceResponse const& playerChoiceResponseTemplate = playerChoice->Responses[i];
+        PlayerChoiceResponse const& _playerChoiceResponseTemplate = playerChoice->Responses[i];
+        if (!_playerChoiceResponseTemplate.ResponseId)
+            continue;
+
+        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(_playerChoiceResponseTemplate.Reward->SpellID);
+        if (!spellInfo)
+            continue;
+
+        bool playerEligible = true;
+        for (SpellEffectInfo const* effect : spellInfo->GetEffectsForDifficulty(DIFFICULTY_NONE))
+        {
+            Quest const* quest = sObjectMgr->GetQuestTemplate(effect->MiscValue);
+            if (!quest)
+            {
+                playerEligible = false;
+                continue;
+            }
+
+            if (!CanTakeQuest(quest, false))
+            {
+                playerEligible = false;
+                continue;
+            }
+
+            if (!CanAddQuest(quest, false))
+            {
+                playerEligible = false;
+                continue;
+            }
+        }
+
+        if (playerEligible)
+            playerChoiceResponses.push_back(_playerChoiceResponseTemplate);
+    }
+
+    // don't send empty choice (warboard)
+    if ((choiceId == 342 || choiceId == 352) && playerChoiceResponses.empty())
+    {
+        ChatHandler(GetSession()).PSendSysMessage("Please come back later.");
+        return;
+    }
+
+    for (std::size_t i = 0; i < playerChoiceResponses.size(); ++i)
+    {
+        auto const& playerChoiceResponseTemplate = playerChoiceResponses[i];
+        if (!playerChoiceResponseTemplate.ResponseId)
+            return;
+
         WorldPackets::Quest::PlayerChoiceResponse& playerChoiceResponse = displayPlayerChoice.Responses[i];
         playerChoiceResponse.ResponseID = playerChoiceResponseTemplate.ResponseId;
         playerChoiceResponse.ChoiceArtFileID = playerChoiceResponseTemplate.ChoiceArtFileId;
@@ -30163,6 +30211,10 @@ void Player::SendPlayerChoice(ObjectGuid sender, int32 choiceId)
             }
         }
     }
+
+    // Resize to 3 if it's Warboard Choice
+    if (playerChoiceResponses.size() > 3 && (choiceId == 342 || choiceId == 352))
+        displayPlayerChoice.Responses.resize(3);
 
     SendDirectMessage(displayPlayerChoice.Write());
 }

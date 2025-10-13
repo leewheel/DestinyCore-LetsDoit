@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2006-2009 ScriptDev2 <https://scriptdev2.svn.sourceforge.net/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1517,6 +1516,44 @@ public:
     uint32 _raceId;
 };
 
+// Warboard Alliance gob: 281339
+struct go_warboard_alliance : public GameObjectAI
+{
+    go_warboard_alliance(GameObject* go) : GameObjectAI(go) {}
+
+    bool GossipUse(Player* player)
+    {
+        if (player->getLevel() < 10)
+            return false;
+
+        if (player->GetTeam() == ALLIANCE)
+            player->CastSpell(player, 261654, true);
+        player->SendPlayerChoice(player->GetGUID(), 352); // forced version
+
+        return true;
+    }
+
+};
+
+// Warboard Horde gob: 281340
+struct go_warboard_horde : public GameObjectAI
+{
+    go_warboard_horde(GameObject* go) : GameObjectAI(go) {}
+
+    bool GossipUse(Player* player)
+    {
+        if (player->getLevel() < 10)
+            return false;
+
+        if (player->GetTeam() == HORDE)
+            player->CastSpell(player, 261655, true);
+        player->SendPlayerChoice(player->GetGUID(), 342); // forced version
+
+        return true;
+    }
+
+};
+
 void AddSC_go_scripts()
 {
     new go_cat_figurine();
@@ -1562,4 +1599,6 @@ void AddSC_go_scripts()
     new go_allied_race_infos("go_allied_race_infos_tauren",     28);
     new go_allied_race_infos("go_allied_race_infos_voidelf",    29);
     new go_allied_race_infos("go_allied_race_infos_draenei",    30);
+    RegisterGameObjectAI(go_warboard_alliance);
+    RegisterGameObjectAI(go_warboard_horde);
 }

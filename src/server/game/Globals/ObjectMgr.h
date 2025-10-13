@@ -790,6 +790,7 @@ struct PlayerChoiceResponseReward
     uint32 HonorPointCount;
     uint64 Money;
     uint32 Xp;
+    uint32 SpellID;
     std::vector<PlayerChoiceResponseRewardItem> Items;
     std::vector<PlayerChoiceResponseRewardEntry> Currency;
     std::vector<PlayerChoiceResponseRewardEntry> Faction;

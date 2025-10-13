@@ -1526,7 +1526,7 @@ enum OpcodeServer : uint16
     SMSG_QUEST_POI_CHANGED                            = 0x2A9F,
     SMSG_QUEST_POI_QUERY_RESPONSE                     = 0x2A9C,
     SMSG_QUEST_PUSH_RESULT                            = 0x2A8F,
-    SMSG_QUEST_SPAWN_TRACKING_UPDATE                  = 0x2A9E,
+    SMSG_QUEST_POI_UPDATE_RESPONSE                    = 0x2A9E,
     SMSG_QUEST_UPDATE_ADD_CREDIT                      = 0x2A8B,
     SMSG_QUEST_UPDATE_ADD_CREDIT_SIMPLE               = 0x2A8C,
     SMSG_QUEST_UPDATE_ADD_PVP_CREDIT                  = 0x2A8D,

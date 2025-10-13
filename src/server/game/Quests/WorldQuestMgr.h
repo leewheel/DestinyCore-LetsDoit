@@ -71,6 +71,7 @@ public:
     void RewardQuestForPlayer(Player* player, uint32 questId);
 
     WorldQuestTemplate* GetWorldQuestTemplate(uint32 questId);
+    ActiveWorldQuest* GetActiveWorldQuest(uint32 questId);
 
     uint8 GetActiveEmissaryQuestsCount();
     uint32 GetActiveQuestsCount();
@@ -88,6 +89,8 @@ public:
     void AddEmissaryQuestsOnPlayerIfNeeded(Player* player);
 
     uint32 GetTimerForQuest(uint32 questId);
+
+    uint32 WorldLegionInvasionZoneID = 0;
 
 private:
     WorldQuestTemplateMap _worldQuestTemplates;

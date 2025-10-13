@@ -122,12 +122,22 @@ void WorldQuestMgr::LoadActiveWorldQuests()
         uint32 rewardId     = fields[1].GetUInt32();
         uint32 startTime    = fields[2].GetUInt32();
 
+        Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
+        if (!quest)
+        {
+            TC_LOG_ERROR("server.loading", "World Quest: Quest %u has world quest duration but quest does not exist.", questId);
+            continue;
+        }
+
         WorldQuestTemplate* worldQuestTemplate = GetWorldQuestTemplate(questId);
         if (!worldQuestTemplate)
         {
             TC_LOG_ERROR("server.loading", "World Quest: Quest %u has world quest duration but quest is not a world quest.", questId);
             continue;
         }
+
+        if (quest->IsLegionInvasion())
+            WorldLegionInvasionZoneID = quest->GetZoneOrSort();
 
         ActiveWorldQuest* activeWorldQuest = new ActiveWorldQuest(questId, rewardId, startTime);
         _activeWorldQuests[worldQuestTemplate->QuestId] = activeWorldQuest;
@@ -154,6 +164,31 @@ void WorldQuestMgr::Update()
 
         if (questDiff > 0)
         {
+            static uint32 WorldLegionInvasionZoneID = 0;
+            std::set<uint32> invasionZones = { 7558, 7541, 7503, 7334 }; // Val'sharah, Stormheim, Highmountain, Azsuna
+
+            if (!WorldLegionInvasionZoneID)
+                WorldLegionInvasionZoneID = Trinity::Containers::SelectRandomContainerElement(invasionZones);
+
+            uint32 selectQuest = 0;
+            switch (WorldLegionInvasionZoneID)
+            {
+            case 7558: selectQuest = 45812; break; // Val'sharah
+            case 7541: selectQuest = 45839; break; // Stormheim
+            case 7503: selectQuest = 45840; break; // Highmountain
+            case 7334: selectQuest = 45838; break; // Azsuna
+            default: selectQuest = 0; break;
+            }
+
+            if (selectQuest && !IsQuestActive(selectQuest))
+            {
+                if (WorldQuestTemplate* invasionQuest = GetWorldQuestTemplate(selectQuest))
+                {
+                    ActivateQuest(invasionQuest);
+                    --questDiff;
+                }
+            }
+
             WorldQuestTemplateMap inactiveWorldQuestTemplates;
             for (auto it : _worldQuestTemplates)
             {
@@ -319,6 +354,16 @@ WorldQuestTemplate* WorldQuestMgr::GetWorldQuestTemplate(uint32 questId)
         return nullptr;
 
     return _worldQuestTemplates.find(questId)->second;
+}
+
+ActiveWorldQuest* WorldQuestMgr::GetActiveWorldQuest(uint32 questId)
+{
+    auto itr = _activeWorldQuests.find(questId);
+    if (itr != _activeWorldQuests.end())
+        return itr->second;
+
+    // TODO: team-based search (TEAM_ALLIANCE / TEAM_HORDE)
+    return nullptr;
 }
 
 uint8 WorldQuestMgr::GetActiveEmissaryQuestsCount()

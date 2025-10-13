@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -3400,6 +3399,46 @@ ObjectGuid WorldObject::GetTransGUID() const
     if (GetTransport())
         return GetTransport()->GetGUID();
     return ObjectGuid::Empty;
+}
+
+bool WorldObject::HasQuestForPlayer(Player* player)
+{
+    if (!player)
+        return false;
+
+    if (ToCreature())
+    {
+        QuestRelationBounds qr = sObjectMgr->GetCreatureQuestRelationBounds(GetEntry());
+        for (QuestRelations::const_iterator itr = qr.first; itr != qr.second; ++itr)
+        {
+            uint32 questId = itr->second;
+
+            Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
+            if (!quest)
+                return false;
+
+            if (player->CanTakeQuest(quest, false))
+                return true;
+        }
+    }
+
+    if (ToGameObject())
+    {
+        QuestRelationBounds qr = sObjectMgr->GetGOQuestRelationBounds(GetEntry());
+        for (QuestRelations::const_iterator itr = qr.first; itr != qr.second; ++itr)
+        {
+            uint32 questId = itr->second;
+
+            Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
+            if (!quest)
+                return false;
+
+            if (player->CanTakeQuest(quest, false))
+                return true;
+        }
+    }
+
+    return false;
 }
 
 template TC_GAME_API void WorldObject::GetGameObjectListWithEntryInGrid(std::list<GameObject*>&, uint32, float) const;

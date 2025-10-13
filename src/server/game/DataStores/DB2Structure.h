@@ -624,6 +624,14 @@ struct ChrClassesEntry
     uint32 ID;
 };
 
+struct ChrClassUIDisplayEntry
+{
+    uint32 ID;
+    uint8 ChrClassesID;
+    uint32 AdvGuidePlayerConditionID;
+    uint32 SplashPlayerConditionID;
+};
+
 struct ChrClassesXPowerTypesEntry
 {
     uint32 ID;

@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,8 +15,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef TRINITYCORE_GOSSIP_H
-#define TRINITYCORE_GOSSIP_H
+#ifndef GOSSIPDEF_H
+#define GOSSIPDEF_H
 
 #include "Common.h"
 #include "ObjectGuid.h"
@@ -238,6 +237,7 @@ class TC_GAME_API QuestMenu
         ~QuestMenu();
 
         void AddMenuItem(uint32 QuestId, uint8 Icon);
+        void RemoveMenuItem(uint32 QuestId);
         void ClearMenu();
         uint8 GetMenuItemCount() const{ return uint8(_questMenuItems.size()); }
         bool Empty() const { return _questMenuItems.empty(); }

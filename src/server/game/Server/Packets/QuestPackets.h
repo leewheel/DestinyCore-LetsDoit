@@ -682,6 +682,24 @@ namespace WorldPackets
             std::vector<ItemReward> ItemRewards;
         };
 
+        class AreaPoiUpdate final : public ServerPacket
+        {
+        public:
+            AreaPoiUpdate() : ServerPacket(SMSG_AREA_POI_UPDATE, 4) {}
+
+            WorldPacket const* Write() override;
+
+            std::vector<WorldQuestUpdateInfo> Pois;
+        };
+
+        class RequestAreaPoiUpdate final : public ClientPacket
+        {
+        public:
+            RequestAreaPoiUpdate(WorldPacket&& packet) : ClientPacket(CMSG_REQUEST_AREA_POI_UPDATE, std::move(packet)) {}
+
+            void Read() override {}
+        };
+
         struct PlayerChoiceResponseRewardEntry
         {
             WorldPackets::Item::ItemInstance Item;
@@ -698,6 +716,7 @@ namespace WorldPackets
             uint32 HonorPointCount = 0;
             uint64 Money = 0;
             uint32 Xp = 0;
+            uint32 SpellID = 0;
             std::vector<PlayerChoiceResponseRewardEntry> Items;
             std::vector<PlayerChoiceResponseRewardEntry> Currencies;
             std::vector<PlayerChoiceResponseRewardEntry> Factions;
@@ -740,6 +759,53 @@ namespace WorldPackets
 
             int32 ChoiceID = 0;
             int32 ResponseID = 0;
+        };
+
+        class QuestForceRemoved final : public ServerPacket
+        {
+        public:
+            QuestForceRemoved() : ServerPacket(SMSG_QUEST_FORCE_REMOVED, 4) {}
+
+            WorldPacket const* Write() override;
+
+            uint32 QuestID = 0;
+        };
+
+        struct TrackingUpdate
+        {
+            uint32 SpawnTrackingID = 0; // questID
+            uint32 ObjectID = 0;
+            bool Visible = false;
+        };
+
+        class QuestPoiUpdateResponse final : public ServerPacket
+        {
+        public:
+            QuestPoiUpdateResponse() : ServerPacket(SMSG_QUEST_POI_UPDATE_RESPONSE, 4) {}
+
+            WorldPacket const* Write() override;
+
+            std::vector<TrackingUpdate> TrackingUpdates;
+        };
+
+        class QuestUpdateCompleteBySpell final : public ServerPacket
+        {
+        public:
+            QuestUpdateCompleteBySpell() : ServerPacket(SMSG_QUEST_UPDATE_COMPLETE_BY_SPELL, 4) {}
+
+            WorldPacket const* Write() override;
+
+            int32 QuestID = 0;
+        };
+
+        class QuestUpdateFailed final : public ServerPacket
+        {
+        public:
+            QuestUpdateFailed(uint32 ID) : ServerPacket(SMSG_QUEST_UPDATE_FAILED, 4), QuestID(ID) {}
+
+            WorldPacket const* Write() override;
+
+            uint32 QuestID = 0;
         };
     }
 }

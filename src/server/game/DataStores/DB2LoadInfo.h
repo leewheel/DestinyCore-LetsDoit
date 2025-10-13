@@ -1029,6 +1029,22 @@ struct ChrClassesLoadInfo
     }
 };
 
+struct ChrClassUIDisplayLoadInfo
+{
+    static DB2LoadInfo const* Instance()
+    {
+        static DB2FieldMeta const fields[] =
+        {
+            { false, FT_INT, "ID" },
+            { false, FT_BYTE, "ChrClassesID" },
+            { false, FT_INT, "AdvGuidePlayerConditionID" },
+            { false, FT_INT, "SplashPlayerConditionID" },
+        };
+        static DB2LoadInfo const loadInfo(&fields[0], std::extent<decltype(fields)>::value, ChrClassUIDisplayMeta::Instance(), HOTFIX_SEL_CHR_CLASS_UI_DISPLAY);
+        return &loadInfo;
+    }
+};
+
 struct ChrClassesXPowerTypesLoadInfo
 {
     static DB2LoadInfo const* Instance()

@@ -10721,7 +10721,7 @@ void ObjectMgr::LoadPlayerChoices()
         } while (responses->NextRow());
     }
 
-    if (QueryResult rewards = WorldDatabase.Query("SELECT ChoiceId, ResponseId, TitleId, PackageId, SkillLineId, SkillPointCount, ArenaPointCount, HonorPointCount, Money, Xp FROM playerchoice_response_reward"))
+    if (QueryResult rewards = WorldDatabase.Query("SELECT ChoiceId, ResponseId, TitleId, PackageId, SkillLineId, SkillPointCount, ArenaPointCount, HonorPointCount, Money, Xp, SpellID FROM playerchoice_response_reward"))
     {
         do
         {
@@ -10755,6 +10755,7 @@ void ObjectMgr::LoadPlayerChoices()
             reward->HonorPointCount  = fields[7].GetUInt32();
             reward->Money            = fields[8].GetUInt64();
             reward->Xp               = fields[9].GetUInt32();
+            reward->SpellID          = fields[10].GetUInt32();
             ++rewardCount;
 
             if (reward->TitleId && !sCharTitlesStore.LookupEntry(reward->TitleId))

@@ -5089,6 +5089,72 @@ class spell_gen_rocket_barrage : public SpellScript
     }
 };
 
+class spell_warboard_alliance_261654 : public SpellScriptLoader
+{
+public:
+    spell_warboard_alliance_261654() : SpellScriptLoader("spell_warboard_alliance_261654") {}
+
+    class spell_warboard_alliance_261654_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_warboard_alliance_261654_SpellScript);
+
+        void HandleDummy(SpellEffIndex /*effIndex*/)
+        {
+            // Warboards are Type 22 (SpellCaster) gameobjects with Data6 = 1 (PlayerCast) option.
+            // So the player is the caster!
+            Unit* caster = GetCaster();
+            Player* player = GetCaster()->ToPlayer();
+            if (!caster || !player)
+                return;
+
+            player->SendPlayerChoice(player->GetGUID(), 352);
+        }
+
+        void Register() override
+        {
+            OnEffectHit += SpellEffectFn(spell_warboard_alliance_261654_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+        }
+    };
+
+    SpellScript* GetSpellScript() const override
+    {
+        return new spell_warboard_alliance_261654_SpellScript();
+    }
+};
+
+class spell_warboard_horde_261655 : public SpellScriptLoader
+{
+public:
+    spell_warboard_horde_261655() : SpellScriptLoader("spell_warboard_horde_261655") {}
+
+    class spell_warboard_horde_261655_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_warboard_horde_261655_SpellScript);
+
+        void HandleDummy(SpellEffIndex /*effIndex*/)
+        {
+            // Warboards are Type 22 (SpellCaster) gameobjects with Data6 = 1 (PlayerCast) option.
+            // So the player is the caster!
+            Unit* caster = GetCaster();
+            Player* player = GetCaster()->ToPlayer();
+            if (!caster || !player)
+                return;
+
+            player->SendPlayerChoice(player->GetGUID(), 342);
+        }
+
+        void Register() override
+        {
+            OnEffectHit += SpellEffectFn(spell_warboard_horde_261655_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+        }
+    };
+
+    SpellScript* GetSpellScript() const override
+    {
+        return new spell_warboard_horde_261655_SpellScript();
+    }
+};
+
 void AddSC_generic_spell_scripts()
 {
     new spell_gen_absorb0_hitlimit1();
@@ -5208,4 +5274,6 @@ void AddSC_generic_spell_scripts()
     new spell_gen_jewel_of_hellfire();
     new spell_gen_coin_of_many_faces();
     RegisterSpellScript(spell_gen_rocket_barrage);
+    new spell_warboard_alliance_261654();
+    new spell_warboard_horde_261655();
 }

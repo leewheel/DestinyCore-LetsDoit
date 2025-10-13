@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -761,4 +760,23 @@ void PlayerMenu::AddQuestLevelToTitle(std::string &title, int32 level)
     std::stringstream questTitlePretty;
     questTitlePretty << "[" << level << "] " << title;
     title = questTitlePretty.str();
+}
+
+void QuestMenu::RemoveMenuItem(uint32 QuestId)
+{
+    if (!sObjectMgr->GetQuestTemplate(QuestId))
+        return;
+
+    ASSERT(_questMenuItems.size() <= GOSSIP_MAX_MENU_ITEMS);
+
+    for (QuestMenuItemList::iterator i = _questMenuItems.begin(); i != _questMenuItems.end(); )
+    {
+        if (i->QuestId == QuestId)
+        {
+            i = _questMenuItems.erase(i);
+            break;
+        }
+        else
+            ++i;
+    }
 }
