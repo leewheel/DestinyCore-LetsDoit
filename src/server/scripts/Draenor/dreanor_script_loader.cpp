@@ -35,6 +35,14 @@ void AddSC_garrison_level_3();
 void AddSC_spells_garrison();
 void AddSC_class_hall_legion();
 
+// Auchindoun
+void AddSC_auchindoun();
+void AddSC_boss_azzakel();
+void AddSC_boss_kaathar();
+void AddSC_boss_nyami();
+void AddSC_boss_teronogor();
+void AddSC_instance_auchindoun();
+
 // Bloodmaul Slag Mines
 void AddSC_areatrigger_Bloodmaul();
 void AddSC_boss_forgemaster_gogduh();
@@ -94,6 +102,14 @@ void AddDraenorScripts()
     AddSC_garrison_level_3();
     AddSC_spells_garrison();
     AddSC_class_hall_legion();
+
+    // Auchindoun
+    AddSC_auchindoun();
+    AddSC_boss_azzakel();
+    AddSC_boss_kaathar();
+    AddSC_boss_nyami();
+    AddSC_boss_teronogor();
+    AddSC_instance_auchindoun();
 
     // Bloodmaul Slag Mines
     AddSC_areatrigger_Bloodmaul();

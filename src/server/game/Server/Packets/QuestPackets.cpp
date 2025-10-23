@@ -607,6 +607,13 @@ WorldPacket const* WorldPackets::Quest::WorldQuestUpdate::Write()
     return &_worldPacket;
 }
 
+WorldPacket const* WorldPackets::Quest::DisplayQuestPopup::Write()
+{
+    _worldPacket << QuestID;
+
+    return &_worldPacket;
+}
+
 void WorldPackets::Quest::QueryQuestReward::Read()
 {
     _worldPacket >> QuestID;

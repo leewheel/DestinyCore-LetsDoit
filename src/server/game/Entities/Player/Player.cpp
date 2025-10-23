@@ -2960,21 +2960,13 @@ void Player::InitTalentForLevel()
         ResetTalentSpecialization();
 
     uint32 talentTiers = CalculateTalentsTiers();
-    if (level < 15)
-    {
-        // Remove all talent points
-        ResetTalents(true);
-    }
-    else
-    {
-        if (IsPlayerBot());
-            //SetFreeTalentPoints(0);
-        else if (!GetSession()->HasPermission(rbac::RBAC_PERM_SKIP_CHECK_MORE_TALENTS_THAN_ALLOWED))
-            for (uint32 t = talentTiers; t < MAX_TALENT_TIERS; ++t)
-                for (uint32 c = 0; c < MAX_TALENT_COLUMNS; ++c)
-                    for (TalentEntry const* talent : sDB2Manager.GetTalentsByPosition(getClass(), t, c))
-                        RemoveTalent(talent);
-    }
+	if (IsPlayerBot());
+		//SetFreeTalentPoints(0);
+	else if (!GetSession()->HasPermission(rbac::RBAC_PERM_SKIP_CHECK_MORE_TALENTS_THAN_ALLOWED))
+		for (uint32 t = talentTiers; t < MAX_TALENT_TIERS; ++t)
+			for (uint32 c = 0; c < MAX_TALENT_COLUMNS; ++c)
+				for (TalentEntry const* talent : sDB2Manager.GetTalentsByPosition(getClass(), t, c))
+					RemoveTalent(talent);
 
     SetUInt32Value(PLAYER_FIELD_MAX_TALENT_TIERS, talentTiers);
 
@@ -18313,6 +18305,15 @@ void Player::SendQuestGiverStatusMultiple()
     GetSession()->SendPacket(response.Write());
 }
 
+bool Player::WorldQuestCompleted(uint32 QuestID) const
+{
+    WorldQuestStatusMap::const_iterator iter = m_worldquests.find(QuestID);
+    if (iter == m_worldquests.end())
+        return false;
+
+    return iter->second.resetTime > time(NULL);
+}
+
 WorldObject* Player::GetLastQuestGiver() const
 {
     return ObjectAccessor::GetWorldObject(*this, m_lastQuestGiverGUID);
@@ -31050,7 +31051,6 @@ void Player::UpdateShop(uint32 diff)
                 if (newLevel > getLevel())
                 {
                     GiveLevel(newLevel);
-                    InitTalentForLevel();
                     SetUInt32Value(PLAYER_XP, 0);
                     delivered = true;
                 }
