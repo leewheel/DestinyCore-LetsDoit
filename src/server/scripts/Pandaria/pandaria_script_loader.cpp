@@ -48,7 +48,7 @@ void AddSC_instance_siege_of_niuzao_temple();
 // Stormstout Brewery
 void AddSC_boss_hoptallus();
 void AddSC_boss_ook_ook();
-void AddSC_boss_yan_zhu_the_uncasked();
+void AddSC_boss_yanzhu();
 void AddSC_stormstout_brewery();
 void AddSC_instance_stormstout_brewery();
 
@@ -58,6 +58,14 @@ void AddSC_boss_lorewalker_stonestep();
 void AddSC_boss_sha_of_doubt();
 void AddSC_boss_wise_mari();
 void AddSC_instance_temple_of_jade_serpent();
+
+// Terrace of Endless Spring
+void AddSC_boss_lei_shi();
+void AddSC_boss_protectors_of_the_endless();
+void AddSC_boss_sha_of_fear();
+void AddSC_boss_tsulong();
+void AddSC_instance_terrace_of_endless_spring();
+void AddSC_terrace_of_endless_spring();
 
 // Mogu'Shan Vault
 void AddSC_boss_stone_guard();
@@ -162,7 +170,7 @@ void AddPandariaScripts()
     // Stormstout Brewery
     AddSC_boss_hoptallus();
     AddSC_boss_ook_ook();
-    AddSC_boss_yan_zhu_the_uncasked();
+    AddSC_boss_yanzhu();
     AddSC_stormstout_brewery();
     AddSC_instance_stormstout_brewery();
 
@@ -172,6 +180,14 @@ void AddPandariaScripts()
     AddSC_boss_sha_of_doubt();
     AddSC_boss_wise_mari();
     AddSC_instance_temple_of_jade_serpent();
+
+    // Terrace of Endless Spring
+    AddSC_boss_lei_shi();
+    AddSC_boss_protectors_of_the_endless();
+    AddSC_boss_sha_of_fear();
+    AddSC_boss_tsulong();
+    AddSC_instance_terrace_of_endless_spring();
+    AddSC_terrace_of_endless_spring();
 
     // Mogu'Shan Vault
     AddSC_boss_stone_guard();

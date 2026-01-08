@@ -34,9 +34,9 @@
 #include "AccountMgr.h"
 #include "BattlenetAccountMgr.h"
 #include "CharacterPackets.h"
-
+#include "MotionMaster.h"
 #include <boost/algorithm/string.hpp>
-//#include <boost/format.hpp>
+ //#include <boost/format.hpp>
 
 PlayerBotCharBaseInfo PlayerBotBaseInfo::empty;
 std::map<uint32, std::list<UnitAI*> > PlayerBotMgr::m_DelayDestroyAIs;
@@ -48,46 +48,46 @@ std::string PlayerBotCharBaseInfo::GetNameANDClassesText()
     uint32 clsEntry = 620000;
     switch (profession)
     {
-        case 1:
-            //clsName = "  战  士 : ";
-            clsEntry += 1;
-            break;
-        case 2:
-            //clsName = "  圣骑士 : ";
-            clsEntry += 2;
-            break;
-        case 3:
-            //clsName = "  猎  人 : ";
-            clsEntry += 3;
-            break;
-        case 4:
-            //clsName = "  盗  贼 : ";
-            clsEntry += 4;
-            break;
-        case 5:
-            //clsName = "  牧  师 : ";
-            clsEntry += 5;
-            break;
-        case 6:
-            //clsName = "  死  骑 : ";
-            clsEntry += 6;
-            break;
-        case 7:
-            //clsName = "  萨  满 : ";
-            clsEntry += 7;
-            break;
-        case 8:
-            //clsName = "  法  师 : ";
-            clsEntry += 8;
-            break;
-        case 9:
-            //clsName = "  术  士 : ";
-            clsEntry += 9;
-            break;
-        case 11:
-            //clsName = "  德鲁伊 : ";
-            clsEntry += 10;
-            break;
+    case 1:
+        //clsName = "  战  士 : ";
+        clsEntry += 1;
+        break;
+    case 2:
+        //clsName = "  圣骑士 : ";
+        clsEntry += 2;
+        break;
+    case 3:
+        //clsName = "  猎  人 : ";
+        clsEntry += 3;
+        break;
+    case 4:
+        //clsName = "  盗  贼 : ";
+        clsEntry += 4;
+        break;
+    case 5:
+        //clsName = "  牧  师 : ";
+        clsEntry += 5;
+        break;
+    case 6:
+        //clsName = "  死  骑 : ";
+        clsEntry += 6;
+        break;
+    case 7:
+        //clsName = "  萨  满 : ";
+        clsEntry += 7;
+        break;
+    case 8:
+        //clsName = "  法  师 : ";
+        clsEntry += 8;
+        break;
+    case 9:
+        //clsName = "  术  士 : ";
+        clsEntry += 9;
+        break;
+    case 11:
+        //clsName = "  德鲁伊 : ";
+        clsEntry += 10;
+        break;
     }
     std::string clsText = sObjectMgr->GetTrinityStringForDBCLocale(clsEntry);
     //consoleToUtf8(clsName, clsText);
@@ -155,111 +155,111 @@ void PlayerBotMgr::SwitchPlayerBotAI(Player* player, PlayerBotAIType aiType, boo
     player->IsAIEnabled = false;
     switch (aiType)
     {
-        case PlayerBotAIType::PBAIT_FIELD:
-            if (pAI)
+    case PlayerBotAIType::PBAIT_FIELD:
+        if (pAI)
+        {
+            if (dynamic_cast<BotFieldAI*>(pAI) != NULL)
             {
-                if (dynamic_cast<BotFieldAI*>(pAI) != NULL)
-                {
-                    player->IsAIEnabled = true;
-                    return;
-                }
-                PlayerBotMgr::m_DelayDestroyAIs[getMSTime()].push_back(pAI);
-                player->SetAI(NULL);
-            }
-            pAI = BotFieldAI::CreateBotFieldAIByPlayerClass(player);
-            if (pAI)
-            {
-                pAI->Reset();
-                player->SetAI(pAI);
                 player->IsAIEnabled = true;
+                return;
             }
-            break;
-        case PlayerBotAIType::PBAIT_GROUP:
-            if (pAI)
-            {
-                if (dynamic_cast<BotGroupAI*>(pAI) != NULL)
-                {
-                    player->IsAIEnabled = true;
-                    return;
-                }
-                PlayerBotMgr::m_DelayDestroyAIs[getMSTime()].push_back(pAI);
-                player->SetAI(NULL);
-            }
-            pAI = BotGroupAI::CreateBotGroupAIByPlayerClass(player);
-            if (pAI)
-            {
-                pAI->Reset();
-                player->SetAI(pAI);
-                player->IsAIEnabled = true;
-            }
-            break;
-        case PlayerBotAIType::PBAIT_DUEL:
-            if (pAI)
-            {
-                if (dynamic_cast<BotDuelAI*>(pAI) != NULL)
-                {
-                    player->IsAIEnabled = true;
-                    return;
-                }
-                PlayerBotMgr::m_DelayDestroyAIs[getMSTime()].push_back(pAI);
-                player->SetAI(NULL);
-            }
-            pAI = BotDuelAI::CreateBotDuelAIByPlayerClass(player);
-            if (pAI)
-            {
-                pAI->Reset();
-                player->SetAI(pAI);
-                player->IsAIEnabled = true;
-                ((BotDuelAI*)pAI)->ResetBotAI();
-            }
-            break;
-        case PlayerBotAIType::PBAIT_ARENA:
-#ifndef CONVERT_ARENAAI_TOBG
-            if (pAI)
-            {
-                if (dynamic_cast<BotArenaAI*>(pAI) != NULL)
-                {
-                    player->IsAIEnabled = true;
-                    return;
-                }
-                PlayerBotMgr::m_DelayDestroyAIs[getMSTime()].push_back(pAI);
-                player->SetAI(NULL);
-            }
-            pAI = BotArenaAI::CreateBotArenaAIByPlayerClass(player);
-            if (pAI)
-            {
-                pAI->Reset();
-                player->SetAI(pAI);
-                player->IsAIEnabled = true;
-            }
-            break;
-#endif
-        case PlayerBotAIType::PBAIT_BG:
-            if (pAI)
-            {
-                if (dynamic_cast<BotBGAI*>(pAI) != NULL)
-                {
-                    player->IsAIEnabled = true;
-                    return;
-                }
-                PlayerBotMgr::m_DelayDestroyAIs[getMSTime()].push_back(pAI);
-                player->SetAI(NULL);
-            }
-            player->SetAI(BotBGAI::CreateBotBGAIByPlayerClass(player));
+            PlayerBotMgr::m_DelayDestroyAIs[getMSTime()].push_back(pAI);
+            player->SetAI(NULL);
+        }
+        pAI = BotFieldAI::CreateBotFieldAIByPlayerClass(player);
+        if (pAI)
+        {
+            pAI->Reset();
+            player->SetAI(pAI);
             player->IsAIEnabled = true;
-            break;
-        case PlayerBotAIType::PBAIT_DUNGEON:
-            if (pAI)
+        }
+        break;
+    case PlayerBotAIType::PBAIT_GROUP:
+        if (pAI)
+        {
+            if (dynamic_cast<BotGroupAI*>(pAI) != NULL)
             {
-                //if (dynamic_cast<BotFieldAI*>(pAI) != NULL)
-                //{
-                //	player->IsAIEnabled = true;
-                //	return;
-                //}
-                PlayerBotMgr::m_DelayDestroyAIs[getMSTime()].push_back(pAI);
-                player->SetAI(NULL);
+                player->IsAIEnabled = true;
+                return;
             }
-            break;
+            PlayerBotMgr::m_DelayDestroyAIs[getMSTime()].push_back(pAI);
+            player->SetAI(NULL);
+        }
+        pAI = BotGroupAI::CreateBotGroupAIByPlayerClass(player);
+        if (pAI)
+        {
+            pAI->Reset();
+            player->SetAI(pAI);
+            player->IsAIEnabled = true;
+        }
+        break;
+    case PlayerBotAIType::PBAIT_DUEL:
+        if (pAI)
+        {
+            if (dynamic_cast<BotDuelAI*>(pAI) != NULL)
+            {
+                player->IsAIEnabled = true;
+                return;
+            }
+            PlayerBotMgr::m_DelayDestroyAIs[getMSTime()].push_back(pAI);
+            player->SetAI(NULL);
+        }
+        pAI = BotDuelAI::CreateBotDuelAIByPlayerClass(player);
+        if (pAI)
+        {
+            pAI->Reset();
+            player->SetAI(pAI);
+            player->IsAIEnabled = true;
+            ((BotDuelAI*)pAI)->ResetBotAI();
+        }
+        break;
+    case PlayerBotAIType::PBAIT_ARENA:
+#ifndef CONVERT_ARENAAI_TOBG
+        if (pAI)
+        {
+            if (dynamic_cast<BotArenaAI*>(pAI) != NULL)
+            {
+                player->IsAIEnabled = true;
+                return;
+            }
+            PlayerBotMgr::m_DelayDestroyAIs[getMSTime()].push_back(pAI);
+            player->SetAI(NULL);
+        }
+        pAI = BotArenaAI::CreateBotArenaAIByPlayerClass(player);
+        if (pAI)
+        {
+            pAI->Reset();
+            player->SetAI(pAI);
+            player->IsAIEnabled = true;
+        }
+        break;
+#endif
+    case PlayerBotAIType::PBAIT_BG:
+        if (pAI)
+        {
+            if (dynamic_cast<BotBGAI*>(pAI) != NULL)
+            {
+                player->IsAIEnabled = true;
+                return;
+            }
+            PlayerBotMgr::m_DelayDestroyAIs[getMSTime()].push_back(pAI);
+            player->SetAI(NULL);
+        }
+        player->SetAI(BotBGAI::CreateBotBGAIByPlayerClass(player));
+        player->IsAIEnabled = true;
+        break;
+    case PlayerBotAIType::PBAIT_DUNGEON:
+        if (pAI)
+        {
+            //if (dynamic_cast<BotFieldAI*>(pAI) != NULL)
+            //{
+            //	player->IsAIEnabled = true;
+            //	return;
+            //}
+            PlayerBotMgr::m_DelayDestroyAIs[getMSTime()].push_back(pAI);
+            player->SetAI(NULL);
+        }
+        break;
     }
 }
 
@@ -397,26 +397,26 @@ bool PlayerBotMgr::ExistClassByRace(uint8 race, uint8 prof)
 {
     switch (prof)
     {
-        case 1:
-            return (race != 10);
-        case 2:
-            return (race == 1 || race == 3 || race == 10 || race == 11);
-        case 3:
-            return (race == 2 || race == 3 || race == 4 || race == 6 || race == 8 || race == 10 || race == 11);
-        case 4:
-            return (race == 1 || race == 2 || race == 3 || race == 4 || race == 5 || race == 7 || race == 8 || race == 10);
-        case 5:
-            return (race == 1 || race == 3 || race == 4 || race == 5 || race == 8 || race == 10 || race == 11);
-        case 6:
-            return true;
-        case 7:
-            return (race == 2 || race == 6 || race == 8 || race == 11);
-        case 8:
-            return (race == 1 || race == 5 || race == 7 || race == 8 || race == 10 || race == 11);
-        case 9:
-            return (race == 1 || race == 2 || race == 5 || race == 7 || race == 10);
-        case 11:
-            return (race == 4 || race == 6);
+    case 1:
+        return (race != 10);
+    case 2:
+        return (race == 1 || race == 3 || race == 10 || race == 11);
+    case 3:
+        return (race == 2 || race == 3 || race == 4 || race == 6 || race == 8 || race == 10 || race == 11);
+    case 4:
+        return (race == 1 || race == 2 || race == 3 || race == 4 || race == 5 || race == 7 || race == 8 || race == 10);
+    case 5:
+        return (race == 1 || race == 3 || race == 4 || race == 5 || race == 8 || race == 10 || race == 11);
+    case 6:
+        return true;
+    case 7:
+        return (race == 2 || race == 6 || race == 8 || race == 11);
+    case 8:
+        return (race == 1 || race == 5 || race == 7 || race == 8 || race == 10 || race == 11);
+    case 9:
+        return (race == 1 || race == 2 || race == 5 || race == 7 || race == 10);
+    case 11:
+        return (race == 4 || race == 6);
     }
     return false;
 }
@@ -450,163 +450,239 @@ void PlayerBotMgr::InitializeCreatePlayerBotName()
         } while (result2->NextRow());
     }
 }
+
 std::string PlayerBotMgr::RandomName()
 {
     if (allName.size() <= 0)
         InitializeCreatePlayerBotName();
+
     int32 maxLoop = allName.size() / 2;
     if (maxLoop <= 0)
         return "";
+
     do
     {
         uint32 index = irand(0, allName.size() - 1);
         std::string selectName = allName[index];
-        std::string sql = "SELECT guid FROM characters WHERE name = '" + selectName + "'";
-        QueryResult result = CharacterDatabase.Query(sql.c_str());
+
+        CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHECK_NAME);
+        stmt->setString(0, selectName);
+        PreparedQueryResult result = CharacterDatabase.Query(stmt);
+
         if (!result)
             return selectName;
+
         --maxLoop;
         if (maxLoop <= 0)
             break;
     } while (true);
+
     return "";
 }
+
 std::string PlayerBotMgr::RandomArenaName()
 {
     return "Arena" + std::to_string(urand(0, 100));
 }
+
 uint8 PlayerBotMgr::RandomRace(bool group, uint8 prof)
 {
-    uint8 race = 1;
-    for (int i = 0; i < 80; i++)
+    std::vector<uint8> validRaces;
+
+    if (group) // Alliance
+        validRaces = { 1, 3, 4, 7, 11, 22 }; // Human, Dwarf, NightElf, Gnome, Draenei, Worgen
+    else // Horde
+        validRaces = { 2, 5, 6, 8, 9, 10, 26 }; // Orc, Undead, Tauren, Troll, Goblin, BloodElf, Pandaren(H)
+
+    std::vector<uint8> compatibleRaces;
+    for (uint8 race : validRaces)
     {
-        race = irand(1, 11);
-        if (race == 9) continue;
-        if (group)
-        {
-            if (race == 1 || race == 3 || race == 4 || race == 7 || race == 11)
-            {
-                if (ExistClassByRace(race, prof))
-                    return race;
-            }
-        }
-        else
-        {
-            if (race == 2 || race == 5 || race == 6 || race == 8 || race == 10)
-            {
-                if (ExistClassByRace(race, prof))
-                    return race;
-            }
-        }
+        if (ExistClassByRace(race, prof))
+            compatibleRaces.push_back(race);
     }
 
-    TC_LOG_INFO("server.loading", ">> Random player custom Race timeout!");
-    if (group)
-        return 1;
-    return 2;
+    if (compatibleRaces.empty())
+    {
+        TC_LOG_ERROR("server.loading", ">> No compatible race found for class %u", prof);
+        return group ? 1 : 2;
+    }
+
+    return compatibleRaces[irand(0, compatibleRaces.size() - 1)];
 }
+
 uint8 PlayerBotMgr::RandomSkinColor(uint8 race, uint8 gender, uint8 prof)
 {
-    uint8 skinColor = 0;
-    for (int i = 0; i < 80; i++)
+    uint8 maxSkinColor = 10;
+
+    switch (race)
     {
-        skinColor = irand(0, 9);
-        CharSectionsEntry const* entry = sDB2Manager.GetCharSectionEntry(race, gender, CharBaseSectionVariation::Skin, 0, skinColor);
-        if (entry)
-        {
-            if ((entry->Flags & SECTION_FLAG_DEATH_KNIGHT) && prof != CLASS_DEATH_KNIGHT)
-                continue;
-            if (!(entry->Flags & SECTION_FLAG_PLAYER))
-                continue;
-            return skinColor;
-        }
+    case RACE_HUMAN:
+    case RACE_DWARF:
+    case RACE_GNOME:
+        maxSkinColor = 9;
+        break;
+    case RACE_NIGHTELF:
+        maxSkinColor = 8;
+        break;
+    case RACE_DRAENEI:
+        maxSkinColor = 13;
+        break;
+    case RACE_WORGEN:
+        maxSkinColor = 8;
+        break;
+    case RACE_PANDAREN_NEUTRAL:
+    case RACE_PANDAREN_ALLIANCE:
+    case RACE_PANDAREN_HORDE:
+        maxSkinColor = 14;
+        break;
+    default:
+        maxSkinColor = 10;
+        break;
     }
-    TC_LOG_INFO("server.loading", ">> Random player custom SkinColor timeout!");
-    return 1;
+
+    return irand(0, maxSkinColor - 1);
 }
+
 uint8 PlayerBotMgr::RandomFace(uint8 race, uint8 gender, uint8 skinColor, uint8 prof)
 {
-    uint8 faceID = 0;
-    for (int i = 0; i < 80; i++)
+    uint8 maxFace = 10;
+
+    switch (race)
     {
-        faceID = irand(0, 9);
-        CharSectionsEntry const* entry = sDB2Manager.GetCharSectionEntry(race, gender, CharBaseSectionVariation::Face, faceID, skinColor);
-        if (entry)
-        {
-            if ((entry->Flags & SECTION_FLAG_DEATH_KNIGHT) && prof != CLASS_DEATH_KNIGHT)
-                continue;
-            if (!(entry->Flags & SECTION_FLAG_PLAYER))
-                continue;
-            return faceID;
-        }
+    case RACE_WORGEN:
+        maxFace = 8;
+        break;
+    case RACE_GOBLIN:
+        maxFace = 6;
+        break;
+    case RACE_PANDAREN_NEUTRAL:
+    case RACE_PANDAREN_ALLIANCE:
+    case RACE_PANDAREN_HORDE:
+        maxFace = 10;
+        break;
+    default:
+        maxFace = 10;
+        break;
     }
-    TC_LOG_INFO("server.loading", ">> Random player custom Face timeout!");
-    return 1;
+
+    return irand(0, maxFace - 1);
 }
+
 uint8 PlayerBotMgr::RandomHair(uint8 race, uint8 gender, uint8 prof)
 {
-    uint8 hairID = 0;
-    for (uint8 hc = 0; hc < 80; hc++)
+    uint8 maxHair = 15;
+
+    switch (race)
     {
-        for (int i = 0; i < 80; i++)
-        {
-            hairID = irand(0, 8);
-            CharSectionsEntry const* entry = sDB2Manager.GetCharSectionEntry(race, gender, CharBaseSectionVariation::Hair, hairID, hc);
-            if (entry)
-            {
-                if ((entry->Flags & SECTION_FLAG_DEATH_KNIGHT) && prof != CLASS_DEATH_KNIGHT)
-                    continue;
-                if (!(entry->Flags & SECTION_FLAG_PLAYER))
-                    continue;
-                return hairID;
-            }
-        }
+    case RACE_HUMAN:
+        maxHair = gender == GENDER_MALE ? 11 : 18;
+        break;
+    case RACE_DWARF:
+        maxHair = gender == GENDER_MALE ? 10 : 13;
+        break;
+    case RACE_NIGHTELF:
+        maxHair = gender == GENDER_MALE ? 8 : 7;
+        break;
+    case RACE_GNOME:
+        maxHair = gender == GENDER_MALE ? 10 : 12;
+        break;
+    case RACE_DRAENEI:
+        maxHair = gender == GENDER_MALE ? 11 : 13;
+        break;
+    case RACE_WORGEN:
+        maxHair = gender == GENDER_MALE ? 8 : 12;
+        break;
+    case RACE_PANDAREN_NEUTRAL:
+    case RACE_PANDAREN_ALLIANCE:
+    case RACE_PANDAREN_HORDE:
+        maxHair = gender == GENDER_MALE ? 9 : 10;
+        break;
+    default:
+        maxHair = 10;
+        break;
     }
-    TC_LOG_INFO("server.loading", ">> Random player custom Hair timeout!");
-    return 0;
+
+    return irand(0, maxHair - 1);
 }
+
 uint8 PlayerBotMgr::RandomHairColor(uint8 race, uint8 gender, uint8 hairID, uint8 prof)
 {
-    uint8 hairColor = 0;
-    for (int i = 0; i < 80; i++)
+    uint8 maxHairColor = 10;
+
+    switch (race)
     {
-        hairColor = irand(0, 8);
-        CharSectionsEntry const* entry = sDB2Manager.GetCharSectionEntry(race, gender, CharBaseSectionVariation::Hair, hairID, hairColor);
-        if (entry)
-        {
-            if ((entry->Flags & SECTION_FLAG_DEATH_KNIGHT) && prof != CLASS_DEATH_KNIGHT)
-                continue;
-            if (!(entry->Flags & SECTION_FLAG_PLAYER))
-                continue;
-            return hairColor;
-        }
+    case RACE_NIGHTELF:
+        maxHairColor = 8;
+        break;
+    case RACE_DRAENEI:
+        maxHairColor = 7;
+        break;
+    case RACE_WORGEN:
+        maxHairColor = 11;
+        break;
+    case RACE_PANDAREN_NEUTRAL:
+    case RACE_PANDAREN_ALLIANCE:
+    case RACE_PANDAREN_HORDE:
+        maxHairColor = 6;
+        break;
+    default:
+        maxHairColor = 10;
+        break;
     }
-    TC_LOG_INFO("server.loading", ">> Random player custom HairColor timeout!");
-    return 1;
+
+    return irand(0, maxHairColor - 1);
 }
+
 uint8 PlayerBotMgr::RandomFacialHair(uint8 race, uint8 gender, uint8 hairColor, uint8 prof)
 {
-    uint8 facialHair = 0;
-    for (int i = 0; i < 80; i++)
+    if (gender == GENDER_FEMALE)
+        return 0;
+
+    uint8 maxFacialHair = 8;
+
+    switch (race)
     {
-        facialHair = irand(0, 7);
-        CharSectionsEntry const* entry = sDB2Manager.GetCharSectionEntry(race, gender, CharBaseSectionVariation::FacialHair, facialHair, hairColor);
-        if (entry)
-        {
-            if ((entry->Flags & SECTION_FLAG_DEATH_KNIGHT) && prof != CLASS_DEATH_KNIGHT)
-                continue;
-            if (!(entry->Flags & SECTION_FLAG_PLAYER))
-                continue;
-            return facialHair;
-        }
+    case RACE_HUMAN:
+        maxFacialHair = 8;
+        break;
+    case RACE_DWARF:
+        maxFacialHair = 10;
+        break;
+    case RACE_NIGHTELF:
+        maxFacialHair = 5;
+        break;
+    case RACE_GNOME:
+        maxFacialHair = 7;
+        break;
+    case RACE_DRAENEI:
+        maxFacialHair = 6;
+        break;
+    case RACE_WORGEN:
+        maxFacialHair = 5;
+        break;
+    case RACE_PANDAREN_NEUTRAL:
+    case RACE_PANDAREN_ALLIANCE:
+    case RACE_PANDAREN_HORDE:
+        maxFacialHair = 6;
+        break;
+    default:
+        maxFacialHair = 8;
+        break;
     }
-    TC_LOG_INFO("server.loading", ">> Random player custom FacialHair timeout!");
-    return 0;
+
+    return irand(0, maxFacialHair - 1);
 }
 
 WorldPacket PlayerBotMgr::BuildCreatePlayerData(bool group, uint8 prof)
 {
     std::string name = RandomName();
+
+    if (name.empty())
+    {
+        TC_LOG_ERROR("server.loading", ">> Bot name generation failed!");
+        name = "Bot" + std::to_string(irand(1000, 9999));
+    }
+
     uint8 race = RandomRace(group, prof);
     uint8 gender = irand(0, 1);
     uint8 skinColor = RandomSkinColor(race, gender, prof);
@@ -614,41 +690,124 @@ WorldPacket PlayerBotMgr::BuildCreatePlayerData(bool group, uint8 prof)
     uint8 hairID = RandomHair(race, gender, prof);
     uint8 hairColor = RandomHairColor(race, gender, hairID, prof);
     uint8 facialHair = RandomFacialHair(race, gender, hairColor, prof);
-    WorldPacket cmd(0x36);
-    cmd << name;
-    cmd << race;
-    cmd << prof;
-    cmd << gender;
-    cmd << skinColor;
-    cmd << faceID;
-    cmd << hairID;
-    cmd << hairColor;
-    cmd << facialHair;
-    cmd << 0;//OutfitId
 
-    return cmd;
+    TC_LOG_INFO("server.loading", ">> Building bot data: %s - Race: %u, Class: %u, Gender: %u",
+        name.c_str(), race, prof, gender);
+
+    WorldPacket data(CMSG_CREATE_CHARACTER);
+
+    data.WriteBits(name.length(), 6);  // Name length (6 bits)
+    data.WriteBit(false);              // hasTemplateSet = false
+    data.FlushBits();
+
+    data << uint8(race);
+    data << uint8(prof);
+    data << uint8(gender);
+    data << uint8(skinColor);
+    data << uint8(faceID);
+    data << uint8(hairID);
+    data << uint8(hairColor);
+    data << uint8(facialHair);
+    data << uint8(0);  // OutfitId
+
+    data << uint8(0);
+    data << uint8(0);
+    data << uint8(0);
+
+    data.WriteString(name);
+
+    return data;
 }
 
 void PlayerBotMgr::CreateOncePlayerBot()
 {
+    TC_LOG_INFO("server.loading", ">> CreateOncePlayerBot START");
+
     for (std::map<uint32, PlayerBotBaseInfo*>::iterator it = m_idPlayerBotBase.begin();
         it != m_idPlayerBotBase.end();
         it++)
     {
         PlayerBotBaseInfo* pInfo = it->second;
+
         if (pInfo->needCreateBots.size() > 0)
         {
-            WorldPacket& packet = pInfo->needCreateBots.front();
+            TC_LOG_INFO("server.loading", ">> Found %u bots in queue", (uint32)pInfo->needCreateBots.size());
+
+            WorldPacket packet = pInfo->needCreateBots.front();
             WorldSession* pSession = sWorld->FindSession(pInfo->id);
+
             if (pSession)
             {
-                //std::shared_ptr<CharacterCreateInfo> CreateInfo;
-                //pSession->HandleCharCreateOpcode(packet);
+                TC_LOG_INFO("server.loading", ">> Session found, parsing packet manually");
+
+                // Reset read position
+                packet.rpos(0);
+
+                auto createInfo = std::make_shared<WorldPackets::Character::CharacterCreateInfo>();
+
+                uint32 nameLength = packet.ReadBits(6);
+                bool hasTemplateSet = packet.ReadBit();
+                packet.FlushBits();
+
+                packet >> createInfo->Race;
+                packet >> createInfo->Class;
+                packet >> createInfo->Sex;
+                packet >> createInfo->Skin;
+                packet >> createInfo->Face;
+                packet >> createInfo->HairStyle;
+                packet >> createInfo->HairColor;
+                packet >> createInfo->FacialHairStyle;
+                packet >> createInfo->OutfitId;
+
+                // CustomDisplay array (3 bytes)
+                packet.read(createInfo->CustomDisplay.data(), createInfo->CustomDisplay.size());
+
+                createInfo->Name = packet.ReadString(nameLength);
+
+                if (hasTemplateSet)
+                    createInfo->TemplateSet = packet.read<int32>();
+
+                TC_LOG_INFO("server.loading", ">> Parsed character: %s, Race: %u, Class: %u",
+                    createInfo->Name.c_str(), createInfo->Race, createInfo->Class);
+
+                Player newChar(pSession);
+                newChar.GetMotionMaster()->Initialize();
+
+                if (newChar.Create(sObjectMgr->GetGenerator<HighGuid::Player>().Generate(), createInfo.get()))
+                {
+                    TC_LOG_INFO("server.loading", ">> Character created successfully!");
+
+                    newChar.setCinematic(2);
+                    newChar.SetAtLoginFlag(AT_LOGIN_FIRST);
+                    newChar.SaveToDB(true);
+
+                    sWorld->AddCharacterInfo(newChar.GetGUID(), pSession->GetAccountId(),
+                        newChar.GetName(), newChar.GetByteValue(PLAYER_BYTES_3, PLAYER_BYTES_3_OFFSET_GENDER),
+                        newChar.getRace(), newChar.getClass(), newChar.getLevel(), false);
+
+                    sPlayerBotMgr->OnPlayerBotCreate(newChar.GetGUID(), pSession->GetAccountId(),
+                        newChar.GetName(), newChar.GetByteValue(PLAYER_BYTES_3, PLAYER_BYTES_3_OFFSET_GENDER),
+                        newChar.getRace(), newChar.getClass(), newChar.getLevel());
+
+                    newChar.CleanupsBeforeDelete();
+                }
+                else
+                {
+                    TC_LOG_ERROR("server.loading", ">> Player::Create failed!");
+                    newChar.CleanupsBeforeDelete();
+                }
             }
+            else
+            {
+                TC_LOG_ERROR("server.loading", ">> Bot session not found!");
+            }
+
             pInfo->needCreateBots.pop();
             break;
         }
     }
+
+    TC_LOG_INFO("server.loading", ">> CreateOncePlayerBot END");
 }
 
 void PlayerBotMgr::ClearBaseInfo()
@@ -761,7 +920,7 @@ void PlayerBotMgr::SupplementAccount()
 
 void PlayerBotMgr::DestroyBotMail(uint32 guid)
 {
-    char sql[256] ={ 0 };
+    char sql[256] = { 0 };
     snprintf(sql, 255, "DELETE FROM mail WHERE receiver = %d", guid);
     CharacterDatabase.Execute(sql);
     //memset(sql, 0, 256);
@@ -933,8 +1092,6 @@ void PlayerBotMgr::OnPlayerBotCreate(ObjectGuid const& guid, uint32 accountId, s
         return;
     }
     pInfo->characters[id] = PlayerBotCharBaseInfo(id, accountId, name, uint16(race), uint16(playerClass), uint16(gender), uint16(level));
-
-    CreateOncePlayerBot();
 }
 
 void PlayerBotMgr::OnAccountBotCreate(ObjectGuid const& guid, uint32 accountId, std::string const& name, uint8 gender, uint8 race, uint8 playerClass, uint8 level)
@@ -977,7 +1134,7 @@ void PlayerBotMgr::OnPlayerBotLogin(WorldSession* pSession, Player* pPlayer)
     if (pPlayer->GetBattleground())
     {
         pPlayer->LeaveBattleground();
-       if (pSession)
+        if (pSession)
             pSession->HandleMoveWorldportAck();
     }
 
@@ -1035,7 +1192,7 @@ void PlayerBotMgr::LoginGroupBotByPlayer(Player* pPlayer)
         Player* friendPlayer = ObjectAccessor::FindPlayer(guid);
         if (friendPlayer)
             continue;
-        if (isok==0)
+        if (isok == 0)
             AddNewPlayerBotByGUID2(guid);
         else
             DelayLoginPlayerBotByGUID(guid);
@@ -1211,52 +1368,82 @@ bool PlayerBotMgr::PlayerBotLogout(uint32 account)
 
 void PlayerBotMgr::SupplementPlayerBot()
 {
+    TC_LOG_INFO("server.loading", ">> SupplementPlayerBot START");
+
     for (std::map<uint32, PlayerBotBaseInfo*>::iterator itInfo = m_idPlayerBotBase.begin();
-        itInfo != m_idPlayerBotBase.end();
-        itInfo++)
+        itInfo != m_idPlayerBotBase.end(); itInfo++)
     {
         PlayerBotBaseInfo* pInfo = itInfo->second;
+
+        TC_LOG_INFO("server.loading", ">> Processing bot info ID: %u", itInfo->first);
+
         if (pInfo->username.size() <= 0)
+        {
+            TC_LOG_INFO("server.loading", ">> Bot username empty, skipping");
             continue;
+        }
+
         if (pInfo->characters.size() >= 18)
+        {
+            TC_LOG_INFO("server.loading", ">> Bot already has 18 chars, skipping");
             continue;
+        }
+
         WorldSession* pSession = sWorld->FindSession(pInfo->id);
         if (!pSession)
         {
             TC_LOG_INFO("server.loading", ">> Create bot, but session offline.");
             continue;
         }
+
+        TC_LOG_INFO("server.loading", ">> Bot session found, username: %s", pInfo->username.c_str());
+
         std::string firstName = pInfo->username.substr(6);
-        char botname[30] ={ 0 };
+        char botname[30] = { 0 };
+
+        TC_LOG_INFO("server.loading", ">> FirstName extracted: %s", firstName.c_str());
+
         for (int i = 1; i < 10; i++)
         {
             if (i == 6) continue;
+
             if (!pInfo->ExistClass(true, i))
             {
                 memset(botname, 0, 30);
                 sprintf(botname, "%sA%d", firstName.c_str(), i);
+                TC_LOG_INFO("server.loading", ">> Pushing Alliance bot: %s, class: %u", botname, i);
                 pInfo->needCreateBots.push(BuildCreatePlayerData(true, i));
             }
+
             if (!pInfo->ExistClass(false, i))
             {
                 memset(botname, 0, 30);
                 sprintf(botname, "%sB%d", firstName.c_str(), i);
+                TC_LOG_INFO("server.loading", ">> Pushing Horde bot: %s, class: %u", botname, i);
                 pInfo->needCreateBots.push(BuildCreatePlayerData(false, i));
             }
         }
+
         if (!pInfo->ExistClass(true, 11))
         {
             memset(botname, 0, 30);
             sprintf(botname, "%sA11", firstName.c_str());
+            TC_LOG_INFO("server.loading", ">> Pushing Alliance Druid bot: %s", botname);
             pInfo->needCreateBots.push(BuildCreatePlayerData(true, 11));
         }
+
         if (!pInfo->ExistClass(false, 11))
         {
             memset(botname, 0, 30);
             sprintf(botname, "%sB11", firstName.c_str());
+            TC_LOG_INFO("server.loading", ">> Pushing Horde Druid bot: %s", botname);
             pInfo->needCreateBots.push(BuildCreatePlayerData(false, 11));
         }
+
+        TC_LOG_INFO("server.loading", ">> Total bots in queue: %u", (uint32)pInfo->needCreateBots.size());
     }
+
+    TC_LOG_INFO("server.loading", ">> Calling CreateOncePlayerBot()");
     CreateOncePlayerBot();
 }
 
@@ -1436,13 +1623,13 @@ bool PlayerBotMgr::AddNewPlayerBotByGUID(ObjectGuid& guid)
 {
     int32 isok = sConfigMgr->GetIntDefault("pbot", 1);
 
-    if (isok==0 && !guid)
+    if (isok == 0 && !guid)
         return false;
 
     int32 allianceCount = (int32)sPlayerBotMgr->GetOnlineBotCount(TEAM_ALLIANCE, true);
     int32 hordeCount = (int32)sPlayerBotMgr->GetOnlineBotCount(TEAM_HORDE, true);
 
-    if ((allianceCount+hordeCount) >= m_MaxOnlineBot)
+    if ((allianceCount + hordeCount) >= m_MaxOnlineBot)
         return false;
 
 
@@ -1546,7 +1733,7 @@ bool PlayerBotMgr::AddNewPlayerBotByGUID2(ObjectGuid& guid)
     int32 allianceCount = (int32)sPlayerBotMgr->GetOnlineBotCount(TEAM_ALLIANCE, true);
     int32 hordeCount = (int32)sPlayerBotMgr->GetOnlineBotCount(TEAM_HORDE, true);
 
-    if ((allianceCount+hordeCount) >= m_MaxOnlineBot) return false;
+    if ((allianceCount + hordeCount) >= m_MaxOnlineBot) return false;
 
 
     const SessionMap& allSession = sWorld->GetAllSessions();
@@ -1660,13 +1847,13 @@ void PlayerBotMgr::AddNewPlayerBot(bool faction, Classes prof, uint32 count)
 {
 
     int32 isok = sConfigMgr->GetIntDefault("pbot", 1);
-    if (isok==0 && prof == CLASS_NONE)
+    if (isok == 0 && prof == CLASS_NONE)
         return;
 
     int32 allianceCount = (int32)sPlayerBotMgr->GetOnlineBotCount(TEAM_ALLIANCE, true);
     int32 hordeCount = (int32)sPlayerBotMgr->GetOnlineBotCount(TEAM_HORDE, true);
 
-    if ((allianceCount+hordeCount) >= m_MaxOnlineBot)
+    if ((allianceCount + hordeCount) >= m_MaxOnlineBot)
         return;
 
     const SessionMap& allSession = sWorld->GetAllSessions();
@@ -1761,13 +1948,13 @@ void PlayerBotMgr::AddNewPlayerBot(bool faction, Classes prof, uint32 count)
 void PlayerBotMgr::AddNewAccountBot(bool faction, Classes prof)
 {
     int32 isok = sConfigMgr->GetIntDefault("pbotall", 1);
-    if (isok==0)
+    if (isok == 0)
         return;
 
     int32 allianceCount = (int32)sPlayerBotMgr->GetOnlineBotCount(TEAM_ALLIANCE, true);
     int32 hordeCount = (int32)sPlayerBotMgr->GetOnlineBotCount(TEAM_HORDE, true);
 
-    if ((allianceCount+hordeCount) >= m_MaxOnlineBot)
+    if ((allianceCount + hordeCount) >= m_MaxOnlineBot)
         return;
 
 
@@ -1873,13 +2060,13 @@ void PlayerBotMgr::AddNewAccountBot(bool faction, Classes prof)
 void PlayerBotMgr::AddNewPlayerBotByClass(uint32 count, Classes prof)
 {
     int32 isok = sConfigMgr->GetIntDefault("pbotall", 1);
-    if (isok==0)
+    if (isok == 0)
         return;
 
     int32 allianceCount = (int32)sPlayerBotMgr->GetOnlineBotCount(TEAM_ALLIANCE, true);
     int32 hordeCount = (int32)sPlayerBotMgr->GetOnlineBotCount(TEAM_HORDE, true);
 
-    if ((allianceCount+hordeCount) >= m_MaxOnlineBot) return;
+    if ((allianceCount + hordeCount) >= m_MaxOnlineBot) return;
 
     const SessionMap& allSession = sWorld->GetAllSessions();
     for (SessionMap::const_iterator itSession = allSession.begin(); itSession != allSession.end(); itSession++)
@@ -2521,49 +2708,49 @@ uint32 PlayerBotMgr::GetScheduleTalentByLFGRequirement(lfg::LfgRoles roles, uint
     uint32 talentType = 3;
     switch (botCls)
     {
-        case 1:
-            if (roles == lfg::LfgRoles::PLAYER_ROLE_TANK)
-                talentType = 2;
-            else
-                talentType = urand(0, 1);
-            break;
-        case 2:
-            if (roles == lfg::LfgRoles::PLAYER_ROLE_TANK)
-                talentType = 1;
-            else if (roles == lfg::LfgRoles::PLAYER_ROLE_HEALER)
+    case 1:
+        if (roles == lfg::LfgRoles::PLAYER_ROLE_TANK)
+            talentType = 2;
+        else
+            talentType = urand(0, 1);
+        break;
+    case 2:
+        if (roles == lfg::LfgRoles::PLAYER_ROLE_TANK)
+            talentType = 1;
+        else if (roles == lfg::LfgRoles::PLAYER_ROLE_HEALER)
+            talentType = 0;
+        else
+            talentType = 2;
+        break;
+    case 6:
+        if (roles == lfg::LfgRoles::PLAYER_ROLE_TANK)
+            talentType = 1;
+        else
+        {
+            if (urand(0, 1) == 0)
                 talentType = 0;
             else
                 talentType = 2;
-            break;
-        case 6:
-            if (roles == lfg::LfgRoles::PLAYER_ROLE_TANK)
-                talentType = 1;
-            else
-            {
-                if (urand(0, 1) == 0)
-                    talentType = 0;
-                else
-                    talentType = 2;
-            }
-            break;
-        case 5:
-            if (roles == lfg::LfgRoles::PLAYER_ROLE_DAMAGE)
-                talentType = 2;
-            else
-                talentType = urand(0, 1);
-            break;
-        case 7:
-            if (roles == lfg::LfgRoles::PLAYER_ROLE_HEALER)
-                talentType = 2;
-            else
-                talentType = urand(0, 1);
-            break;
-        case 11:
-            if (roles == lfg::LfgRoles::PLAYER_ROLE_HEALER)
-                talentType = 2;
-            else
-                talentType = urand(0, 1);
-            break;
+        }
+        break;
+    case 5:
+        if (roles == lfg::LfgRoles::PLAYER_ROLE_DAMAGE)
+            talentType = 2;
+        else
+            talentType = urand(0, 1);
+        break;
+    case 7:
+        if (roles == lfg::LfgRoles::PLAYER_ROLE_HEALER)
+            talentType = 2;
+        else
+            talentType = urand(0, 1);
+        break;
+    case 11:
+        if (roles == lfg::LfgRoles::PLAYER_ROLE_HEALER)
+            talentType = 2;
+        else
+            talentType = urand(0, 1);
+        break;
     }
     return talentType;
 }
@@ -2575,52 +2762,52 @@ lfg::LfgRoles PlayerBotMgr::GetPlayerBotCurrentLFGRoles(Player* player)
     uint32 talentType = player->FindTalentType();
     switch (player->getClass())
     {
-        case 1:
-            if (talentType == 2)
-                return lfg::LfgRoles::PLAYER_ROLE_TANK;
-            else
-                return lfg::LfgRoles::PLAYER_ROLE_DAMAGE;
-            break;
-        case 2:
-            if (talentType == 0)
-                return lfg::LfgRoles::PLAYER_ROLE_HEALER;
-            else if (talentType == 1)
-                return lfg::LfgRoles::PLAYER_ROLE_TANK;
-            else
-                return lfg::LfgRoles::PLAYER_ROLE_DAMAGE;
-            break;
-        case 6:
-            if (talentType == 1)
-                return lfg::LfgRoles::PLAYER_ROLE_TANK;
-            else
-                return lfg::LfgRoles::PLAYER_ROLE_DAMAGE;
-            break;
-        case 3:
-        case 4:
-        case 8:
-        case 9:
+    case 1:
+        if (talentType == 2)
+            return lfg::LfgRoles::PLAYER_ROLE_TANK;
+        else
             return lfg::LfgRoles::PLAYER_ROLE_DAMAGE;
-            break;
-        case 5:
-            if (talentType == 2)
-                return lfg::LfgRoles::PLAYER_ROLE_DAMAGE;
-            else
-                return lfg::LfgRoles::PLAYER_ROLE_HEALER;
-            break;
-        case 7:
-            if (talentType == 2)
-                return lfg::LfgRoles::PLAYER_ROLE_HEALER;
-            else
-                return lfg::LfgRoles::PLAYER_ROLE_DAMAGE;
-            break;
-        case 11:
-            if (talentType == 2)
-                return lfg::LfgRoles::PLAYER_ROLE_HEALER;
-            else
-                return lfg::LfgRoles::PLAYER_ROLE_DAMAGE;
-            break;
-        default:
+        break;
+    case 2:
+        if (talentType == 0)
+            return lfg::LfgRoles::PLAYER_ROLE_HEALER;
+        else if (talentType == 1)
+            return lfg::LfgRoles::PLAYER_ROLE_TANK;
+        else
             return lfg::LfgRoles::PLAYER_ROLE_DAMAGE;
+        break;
+    case 6:
+        if (talentType == 1)
+            return lfg::LfgRoles::PLAYER_ROLE_TANK;
+        else
+            return lfg::LfgRoles::PLAYER_ROLE_DAMAGE;
+        break;
+    case 3:
+    case 4:
+    case 8:
+    case 9:
+        return lfg::LfgRoles::PLAYER_ROLE_DAMAGE;
+        break;
+    case 5:
+        if (talentType == 2)
+            return lfg::LfgRoles::PLAYER_ROLE_DAMAGE;
+        else
+            return lfg::LfgRoles::PLAYER_ROLE_HEALER;
+        break;
+    case 7:
+        if (talentType == 2)
+            return lfg::LfgRoles::PLAYER_ROLE_HEALER;
+        else
+            return lfg::LfgRoles::PLAYER_ROLE_DAMAGE;
+        break;
+    case 11:
+        if (talentType == 2)
+            return lfg::LfgRoles::PLAYER_ROLE_HEALER;
+        else
+            return lfg::LfgRoles::PLAYER_ROLE_DAMAGE;
+        break;
+    default:
+        return lfg::LfgRoles::PLAYER_ROLE_DAMAGE;
     }
     return lfg::LfgRoles::PLAYER_ROLE_DAMAGE;
 }
@@ -2768,7 +2955,7 @@ void PlayerBotMgr::QueryRatedArenaRequirement()
     if (!bracketEntry)
         return;
 
-    uint32 arenaType[3] ={ 2, 3, 5 };
+    uint32 arenaType[3] = { 2, 3, 5 };
     for (uint32 i = 0; i < 3; i++)
     {
         BattlegroundQueueTypeId bgQueueTypeID = BattlegroundMgr::BGQueueTypeId(BattlegroundTypeId(BattlegroundTypeId::BATTLEGROUND_AA), arenaType[i]);
@@ -2786,7 +2973,7 @@ void PlayerBotMgr::QueryRatedArenaRequirement()
             continue;
         //if (allianceGroupInfo && hordeGroupInfo)
             //{
-			//allianceArenaTeamID = allianceGroupInfo->ArenaTeamId;
+            //allianceArenaTeamID = allianceGroupInfo->ArenaTeamId;
             //hordeArenaTeamID = hordeGroupInfo->ArenaTeamId;
         //}
         /*else if (allianceGroupInfo && !BotUtility::DownBotArenaTeam)
@@ -2838,7 +3025,7 @@ void PlayerBotMgr::QueryNonRatedArenaRequirement()
         }
     }
 
-    uint32 arenaType[3] ={ 2, 3, 5 };
+    uint32 arenaType[3] = { 2, 3, 5 };
     for (uint32 i = 0; i < 3; i++)
     {
         BattlegroundQueueTypeId bgQueueTypeID = BattlegroundMgr::BGQueueTypeId(BattlegroundTypeId(BattlegroundTypeId::BATTLEGROUND_AA), arenaType[i]);
@@ -2979,7 +3166,7 @@ uint32 PlayerBotMgr::GetOnlineBotCount2(TeamId team, bool hasReal)
             if (!player || !player->IsInWorld())
                 continue;
 
-            if (!player->InBattleground() &&  !player->InBattlegroundQueue())
+            if (!player->InBattleground() && !player->InBattlegroundQueue())
                 continue;
 
             if (team != TEAM_NEUTRAL)
@@ -2998,7 +3185,7 @@ uint32 PlayerBotMgr::GetOnlineBotCount2(TeamId team, bool hasReal)
             if (!player || !player->IsInWorld())
                 continue;
 
-            if (!player->InBattleground() &&  !player->InBattlegroundQueue())
+            if (!player->InBattleground() && !player->InBattlegroundQueue())
                 continue;
 
             if (team != TEAM_NEUTRAL)
@@ -3028,8 +3215,8 @@ void PlayerBotMgr::Update()
         m_LFGSearchTick = 0;
         if (lfg::LFGBotRequirement* pbotReq = sLFGMgr->SearchLFGBotRequirement())
         {
-        	AddNewPlayerBotToLFG(pbotReq);
-        	delete pbotReq;
+            AddNewPlayerBotToLFG(pbotReq);
+            delete pbotReq;
         }
     }
     else

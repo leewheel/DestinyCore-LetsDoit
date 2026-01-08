@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2018 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -144,7 +143,7 @@ enum WarriorSpells
     SPELL_WARRIOR_RETALIATION_DAMAGE                = 22858,
     SPELL_WARRIOR_SECOND_WIND_DAMAGED               = 202149,
     SPELL_WARRIOR_SECOND_WIND_HEAL                  = 202147,
-    SPELL_WARRIOR_SHIELD_BLOCKC_TRIGGERED           = 132404,
+    SPELL_WARRIOR_SHIELD_BLOCK_TRIGGERED            = 132404,
     SPELL_WARRIOR_SHIELD_SLAM                       = 23922,
     SPELL_WARRIOR_SHOCKWAVE                         = 46968,
     SPELL_WARRIOR_SHOCKWAVE_STUN                    = 132168,
@@ -555,7 +554,7 @@ public:
 class spell_warr_intimidating_shout : public SpellScriptLoader
 {
 public:
-    spell_warr_intimidating_shout() : SpellScriptLoader("spell_warr_intimidating_shout") { }
+    spell_warr_intimidating_shout() : SpellScriptLoader("spell_warr_intimidating_shout") {}
 
     class spell_warr_intimidating_shout_SpellScript : public SpellScript
     {
@@ -568,8 +567,8 @@ public:
 
         void Register() override
         {
-            OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_warr_intimidating_shout_SpellScript::FilterTargets, EFFECT_1, TARGET_UNIT_SRC_AREA_ENEMY);
             OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_warr_intimidating_shout_SpellScript::FilterTargets, EFFECT_2, TARGET_UNIT_SRC_AREA_ENEMY);
+            OnObjectAreaTargetSelect += SpellObjectAreaTargetSelectFn(spell_warr_intimidating_shout_SpellScript::FilterTargets, EFFECT_3, TARGET_UNIT_SRC_AREA_ENEMY);
         }
     };
 
@@ -806,32 +805,33 @@ public:
     }
 };
 
-/// Updated 4.3.4
+/// 1464 Slam
 class spell_warr_slam : public SpellScriptLoader
 {
 public:
-    spell_warr_slam() : SpellScriptLoader("spell_warr_slam") { }
+    spell_warr_slam() : SpellScriptLoader("spell_warr_slam") {}
 
     class spell_warr_slam_SpellScript : public SpellScript
     {
         PrepareSpellScript(spell_warr_slam_SpellScript);
 
-        bool Validate(SpellInfo const* /*spellInfo*/) override
+        enum eSpells
         {
-            if (!sSpellMgr->GetSpellInfo(SPELL_WARRIOR_SLAM))
-                return false;
-            return true;
-        }
+            WeightedBlade = 253383
+        };
 
-        void HandleDummy(SpellEffIndex /*effIndex*/)
+        void HandleAfterCast()
         {
-            if (GetHitUnit())
-                GetCaster()->CastCustomSpell(SPELL_WARRIOR_SLAM, SPELLVALUE_BASE_POINT0, GetEffectValue(), GetHitUnit(), TRIGGERED_FULL_MASK);
+            Unit* caster = GetCaster();
+            if (!caster)
+                return;
+
+            caster->RemoveAura(eSpells::WeightedBlade);
         }
 
         void Register() override
         {
-            OnEffectHitTarget += SpellEffectFn(spell_warr_slam_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+            AfterCast += SpellCastFn(spell_warr_slam_SpellScript::HandleAfterCast);
         }
     };
 
@@ -1479,59 +1479,18 @@ public:
     }
 };
 
-class spell_warr_shield_block : public SpellScriptLoader
+class spell_warr_shield_block : public SpellScript
 {
-public:
-    spell_warr_shield_block() : SpellScriptLoader("spell_warr_shield_block") { }
+    PrepareSpellScript(spell_warr_shield_block);
 
-    class spell_warr_shield_block_SpellScript : public SpellScript
+    void HandleDummy(SpellEffIndex /*effIndex*/)
     {
-        PrepareSpellScript(spell_warr_shield_block_SpellScript);
-
-        void HandleOnHit()
-        {
-            if (Player* _player = GetCaster()->ToPlayer())
-                _player->CastSpell(_player, SPELL_WARRIOR_SHIELD_BLOCKC_TRIGGERED, true);
-        }
-
-        void Register() override
-        {
-            OnHit += SpellHitFn(spell_warr_shield_block_SpellScript::HandleOnHit);
-        }
-    };
-
-    class spell_warr_shield_block_AuraScript : public AuraScript
-    {
-        PrepareAuraScript(spell_warr_shield_block_AuraScript);
-
-        bool Validate(SpellInfo const* /*spellInfo*/) override
-        {
-            if (!sSpellMgr->GetSpellInfo(SPELL_WARRIOR_SHIELD_BLOCKC_TRIGGERED))
-                return false;
-            return true;
-        }
-
-        void CalculateAmount(AuraEffect const* /*aurEff*/, int32& amount, bool& /*canBeRecalculated*/)
-        {
-            if (Unit* caster = GetCaster())
-                if (caster->HasAura(SPELL_WARRIOR_HEAVY_REPERCUSSIONS))
-                    amount += 30;
-        }
-
-        void Register() override
-        {
-            DoEffectCalcAmount += AuraEffectCalcAmountFn(spell_warr_shield_block_AuraScript::CalculateAmount, EFFECT_1, SPELL_AURA_MOD_DAMAGE_PERCENT_DONE);
-        }
-    };
-
-    SpellScript* GetSpellScript() const override
-    {
-        return new spell_warr_shield_block_SpellScript();
+        GetCaster()->CastSpell(GetCaster(), SPELL_WARRIOR_SHIELD_BLOCK_TRIGGERED);
     }
 
-    AuraScript* GetAuraScript() const override
+    void Register() override
     {
-        return new spell_warr_shield_block_AuraScript();
+        OnEffectHit += SpellEffectFn(spell_warr_shield_block::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
     }
 };
 
@@ -1845,8 +1804,8 @@ public:
         {
             //Handles the passive bonuses
             if (Unit* caster = GetCaster())
-                if (caster->HasAura(SPELL_WARRIOR_HEAVY_REPERCUSSIONS) && caster->HasAura(SPELL_WARRIOR_SHIELD_BLOCKC_TRIGGERED))
-                     caster->GetAura(SPELL_WARRIOR_SHIELD_BLOCKC_TRIGGERED)->SetDuration(caster->GetAura(SPELL_WARRIOR_SHIELD_BLOCKC_TRIGGERED)->GetDuration() + 1500);
+                if (caster->HasAura(SPELL_WARRIOR_HEAVY_REPERCUSSIONS) && caster->HasAura(SPELL_WARRIOR_SHIELD_BLOCK_TRIGGERED))
+                     caster->GetAura(SPELL_WARRIOR_SHIELD_BLOCK_TRIGGERED)->SetDuration(caster->GetAura(SPELL_WARRIOR_SHIELD_BLOCK_TRIGGERED)->GetDuration() + 1500);
         }
 
         void Register() override

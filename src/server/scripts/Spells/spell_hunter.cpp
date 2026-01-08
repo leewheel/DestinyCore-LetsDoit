@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017-2018 AshamaneProject <https://github.com/AshamaneProject>
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -50,6 +49,7 @@ enum HunterSpells
     SPELL_HUNTER_A_MURDER_OF_CROWS_2                = 206505,
     SPELL_HUNTER_A_MURDER_OF_CROWS_DAMAGE           = 131900,
     SPELL_HUNTER_AIMED_SHOT                         = 19434,
+    SPELL_HUNTER_GLYPH_OF_MISDIRECTION              = 56829,
     SPELL_HUNTER_ANIMAL_INSTINCTS                   = 204315,
     SPELL_HUNTER_ANIMAL_INSTINCTS_CHEETAH           = 204324,
     SPELL_HUNTER_ANIMAL_INSTINCTS_MONGOOSE          = 204333,
@@ -127,6 +127,8 @@ enum HunterSpells
     SPELL_HUNTER_TRAILBLAZER_BUFF                   = 231390,
     SPELL_HUNTER_VULNERABLE                         = 187131,
     SPELL_HUNTER_WILD_CALL_AURA                     = 185791,
+    SPELL_HUNTER_MASTER_OF_BEASTS                   = 197248,
+    SPELL_HUNTER_ASPECT_OF_THE_BEAST                = 191384
 };
 
 enum AncientHysteriaSpells
@@ -151,6 +153,13 @@ enum DireBeastSpells
     DIRE_BEAST_TOWNLONG_STEPPES                     = 126215,
     DIRE_BEAST_VALE_OF_THE_ETERNAL_BLOSSOM          = 126213,
     DIRE_BEAST_VALLEY_OF_THE_FOUR_WINDS             = 122811,
+};
+
+enum AspectOfTheBeastSpells
+{
+    SPELL_BESTIAL_FEROCITY = 191413,
+    SPELL_BESTIAL_CUNNING = 191397,
+    SPELL_BESTIAL_TENACITY = 191414
 };
 
 // Harpoon - 190925
@@ -519,46 +528,66 @@ public:
 class spell_hun_misdirection : public SpellScriptLoader
 {
 public:
-    spell_hun_misdirection() : SpellScriptLoader("spell_hun_misdirection") { }
+    spell_hun_misdirection() : SpellScriptLoader("spell_hun_misdirection") {}
 
     class spell_hun_misdirection_AuraScript : public AuraScript
     {
         PrepareAuraScript(spell_hun_misdirection_AuraScript);
 
+        bool _hasGlyph;
         bool Validate(SpellInfo const* /*spellInfo*/) override
         {
             return ValidateSpellInfo({ SPELL_HUNTER_MISDIRECTION_PROC });
         }
 
+        void OnApply(AuraEffect const*  /*aurEff*/, AuraEffectHandleModes /*mode*/)
+        {
+            if (!GetCaster())
+            {
+                _hasGlyph = false;
+                return;
+            }
+
+            _hasGlyph = false;
+
+            if (Player* _player = GetCaster()->ToPlayer())
+                if (Unit* target = GetTarget())
+                    if (Pet* pet = _player->GetPet())
+                        if (pet->GetGUID() == target->GetGUID())
+                            if (_player->HasAura(SPELL_HUNTER_GLYPH_OF_MISDIRECTION))
+                                _hasGlyph = true;
+        }
+
         void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
         {
-            if (GetTargetApplication()->GetRemoveMode() == AURA_REMOVE_BY_DEFAULT || GetTargetApplication()->GetRemoveMode() == AURA_REMOVE_BY_INTERRUPT)
+            if (!GetCaster())
                 return;
-                
-            if (!GetTarget()->HasAura(SPELL_HUNTER_MISDIRECTION_PROC))
-                GetTarget()->ResetRedirectThreat();
-        }
 
-        bool CheckProc(ProcEventInfo& /*eventInfo*/)
-        {
-            return GetTarget()->GetRedirectThreatTarget() != nullptr;
-        }
+            if (Player* _player = GetCaster()->ToPlayer())
+            {
+                if (!GetDuration())
+                {
+                    _player->ResetRedirectThreat();
 
-        void HandleProc(AuraEffect const* aurEff, ProcEventInfo& /*eventInfo*/)
-        {
-            PreventDefaultAction();
-            GetTarget()->CastSpell(GetTarget(), SPELL_HUNTER_MISDIRECTION_PROC, true, NULL, aurEff);
+                    if (_hasGlyph)
+                    {
+                        if (_player->GetSpellHistory()->HasCooldown(SPELL_HUNTER_MISDIRECTION))
+                            _player->GetSpellHistory()->ResetCooldown(SPELL_HUNTER_MISDIRECTION);
+                        if (_player->GetSpellHistory()->HasCooldown(SPELL_HUNTER_MISDIRECTION_PROC))
+                            _player->GetSpellHistory()->ResetCooldown(SPELL_HUNTER_MISDIRECTION_PROC);
+                    }
+                }
+            }
         }
 
         void Register() override
         {
-            AfterEffectRemove += AuraEffectRemoveFn(spell_hun_misdirection_AuraScript::OnRemove, EFFECT_1, SPELL_AURA_DUMMY, AURA_EFFECT_HANDLE_REAL);
-            DoCheckProc += AuraCheckProcFn(spell_hun_misdirection_AuraScript::CheckProc);
-            OnEffectProc += AuraEffectProcFn(spell_hun_misdirection_AuraScript::HandleProc, EFFECT_1, SPELL_AURA_DUMMY);
+            AfterEffectApply += AuraEffectApplyFn(spell_hun_misdirection_AuraScript::OnApply, EFFECT_1, SPELL_AURA_MOD_SCALE, AURA_EFFECT_HANDLE_REAL);
+            AfterEffectRemove += AuraEffectRemoveFn(spell_hun_misdirection_AuraScript::OnRemove, EFFECT_1, SPELL_AURA_MOD_SCALE, AURA_EFFECT_HANDLE_REAL);
         }
     };
 
-    AuraScript* GetAuraScript() const override
+    AuraScript* GetAuraScript() const
     {
         return new spell_hun_misdirection_AuraScript();
     }
@@ -568,7 +597,7 @@ public:
 class spell_hun_misdirection_proc : public SpellScriptLoader
 {
 public:
-    spell_hun_misdirection_proc() : SpellScriptLoader("spell_hun_misdirection_proc") { }
+    spell_hun_misdirection_proc() : SpellScriptLoader("spell_hun_misdirection_proc") {}
 
     class spell_hun_misdirection_proc_AuraScript : public AuraScript
     {
@@ -1015,9 +1044,17 @@ public:
             if (!pet || pet->isDead())
                 return SPELL_FAILED_NO_PET;
 
-            // pet has a target and target is within 5 yards and target is in line of sight
-            if (!petTarget || !pet->IsWithinDist(petTarget, 25.0f, true) || !petTarget->IsWithinLOSInMap(pet))
-                return SPELL_FAILED_DONT_REPORT;
+            // no target
+            if (!petTarget)
+                return SPELL_FAILED_NO_VALID_TARGETS;
+
+            // target not in range
+            if (!pet->IsWithinDist(petTarget, 40.0f, true))
+                return SPELL_FAILED_OUT_OF_RANGE;
+
+            // target not in line of sight
+            if (!petTarget->IsWithinLOSInMap(pet))
+                return SPELL_FAILED_LINE_OF_SIGHT;
 
             if (pet->HasAuraType(SPELL_AURA_MOD_STUN) || pet->HasAuraType(SPELL_AURA_MOD_CONFUSE) || pet->HasAuraType(SPELL_AURA_MOD_SILENCE) ||
                 pet->HasAuraType(SPELL_AURA_MOD_FEAR) || pet->HasAuraType(SPELL_AURA_MOD_FEAR_2))
@@ -1030,6 +1067,7 @@ public:
         {
             if (GetCaster()->IsPlayer())
             {
+
                 if (Unit* pet = GetCaster()->GetGuardianPet())
                 {
                     if (!pet)
@@ -1039,7 +1077,7 @@ public:
                         return;
 
                     pet->CastSpell(GetExplTargetUnit(), SPELL_HUNTER_KILL_COMMAND_TRIGGER, true);
-
+                    
                     if (pet->GetVictim())
                     {
                         pet->AttackStop();
@@ -1049,13 +1087,33 @@ public:
                         pet->ToCreature()->AI()->AttackStart(GetExplTargetUnit());
 
                     pet->CastSpell(GetExplTargetUnit(), SPELL_HUNTER_KILL_COMMAND_CHARGE, true);
+
+                    // Aspect of the Beast
+                    if (GetCaster()->HasAura(SPELL_HUNTER_ASPECT_OF_THE_BEAST))
+                    {
+                        switch (((Pet*)pet)->GetSpecialization())
+                        {
+                        case PET_SPEC_FEROCITY:
+                        case PET_SPEC_FEROCITY_ALT:
+                            pet->CastSpell(GetExplTargetUnit(), SPELL_BESTIAL_FEROCITY, true);
+                            break;
+                        case PET_SPEC_CUNNING:
+                        case PET_SPEC_CUNNING_ALT:
+                            pet->CastSpell(GetExplTargetUnit(), SPELL_BESTIAL_CUNNING, true);
+                            break;
+                        case PET_SPEC_TENACITY:
+                        case PET_SPEC_TENACITY_ALT:
+                            pet->CastSpell(pet, SPELL_BESTIAL_TENACITY, true);
+                            break;
+                        }
+                    }
                 }
 				if (Creature* hati = GetCaster()->GetHati())
                 {
                     if (!hati || hati->isDead())
                         return;
 
-                    if (!GetExplTargetUnit() || !hati->IsWithinDist(GetExplTargetUnit(), 25.0f, true) || !GetExplTargetUnit()->IsWithinLOSInMap(hati) || !GetCaster()->HasAura(197248))
+                    if (!GetExplTargetUnit() || !hati->IsWithinDist(GetExplTargetUnit(), 25.0f, true) || !GetExplTargetUnit()->IsWithinLOSInMap(hati) || !GetCaster()->HasAura(SPELL_HUNTER_MASTER_OF_BEASTS))
                         return;
                     hati->CastSpell(GetExplTargetUnit(), SPELL_HUNTER_KILL_COMMAND_TRIGGER, true);
 
@@ -1097,21 +1155,18 @@ public:
 
         void HandleDamage(SpellEffIndex /*effIndex*/)
         {
-            Unit* caster = GetCaster();
-            Unit* owner = caster->GetOwner();
-            Unit* target = GetExplTargetUnit();
+            if (Unit* caster = GetCaster())
+            {
+                if (Player* owner = caster->GetOwner()->ToPlayer())
+                {
+                    // formula from Patch 7.2.5
+                    // [ 1.5 * (1 + (Ranged Attack Power * 3.6)) * 1 * (0.5 + min( Level, 20 ) * 0.025) * (1 + Versatility) ]
+                    float rawdmg = 1.5f * (1.0f + owner->GetUInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER) * 3.6f);
+                    rawdmg *= (0.5f + std::min(int32(owner->getLevel()), 20) * 0.025f) * (1 + owner->GetRatingBonusValue(CR_VERSATILITY_DAMAGE_DONE) / 100.0f);
 
-            // (1.5 * (rap * 3) * bmMastery * lowNerf * (1 + versability))
-            int32 dmg = 4.5f * owner->GetUInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER);
-            int32 lowNerf = std::min(int32(owner->getLevel()), 20) * 0.05f;
-
-            dmg = AddPct(dmg, owner->GetFloatValue(PLAYER_MASTERY));
-            dmg *= lowNerf;
-
-            dmg = caster->SpellDamageBonusDone(target, GetSpellInfo(), dmg, SPELL_DIRECT_DAMAGE, GetEffectInfo(EFFECT_0));
-            dmg = target->SpellDamageBonusTaken(caster, GetSpellInfo(), dmg, SPELL_DIRECT_DAMAGE, GetEffectInfo(EFFECT_0));
-
-            SetHitDamage(dmg);
+                    SetHitDamage((int32)rawdmg);
+                }
+            }
         }
 
         void Register() override
@@ -1998,8 +2053,25 @@ public:
                         pet->AddThreat(target, 400.0f);
                     }
 
-                    dmg = player->SpellDamageBonusDone(target, GetSpellInfo(), dmg, SPELL_DIRECT_DAMAGE, GetEffectInfo(EFFECT_0));
-                    dmg = target->SpellDamageBonusTaken(player, GetSpellInfo(), dmg, SPELL_DIRECT_DAMAGE, GetEffectInfo(EFFECT_0));
+                    // Aspect of the Beast
+                    if (GetCaster()->HasAura(SPELL_HUNTER_ASPECT_OF_THE_BEAST))
+                    {
+                        switch (((Pet*)pet)->GetSpecialization())
+                        {
+                        case PET_SPEC_FEROCITY:
+                        case PET_SPEC_FEROCITY_ALT:
+                            pet->CastSpell(target, SPELL_BESTIAL_FEROCITY, true);
+                            break;
+                        case PET_SPEC_CUNNING:
+                        case PET_SPEC_CUNNING_ALT:
+                            pet->CastSpell(target, SPELL_BESTIAL_CUNNING, true);
+                            break;
+                        case PET_SPEC_TENACITY:
+                        case PET_SPEC_TENACITY_ALT:
+                            pet->CastSpell(pet, SPELL_BESTIAL_TENACITY, true);
+                            break;
+                        }
+                    }
 
                     SetHitDamage(dmg);
                 }

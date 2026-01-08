@@ -2520,6 +2520,32 @@ void Creature::SetInCombatWithZone()
     }
 }
 
+void Creature::PrepareChanneledCast(float facing, uint32 spell_id, bool triggered)
+{
+    AttackStop();
+    SetReactState(REACT_PASSIVE);
+    SetFacingTo(facing);
+
+    if (spell_id)
+        CastSpell(this, spell_id, triggered);
+}
+
+void Creature::RemoveChanneledCast(ObjectGuid target)
+{
+    SetReactState(REACT_AGGRESSIVE);
+
+    if (Unit* itr = ObjectAccessor::GetUnit(*this, target))
+    {
+        GetMotionMaster()->MoveChase(itr);
+        Attack(itr, true);
+    }
+    else if (Player* itr = FindNearestPlayer(100.0f))
+    {
+        GetMotionMaster()->MoveChase(itr);
+        Attack(itr, true);
+    }
+}
+
 bool Creature::HasSpell(uint32 spellID) const
 {
     for (uint8 i = 0; i < MAX_CREATURE_SPELLS; ++i)

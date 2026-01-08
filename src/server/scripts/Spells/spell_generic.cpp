@@ -3412,67 +3412,77 @@ class spell_gen_tournament_pennant : public SpellScriptLoader
 
 class spell_gen_trigger_exclude_caster_aura_spell : public SpellScriptLoader
 {
-    public:
-        spell_gen_trigger_exclude_caster_aura_spell() : SpellScriptLoader("spell_gen_trigger_exclude_caster_aura_spell") { }
+public:
+    spell_gen_trigger_exclude_caster_aura_spell() : SpellScriptLoader("spell_gen_trigger_exclude_caster_aura_spell") {}
 
-        class spell_gen_trigger_exclude_caster_aura_spell_SpellScript : public SpellScript
+    class spell_gen_trigger_exclude_caster_aura_spell_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_gen_trigger_exclude_caster_aura_spell_SpellScript);
+
+        bool Validate(SpellInfo const* spellInfo) override
         {
-            PrepareSpellScript(spell_gen_trigger_exclude_caster_aura_spell_SpellScript);
-
-            bool Validate(SpellInfo const* spellInfo) override
-            {
-                return ValidateSpellInfo({ spellInfo->ExcludeCasterAuraSpell });
-            }
-
-            void HandleTrigger()
-            {
-                // Blizz seems to just apply aura without bothering to cast
-                GetCaster()->AddAura(GetSpellInfo()->ExcludeCasterAuraSpell, GetCaster());
-            }
-
-            void Register() override
-            {
-                AfterCast += SpellCastFn(spell_gen_trigger_exclude_caster_aura_spell_SpellScript::HandleTrigger);
-            }
-        };
-
-        SpellScript* GetSpellScript() const override
-        {
-            return new spell_gen_trigger_exclude_caster_aura_spell_SpellScript();
+            uint32 excludeSpellID = spellInfo->ExcludeCasterAuraSpell;
+            if (!excludeSpellID)
+                return true; // spellID==0
+            if (!sSpellMgr->GetSpellInfo(excludeSpellID))
+                return true; // spellID not exist; 
+            return ValidateSpellInfo({ excludeSpellID });
         }
+
+        void HandleTrigger()
+        {
+            // Blizz seems to just apply aura without bothering to cast
+            GetCaster()->AddAura(GetSpellInfo()->ExcludeCasterAuraSpell, GetCaster());
+        }
+
+        void Register() override
+        {
+            AfterCast += SpellCastFn(spell_gen_trigger_exclude_caster_aura_spell_SpellScript::HandleTrigger);
+        }
+    };
+
+    SpellScript* GetSpellScript() const override
+    {
+        return new spell_gen_trigger_exclude_caster_aura_spell_SpellScript();
+    }
 };
 
 class spell_gen_trigger_exclude_target_aura_spell : public SpellScriptLoader
 {
-    public:
-        spell_gen_trigger_exclude_target_aura_spell() : SpellScriptLoader("spell_gen_trigger_exclude_target_aura_spell") { }
+public:
+    spell_gen_trigger_exclude_target_aura_spell() : SpellScriptLoader("spell_gen_trigger_exclude_target_aura_spell") {}
 
-        class spell_gen_trigger_exclude_target_aura_spell_SpellScript : public SpellScript
+    class spell_gen_trigger_exclude_target_aura_spell_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_gen_trigger_exclude_target_aura_spell_SpellScript);
+
+        bool Validate(SpellInfo const* spellInfo) override
         {
-            PrepareSpellScript(spell_gen_trigger_exclude_target_aura_spell_SpellScript);
-
-            bool Validate(SpellInfo const* spellInfo) override
-            {
-                return ValidateSpellInfo({ spellInfo->ExcludeTargetAuraSpell });
-            }
-
-            void HandleTrigger()
-            {
-                if (Unit* target = GetHitUnit())
-                    // Blizz seems to just apply aura without bothering to cast
-                    GetCaster()->AddAura(GetSpellInfo()->ExcludeTargetAuraSpell, target);
-            }
-
-            void Register() override
-            {
-                AfterHit += SpellHitFn(spell_gen_trigger_exclude_target_aura_spell_SpellScript::HandleTrigger);
-            }
-        };
-
-        SpellScript* GetSpellScript() const override
-        {
-            return new spell_gen_trigger_exclude_target_aura_spell_SpellScript();
+            uint32 excludeSpellID = spellInfo->ExcludeTargetAuraSpell;
+            if (!excludeSpellID)
+                return true; // spellID==0
+            if (!sSpellMgr->GetSpellInfo(excludeSpellID))
+                return true; // spellID not exist; 
+            return ValidateSpellInfo({ excludeSpellID });
         }
+
+        void HandleTrigger()
+        {
+            if (Unit* target = GetHitUnit())
+                // Blizz seems to just apply aura without bothering to cast
+                GetCaster()->AddAura(GetSpellInfo()->ExcludeTargetAuraSpell, target);
+        }
+
+        void Register() override
+        {
+            AfterHit += SpellHitFn(spell_gen_trigger_exclude_target_aura_spell_SpellScript::HandleTrigger);
+        }
+    };
+
+    SpellScript* GetSpellScript() const override
+    {
+        return new spell_gen_trigger_exclude_target_aura_spell_SpellScript();
+    }
 };
 
 enum PvPTrinketTriggeredSpells

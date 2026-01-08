@@ -13851,6 +13851,11 @@ uint32 Unit::GetRemainingPeriodicAmount(ObjectGuid caster, uint32 spellId, AuraT
     return amount;
 }
 
+int32 Unit::GetSplineDuration() const
+{
+    return IsSplineEnabled() ? movespline->Duration() : 0;
+}
+
 void Unit::SendClearTarget()
 {
     WorldPackets::Combat::BreakTarget breakTarget;

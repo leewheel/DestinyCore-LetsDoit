@@ -1859,6 +1859,7 @@ enum Resurgence
     SPELL_WATER_SHIELD = 52127,  // Player must have this aura to let the spell proc
     SPELL_RESURGENCE = 16196,  // Dummy aura applied on the player (spec spell)
     SPELL_RESURGENCE_PROC = 101033, // Regenerate life according to the spell that triggered the proc
+    SPELL_WATER_SHIELD_ENERGIZE = 79950,
 
     /* Spells that can cause the proc  */
     SPELL_HEALING_WAVE = 331,
@@ -1873,7 +1874,7 @@ enum Resurgence
 class spell_sha_resurgence : public SpellScriptLoader
 {
 public:
-    spell_sha_resurgence() : SpellScriptLoader("spell_sha_resurgence"){ }
+    spell_sha_resurgence() : SpellScriptLoader("spell_sha_resurgence") {}
 
     class spell_sha_resurgence_AuraScript : public AuraScript
     {
@@ -1881,62 +1882,52 @@ public:
 
         bool Validate(SpellInfo const* /*spellInfo*/) override
         {
-            return ValidateSpellInfo({ SPELL_WATER_SHIELD, SPELL_RESURGENCE, SPELL_RESURGENCE_PROC });
+            return ValidateSpellInfo({ SPELL_RESURGENCE, SPELL_RESURGENCE_PROC });
         }
 
-        // Spell cannot proc if caster doesn't have aura 52127
         bool CheckDummyProc(ProcEventInfo& procInfo)
         {
-            if (Unit* target = procInfo.GetActor())
-                return target->HasAura(SPELL_WATER_SHIELD);
+            if (procInfo.GetHitMask() & PROC_HIT_CRITICAL) {
+                return true;
+            }
 
             return false;
         }
 
         void HandleDummyProc(ProcEventInfo& procInfo)
         {
-            int32 healAmount = 0;
-            if (Unit *target = procInfo.GetActor())
+            int32 mana = 0;
+            if (Unit* caster = GetTarget())
             {
-                healAmount = target->CalculateSpellDamage(target, sSpellMgr->GetSpellInfo(SPELL_RESURGENCE_PROC), 0);
-                if (healAmount)
+                // Change mana amount accoring to the spell that triggered this one 
+                if (HealInfo* healInfo = procInfo.GetHealInfo())
                 {
-                    // Change heal amount accoring to the spell that triggered this one */
-                    if (DamageInfo *damageInfo = procInfo.GetDamageInfo())
+                    switch (healInfo->GetSpellInfo()->Id)
                     {
-                        switch (damageInfo->GetSpellInfo()->Id)
-                        {
-                            // 100% on Healing Wave and Greater Healing Wave
-                        case SPELL_HEALING_WAVE:
-                        case SPELL_GREATER_HEALING_WAVE:
-                            break;
-
-                            // 60% on Riptide, Healing Surge and Unleash Life
-                        case SPELL_RIPTIDE:
-                        case SPELL_HEALING_SURGE:
-                        case SPELL_UNLEASH_LIFE:
-                            healAmount *= 0.6f;
-                            break;
-
-                            // 33% on Chain Heal
-                        case SPELL_CHAIN_HEAL:
-                            healAmount *= 0.33f;
-                            break;
-
-                            /*
-                            * If we have something else here, we should assert, because it would not be
-                            * logic (if spell_proc_event entry in DB is correct). But, since I cannot be
-                            * sure that proc system is 100% correct, just return for now.
-                            */
-                        default:
-                            return;
-                        } // switch damageInfo->GetSpellInfo()->Id
-
-                        target->CastCustomSpell(target, SPELL_RESURGENCE_PROC, &healAmount, NULL, NULL, true);
-                    }   // if procInfo.GetDamageInfo()
-                }   // if target->CalculateSpellDamage()
-            }   // if procInfo.GetActor()
-        }   // void HandleDummyProc
+                        // 1% on Healing Wave and Greater Healing Wave
+                    case SPELL_HEALING_WAVE:
+                        caster->CastSpell(caster, SPELL_RESURGENCE_PROC, true);  //ID - 101033 Resurgence energyze
+                        break;
+                        // 0.6% on Riptide, Healing Surge and Unleash Life
+                    case SPELL_RIPTIDE:
+                    case SPELL_HEALING_SURGE:
+                    case SPELL_UNLEASH_LIFE:
+                        mana = caster->CountPctFromMaxPower(POWER_MANA, 1);
+                        mana = CalculatePct(mana, 60);
+                        caster->CastCustomSpell(SPELL_WATER_SHIELD_ENERGIZE, SPELLVALUE_BASE_POINT0, mana, caster, true);
+                        break;
+                        // 0.25% on Chain Heal
+                    case SPELL_CHAIN_HEAL:
+                        mana = caster->CountPctFromMaxPower(POWER_MANA, 1);
+                        mana = CalculatePct(mana, 25);
+                        caster->CastCustomSpell(SPELL_WATER_SHIELD_ENERGIZE, SPELLVALUE_BASE_POINT0, mana, caster, true);
+                        break;
+                    default:
+                        return;
+                    }
+                }
+            }
+        }
 
         void Register() override
         {
@@ -1945,7 +1936,7 @@ public:
         }
     };
 
-    AuraScript *GetAuraScript() const override
+    AuraScript* GetAuraScript() const override
     {
         return new spell_sha_resurgence_AuraScript();
     }

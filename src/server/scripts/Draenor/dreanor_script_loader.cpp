@@ -43,6 +43,20 @@ void AddSC_boss_nyami();
 void AddSC_boss_teronogor();
 void AddSC_instance_auchindoun();
 
+// Blackrock Foundry
+void AddSC_blackrock_foundry();
+void AddSC_boss_beastlord_darmac();
+void AddSC_boss_blackhand();
+void AddSC_boss_blast_furnace();
+void AddSC_boss_flamebender_kagraz();
+void AddSC_boss_gruul_foundry();
+void AddSC_boss_hansgar_and_franzok();
+void AddSC_boss_iron_maidens();
+void AddSC_boss_kromog();
+void AddSC_boss_operator_thogar();
+void AddSC_boss_oregorger();
+void AddSC_instance_blackrock_foundry();
+
 // Bloodmaul Slag Mines
 void AddSC_areatrigger_Bloodmaul();
 void AddSC_boss_forgemaster_gogduh();
@@ -110,6 +124,20 @@ void AddDraenorScripts()
     AddSC_boss_nyami();
     AddSC_boss_teronogor();
     AddSC_instance_auchindoun();
+
+    // Blackrock Foundry
+    AddSC_blackrock_foundry();
+    AddSC_boss_beastlord_darmac();
+    AddSC_boss_blackhand();
+    AddSC_boss_blast_furnace();
+    AddSC_boss_flamebender_kagraz();
+    AddSC_boss_gruul_foundry();
+    AddSC_boss_hansgar_and_franzok();
+    AddSC_boss_iron_maidens();
+    AddSC_boss_kromog();
+    AddSC_boss_operator_thogar();
+    AddSC_boss_oregorger();
+    AddSC_instance_blackrock_foundry();
 
     // Bloodmaul Slag Mines
     AddSC_areatrigger_Bloodmaul();

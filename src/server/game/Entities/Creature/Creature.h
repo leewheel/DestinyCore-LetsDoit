@@ -147,6 +147,10 @@ class TC_GAME_API Creature : public Unit, public GridObject<Creature>, public Ma
         SpellSchoolMask GetMeleeDamageSchoolMask() const override { return m_meleeDamageSchoolMask; }
         void SetMeleeDamageSchool(SpellSchools school) { m_meleeDamageSchoolMask = SpellSchoolMask(1 << school); }
 
+        // For spells with Cone targets
+        void PrepareChanneledCast(float facing, uint32 spellId = 0, bool triggered = false);
+        void RemoveChanneledCast(ObjectGuid target = ObjectGuid::Empty);
+
         bool HasSpell(uint32 spellID) const override;
 
         bool UpdateEntry(uint32 entry, CreatureData const* data = nullptr, bool updateLevel = true, bool updateScript = false);
