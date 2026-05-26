@@ -84,6 +84,10 @@ public:
             return false;
         }
 
+        _acceptor.set_option(boost::asio::socket_base::reuse_address(true), errorCode);
+        if (errorCode)
+            TC_LOG_INFO("network", "Failed to set SO_REUSEADDR on acceptor: %s", errorCode.message().c_str());
+
         _acceptor.bind(_endpoint, errorCode);
         if (errorCode)
         {
