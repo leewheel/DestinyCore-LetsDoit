@@ -19,6 +19,8 @@
 #include "Battleground.h"
 #include "BrawlersGuild.h"
 #include "CellImpl.h"
+#include "WanderInfluenceMap.h"
+#include "WanderTickScheduler.h"
 #include "Conversation.h"
 #include "DatabaseEnv.h"
 #include "DisableMgr.h"
@@ -288,7 +290,10 @@ m_unloadTimer(0), m_VisibleDistance(DEFAULT_VISIBILITY_DISTANCE),
 m_VisibilityNotifyPeriod(DEFAULT_VISIBILITY_NOTIFY_PERIOD),
 m_activeNonPlayersIter(m_activeNonPlayers.end()), _transportsUpdateIter(_transports.end()),
 i_gridExpiry(expiry),
-i_scriptLock(false), _defaultLight(DB2Manager::GetDefaultMapLight(id))
+i_scriptLock(false),
+_wanderInfluence(std::make_unique<WanderInfluenceMap>()),
+_wanderScheduler(std::make_unique<WanderTickScheduler>()),
+_defaultLight(DB2Manager::GetDefaultMapLight(id))
 {
     if (_parent)
     {
@@ -785,6 +790,11 @@ void Map::VisitNearbyCellsOf(WorldObject* obj, TypeContainerVisitor<Trinity::Obj
 
 void Map::Update(const uint32 t_diff)
 {
+    // Rotate the wander scheduler slot once per Map update so SmartWander
+    // decisions are spread over WanderTickScheduler::SLOTS frames instead
+    // of all firing on the same frame after a global idle window.
+    _wanderScheduler->AdvanceFrame();
+
     _dynamicTree.update(t_diff);
     /// update worldsessions for existing players
     for (m_mapRefIter = m_mapRefManager.begin(); m_mapRefIter != m_mapRefManager.end(); ++m_mapRefIter)

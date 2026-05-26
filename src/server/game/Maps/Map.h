@@ -465,6 +465,9 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         template<class T> void SwitchGridContainers(T* obj, bool on);
         CreatureGroupHolderType CreatureGroupHolder;
 
+        class WanderInfluenceMap& GetWanderInfluence() { return *_wanderInfluence; }
+        class WanderTickScheduler& GetWanderScheduler() { return *_wanderScheduler; }
+
         void UpdateIteratorBack(Player* player);
 
         TempSummon* SummonCreature(uint32 entry, Position const& pos, SummonPropertiesEntry const* properties = NULL, uint32 duration = 0, Unit* summoner = NULL, uint32 spellId = 0, uint32 vehId = 0, bool visibleBySummonerOnly = false, Spell const* summonSpell = nullptr);
@@ -740,6 +743,9 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         std::set<WorldObject*> i_objectsToRemove;
         std::map<WorldObject*, bool> i_objectsToSwitch;
         std::set<WorldObject*> i_worldObjects;
+
+        std::unique_ptr<WanderInfluenceMap> _wanderInfluence;
+        std::unique_ptr<WanderTickScheduler> _wanderScheduler;
 
         typedef std::multimap<time_t, ScriptAction> ScriptScheduleMap;
         ScriptScheduleMap m_scriptSchedule;

@@ -24,12 +24,16 @@
 #include "Map.h"
 #include "ConfusedMovementGenerator.h"
 #include "FleeingMovementGenerator.h"
+#include "FormationMovementGenerator.h"
 #include "HomeMovementGenerator.h"
+#include "SmartWanderGenerator.h"
+#include "WanderProfileMgr.h"
+#include "ObjectMgr.h"
+#include "CreatureData.h"
 #include "IdleMovementGenerator.h"
 #include "PointMovementGenerator.h"
 #include "TargetedMovementGenerator.h"
 #include "WaypointMovementGenerator.h"
-#include "RandomMovementGenerator.h"
 #include "SplineChainMovementGenerator.h"
 #include "MoveSpline.h"
 #include "MoveSplineInit.h"
@@ -227,11 +231,18 @@ void MotionMaster::MoveTargetedHome()
 
 void MotionMaster::MoveRandom(float spawndist)
 {
-    if (_owner->GetTypeId() == TYPEID_UNIT)
-    {
-        TC_LOG_DEBUG("misc", "Creature (%s) started random movement.", _owner->GetGUID().ToString().c_str());
-        Mutate(new RandomMovementGenerator<Creature>(spawndist), MOTION_SLOT_IDLE);
-    }
+    if (_owner->GetTypeId() != TYPEID_UNIT)
+        return;
+
+    Creature* creature = _owner->ToCreature();
+    uint32 profileId = 0;
+    if (CreatureAddon const* addon = sObjectMgr->GetCreatureTemplateAddon(creature->GetEntry()))
+        profileId = addon->wanderProfileId;
+    SmartWander::Profile const* profile = sWanderProfileMgr->GetProfile(profileId);
+
+    TC_LOG_DEBUG("misc", "Creature (%s) started random wander (SmartWander, dist=%.2f)",
+        creature->GetGUID().ToString().c_str(), spawndist);
+    Mutate(new SmartWanderGenerator(profile, spawndist), MOTION_SLOT_IDLE);
 }
 
 void MotionMaster::MoveFollow(Unit* target, float dist, float angle, MovementSlot slot)
@@ -251,6 +262,29 @@ void MotionMaster::MoveFollow(Unit* target, float dist, float angle, MovementSlo
         TC_LOG_DEBUG("misc", "Creature (Entry: %u %s) follows (%s)", _owner->GetEntry(), _owner->GetGUID().ToString().c_str(), target->GetGUID().ToString().c_str());
         Mutate(new FollowMovementGenerator<Creature>(target, dist, angle), slot);
     }
+}
+
+void MotionMaster::MoveFormation(Unit* leader, float range, float angle, uint32 point1, uint32 point2, MovementSlot slot)
+{
+    if (!leader || leader == _owner)
+        return;
+
+    if (_owner->GetTypeId() != TYPEID_UNIT)
+        return;
+
+    TC_LOG_DEBUG("misc", "Creature (Entry: %u %s) joins formation behind (%s)",
+        _owner->GetEntry(), _owner->GetGUID().ToString().c_str(), leader->GetGUID().ToString().c_str());
+    Mutate(new FormationMovementGenerator(leader, range, angle, point1, point2), slot);
+}
+
+void MotionMaster::MoveSmartWander(SmartWander::Profile const* profile, MovementSlot slot)
+{
+    if (_owner->GetTypeId() != TYPEID_UNIT)
+        return;
+
+    TC_LOG_DEBUG("misc", "Creature (Entry: %u %s) starts smart wander",
+        _owner->GetEntry(), _owner->GetGUID().ToString().c_str());
+    Mutate(new SmartWanderGenerator(profile), slot);
 }
 
 void MotionMaster::MoveChase(Unit* target, float dist, float angle)

@@ -52,7 +52,7 @@ void PointMovementGenerator<T>::DoInitialize(T* unit)
     // Call for creature group update
     if (Creature* creature = unit->ToCreature())
         if (creature->GetFormation() && creature->GetFormation()->getLeader() == creature)
-            creature->GetFormation()->LeaderMoveTo(i_x, i_y, i_z);
+            creature->GetFormation()->LeaderStartedMoving();
 }
 
 template<class T>
@@ -81,7 +81,7 @@ bool PointMovementGenerator<T>::DoUpdate(T* unit, uint32 /*diff*/)
         // Call for creature group update
         if (Creature* creature = unit->ToCreature())
             if (creature->GetFormation() && creature->GetFormation()->getLeader() == creature)
-                creature->GetFormation()->LeaderMoveTo(i_x, i_y, i_z);
+                creature->GetFormation()->LeaderStartedMoving();
     }
 
     return !unit->movespline->Finalized();

@@ -179,7 +179,7 @@ bool TargetedMovementGeneratorMedium<T, D>::DoUpdate(T* owner, uint32 time_diff)
     i_recheckDistance.Update(time_diff);
     if (i_recheckDistance.Passed())
     {
-        i_recheckDistance.Reset(100);
+        i_recheckDistance.Reset(300);
 
         //More distance let have better performance, less distance let have more sensitive reaction at target move.
         float allowed_dist = 0.0f;
@@ -187,7 +187,7 @@ bool TargetedMovementGeneratorMedium<T, D>::DoUpdate(T* owner, uint32 time_diff)
         if (owner->IsPet() && (owner->GetCharmerOrOwnerGUID() == i_target->GetGUID()))
             allowed_dist = 1.0f; // pet following owner
         else
-            allowed_dist = owner->GetCombatReach() + sWorld->getRate(RATE_TARGET_POS_RECALCULATION_RANGE);
+            allowed_dist = owner->GetCombatReach() + sWorld->getRate(RATE_TARGET_POS_RECALCULATION_RANGE) + 1.5f;
 
         G3D::Vector3 dest = owner->movespline->FinalDestination();
         if (owner->movespline->onTransport)
@@ -210,11 +210,23 @@ bool TargetedMovementGeneratorMedium<T, D>::DoUpdate(T* owner, uint32 time_diff)
 
     if (owner->movespline->Finalized())
     {
+        // If the spline ran out but we still aren't in melee reach, we need
+        // to re-plan IMMEDIATELY — not on the next recheck tick — otherwise
+        // a fast creature (wolves, cats) ends its spline, the target has
+        // drifted < hysteresis, and the creature visibly idles for up to
+        // recheckDistance ms before being kicked back into motion. Setting
+        // i_recalculateTravel flags _setTargetLocation to fire next frame
+        // and the spline chain becomes seamless.
+        bool inMelee = i_target.isValid()
+            && owner->IsWithinMeleeRange(i_target.getTarget());
+        if (!inMelee)
+            i_recalculateTravel = true;
+
         static_cast<D*>(this)->MovementInform(owner);
         if (i_angle == 0.f && !owner->HasInArc(0.01f, i_target.getTarget()))
             owner->SetInFront(i_target.getTarget());
 
-        if (!i_targetReached)
+        if (!i_targetReached && inMelee)
         {
             i_targetReached = true;
             static_cast<D*>(this)->_reachTarget(owner);

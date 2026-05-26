@@ -25,8 +25,6 @@
 #include "MotionMaster.h"
 #include "ObjectMgr.h"
 
-#define MAX_DESYNC 5.0f
-
 FormationMgr::~FormationMgr()
 {
     for (CreatureGroupInfoType::iterator itr = CreatureGroupMap.begin(); itr != CreatureGroupMap.end(); ++itr)
@@ -225,44 +223,27 @@ void CreatureGroup::FormationReset(bool dismiss)
     m_Formed = !dismiss;
 }
 
-void CreatureGroup::LeaderMoveTo(float x, float y, float z)
+void CreatureGroup::LeaderStartedMoving()
 {
-    //! To do: This should probably get its own movement generator or use WaypointMovementGenerator.
-    //! If the leader's path is known, member's path can be plotted as well using formation offsets.
     if (!m_leader)
         return;
-
-    float pathangle = std::atan2(m_leader->GetPositionY() - y, m_leader->GetPositionX() - x);
 
     for (CreatureGroupMemberType::iterator itr = m_members.begin(); itr != m_members.end(); ++itr)
     {
         Creature* member = itr->first;
-        if (member == m_leader || !member->IsAlive() || member->GetVictim() || !(itr->second->groupAI & FLAG_IDLE_IN_FORMATION))
+        FormationInfo const* info = itr->second;
+
+        if (member == m_leader || !member->IsAlive() || member->GetVictim() ||
+            !(info->groupAI & FLAG_IDLE_IN_FORMATION))
             continue;
 
-        if (itr->second->point_1)
-            if (m_leader->GetCurrentWaypointID() == itr->second->point_1 - 1 || m_leader->GetCurrentWaypointID() == itr->second->point_2 - 1)
-                itr->second->follow_angle = float(M_PI) * 2 - itr->second->follow_angle;
+        if (member->HasUnitState(UNIT_STATE_NOT_MOVE) || member->HasUnitFlag(UNIT_FLAG_PLAYER_CONTROLLED))
+            continue;
 
-        float angle = itr->second->follow_angle;
-        float dist = itr->second->follow_dist;
+        if (member->GetMotionMaster()->GetCurrentMovementGeneratorType() == FORMATION_MOTION_TYPE)
+            continue;
 
-        float dx = x + std::cos(angle + pathangle) * dist;
-        float dy = y + std::sin(angle + pathangle) * dist;
-        float dz = z;
-
-        Trinity::NormalizeMapCoord(dx);
-        Trinity::NormalizeMapCoord(dy);
-
-        if (!member->IsFlying())
-            member->UpdateGroundPositionZ(dx, dy, dz);
-
-        if (member->IsWithinDist(m_leader, dist + MAX_DESYNC))
-            member->SetUnitMovementFlags(m_leader->GetUnitMovementFlags());
-        else
-            member->SetWalk(false);
-
-        member->GetMotionMaster()->MovePoint(0, dx, dy, dz);
-        member->SetHomePosition(dx, dy, dz, pathangle);
+        member->GetMotionMaster()->MoveFormation(m_leader, info->follow_dist, info->follow_angle,
+                                                 info->point_1, info->point_2);
     }
 }

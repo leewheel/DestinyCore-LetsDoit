@@ -485,6 +485,7 @@ void CollectionMgr::LoadAccountItemAppearances(PreparedQueryResult knownAppearan
 
         } while (knownAppearances->NextRow());
 
+        _appearances->resize(blocks.size() * boost::dynamic_bitset<uint32>::bits_per_block);
         boost::from_block_range(blocks.begin(), blocks.end(), *_appearances);
     }
 

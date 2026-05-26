@@ -568,6 +568,9 @@ struct CreatureAddon
     uint16 meleeAnimKit;
     std::vector<uint32> auras;
     VisibilityDistanceType visibilityDistanceType;
+    // 0 = use SmartWanderGenerator's built-in default profile.
+    // >0 looks up sWanderProfileMgr->GetProfile(id) at spawn time.
+    uint32 wanderProfileId = 0;
 };
 
 // `creature_sparring_template` table

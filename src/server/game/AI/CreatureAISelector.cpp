@@ -17,13 +17,17 @@
 
 #include "Creature.h"
 #include "CreatureAISelector.h"
+#include "CreatureData.h"
 #include "GameObject.h"
+#include "ObjectMgr.h"
 #include "PassiveAI.h"
 #include "Log.h"
 #include "MovementGenerator.h"
+#include "SmartWanderGenerator.h"
 #include "TemporarySummon.h"
 #include "CreatureAIFactory.h"
 #include "ScriptMgr.h"
+#include "WanderProfileMgr.h"
 
 namespace FactorySelector
 {
@@ -101,8 +105,23 @@ namespace FactorySelector
 
     MovementGenerator* selectMovementGenerator(Creature* creature)
     {
-        MovementGeneratorRegistry& mv_registry(*MovementGeneratorRegistry::instance());
         ASSERT(creature->GetCreatureTemplate());
+
+        // ALL wandering creatures (ground or flying) route through
+        // SmartWanderGenerator. RandomMovementGenerator is gone; SmartWander
+        // handles 3D altitude sampling for flyers via CanFly() inside
+        // TryLaunchMove.
+        if (creature->GetDefaultMovementType() == RANDOM_MOTION_TYPE)
+        {
+            uint32 profileId = 0;
+            if (CreatureAddon const* addon = sObjectMgr->GetCreatureTemplateAddon(creature->GetEntry()))
+                profileId = addon->wanderProfileId;
+
+            SmartWander::Profile const* profile = sWanderProfileMgr->GetProfile(profileId);
+            return new SmartWanderGenerator(profile);
+        }
+
+        MovementGeneratorRegistry& mv_registry(*MovementGeneratorRegistry::instance());
         const MovementGeneratorCreator* mv_factory = mv_registry.GetRegistryItem(creature->GetDefaultMovementType());
 
         /* if (mv_factory == NULL)

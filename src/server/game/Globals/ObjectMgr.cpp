@@ -576,8 +576,8 @@ void ObjectMgr::LoadCreatureTemplateAddons()
     uint32 oldMSTime = getMSTime();
 
     _creatureTemplateAddonStore.clear(); // needed for reload
-    //                                                 0       1       2      3       4       5        6             7              8                  9              10
-    QueryResult result = WorldDatabase.Query("SELECT entry, path_id, mount, bytes1, bytes2, emote, aiAnimKit, movementAnimKit, meleeAnimKit, visibilityDistanceType, auras FROM creature_template_addon");
+    //                                                 0       1       2      3       4       5        6             7              8                  9              10    11
+    QueryResult result = WorldDatabase.Query("SELECT entry, path_id, mount, bytes1, bytes2, emote, aiAnimKit, movementAnimKit, meleeAnimKit, visibilityDistanceType, auras, WanderProfileId FROM creature_template_addon");
 
     if (!result)
     {
@@ -609,6 +609,7 @@ void ObjectMgr::LoadCreatureTemplateAddons()
         creatureAddon.movementAnimKit           = fields[7].GetUInt16();
         creatureAddon.meleeAnimKit              = fields[8].GetUInt16();
         creatureAddon.visibilityDistanceType    = VisibilityDistanceType(fields[9].GetUInt8());
+        creatureAddon.wanderProfileId           = fields[11].GetUInt32();
 
         Tokenizer tokens(fields[10].GetString(), ' ');
         uint8 i = 0;

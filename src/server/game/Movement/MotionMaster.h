@@ -30,6 +30,11 @@
 class MovementGenerator;
 class Unit;
 class PathGenerator;
+
+namespace SmartWander
+{
+    struct Profile;
+}
 struct Position;
 struct SplineChainLink;
 struct SplineChainResumeInfo;
@@ -72,6 +77,8 @@ enum MovementGeneratorType : uint8
     EFFECT_MOTION_TYPE              = 16,
     NULL_MOTION_TYPE                = 17,
     SPLINE_CHAIN_MOTION_TYPE        = 18,                 // SplineChainMovementGenerator.h
+    FORMATION_MOTION_TYPE           = 19,                 // FormationMovementGenerator.h
+    SMART_WANDER_MOTION_TYPE        = 20,                 // SmartWanderGenerator.h
     MAX_MOTION_TYPE                                       // limit
 };
 
@@ -143,6 +150,10 @@ class TC_GAME_API MotionMaster
         void MoveTargetedHome();
         void MoveRandom(float spawndist = 0.0f);
         void MoveFollow(Unit* target, float dist, float angle, MovementSlot slot = MOTION_SLOT_ACTIVE);
+
+        void MoveFormation(Unit* leader, float range, float angle, uint32 point1 = 0, uint32 point2 = 0, MovementSlot slot = MOTION_SLOT_ACTIVE);
+
+        void MoveSmartWander(SmartWander::Profile const* profile = nullptr, MovementSlot slot = MOTION_SLOT_IDLE);
         void MoveChase(Unit* target, float dist = 0.0f, float angle = 0.0f);
         void MoveConfused();
         void MoveFleeing(Unit* enemy, uint32 time = 0);
