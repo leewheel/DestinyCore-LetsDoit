@@ -52,11 +52,6 @@
 #include "World.h"
 #include "WorldSession.h"
 #include "WildBattlePet.h"
-#include "../CommandBG/CommandAB.h"
-#include "../CommandBG/CommandWS.h"
-#include "../CommandBG/CommandEY.h"
-#include "../CommandBG/CommandAV.h"
-#include "../CommandBG/CommandIC.h"
 #include "Config.h"
 #ifdef ELUNA
 #include "LuaEngine.h"
@@ -4034,7 +4029,7 @@ uint32 InstanceMap::GetMaxResetDelay() const
 /* ******* Battleground Instance Maps ******* */
 
 BattlegroundMap::BattlegroundMap(uint32 id, time_t expiry, uint32 InstanceId, Map* _parent, Difficulty spawnMode)
-  : Map(id, expiry, InstanceId, spawnMode, _parent), m_bg(NULL), m_pAllianceCommander(NULL), m_pHordeCommander(NULL)
+  : Map(id, expiry, InstanceId, spawnMode, _parent), m_bg(NULL)
 {
     //lets initialize visibility distance for BG/Arenas
     BattlegroundMap::InitVisibilityDistance();
@@ -4112,97 +4107,6 @@ void BattlegroundMap::RemoveAllPlayers()
 void BattlegroundMap::Update(const uint32 diff)
 {
     Map::Update(diff);
-    if (m_pAllianceCommander)
-        m_pAllianceCommander->Update(diff);
-    if (m_pHordeCommander)
-        m_pHordeCommander->Update(diff);
-}
-
-void BattlegroundMap::InsureCommander(BattlegroundTypeId bgType)
-{
-    if (!m_pAllianceCommander)
-    {
-        switch (bgType)
-        {
-        case BATTLEGROUND_AB:
-            m_pAllianceCommander = new CommandAB(m_bg, TeamId::TEAM_ALLIANCE);
-            break;
-        case BATTLEGROUND_WS:
-            m_pAllianceCommander = new CommandWS(m_bg, TeamId::TEAM_ALLIANCE);
-            break;
-        case BATTLEGROUND_EY:
-            m_pAllianceCommander = new CommandEY(m_bg, TeamId::TEAM_ALLIANCE);
-            break;
-        case BATTLEGROUND_AV:
-            m_pAllianceCommander = new CommandAV(m_bg, TeamId::TEAM_ALLIANCE);
-            break;
-        case BATTLEGROUND_IC:
-            m_pAllianceCommander = new CommandIC(m_bg, TeamId::TEAM_ALLIANCE);
-            break;
-        }
-    }
-    if (!m_pHordeCommander)
-    {
-        switch (bgType)
-        {
-        case BATTLEGROUND_AB:
-            m_pHordeCommander = new CommandAB(m_bg, TeamId::TEAM_HORDE);
-            break;
-        case BATTLEGROUND_WS:
-            m_pHordeCommander = new CommandWS(m_bg, TeamId::TEAM_HORDE);
-            break;
-        case BATTLEGROUND_EY:
-            m_pHordeCommander = new CommandEY(m_bg, TeamId::TEAM_HORDE);
-            break;
-        case BATTLEGROUND_AV:
-            m_pHordeCommander = new CommandAV(m_bg, TeamId::TEAM_HORDE);
-            break;
-        case BATTLEGROUND_IC:
-            m_pHordeCommander = new CommandIC(m_bg, TeamId::TEAM_HORDE);
-            break;
-        }
-    }
-}
-
-void BattlegroundMap::InitCommander()
-{
-    if (m_pAllianceCommander)
-        m_pAllianceCommander->Initialize();
-    if (m_pHordeCommander)
-        m_pHordeCommander->Initialize();
-}
-
-void BattlegroundMap::ResetCommander()
-{
-    if (m_pAllianceCommander)
-        m_pAllianceCommander->UpdateBelongBattleground(m_bg);
-    if (m_pHordeCommander)
-        m_pHordeCommander->UpdateBelongBattleground(m_bg);
-}
-
-void BattlegroundMap::ReadyCommander()
-{
-    if (m_pAllianceCommander)
-        m_pAllianceCommander->ReadyGame();
-    if (m_pHordeCommander)
-        m_pHordeCommander->ReadyGame();
-}
-
-void BattlegroundMap::StartCommander()
-{
-    if (m_pAllianceCommander)
-        m_pAllianceCommander->StartGame();
-    if (m_pHordeCommander)
-        m_pHordeCommander->StartGame();
-}
-
-CommandBG* BattlegroundMap::GetCommander(TeamId team)
-{
-    if (team == TEAM_ALLIANCE)
-        return m_pAllianceCommander;
-    else if (team == TEAM_HORDE)
-        return m_pHordeCommander;
-    return NULL;
 }
 
 GameObject* Map::SummonGameObject(uint32 entry, Position const& pos, QuaternionData const& rot, uint32 respawnTime)

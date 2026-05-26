@@ -103,11 +103,9 @@
 #include "WorldSession.h"
 #include "WorldSocket.h"
 #include "PetBattleSystem.h"
-#include "AIWaypointsMgr.h"
 #include "PathfindingMgr.h"
 #include "SHA1.h"
 #include <boost/algorithm/string.hpp>
-#include "CustomTalkMenu.h"
 
 TC_GAME_API std::atomic<bool> World::m_stopEvent(false);
 TC_GAME_API uint8 World::m_ExitCode = SHUTDOWN_EXIT_CODE;
@@ -1877,15 +1875,6 @@ void World::SetInitialWorldSettings()
 
     if (VMAP::VMapManager2* vmmgr2 = dynamic_cast<VMAP::VMapManager2*>(VMAP::VMapFactory::createOrGetVMapManager()))
         vmmgr2->InitializeThreadUnsafe(mapData);
-
-    TC_LOG_INFO("server.loading", "Loading AI Way points...");
-    if (!sAIWPMgr->LoadAIWaypoints())
-    {
-        exit(0);
-        return;
-    }
-    TC_LOG_INFO("server.loading", "Loading Custom talk menu...");
-    sCustomTalkMenu->Initialize();
 
     MMAP::MMapManager* mmmgr = MMAP::MMapFactory::createOrGetMMapManager();
     mmmgr->InitializeThreadUnsafe(mapData);

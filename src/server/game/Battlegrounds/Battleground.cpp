@@ -43,7 +43,6 @@
 #include "WorldStatePackets.h"
 #include "CreatureAIImpl.h"
 #include <cstdarg>
-#include "CommandBG.h"
 
 #ifdef ELUNA
 #include "LuaEngine.h"
@@ -349,14 +348,6 @@ inline void Battleground::_ProcessResurrect(uint32 diff)
             player->CastSpell(player, 6962, true);
             player->CastSpell(player, SPELL_SPIRIT_HEAL_MANA, true);
             player->SpawnCorpseBones(false);
-
-            BattlegroundMap* pBGMap = GetBgMap();
-            if (pBGMap)
-            {
-                CommandBG* pCommander = pBGMap->GetCommander(player->GetTeamId());
-                if (pCommander)
-                    pCommander->OnPlayerRevive(player);
-            }
         }
         m_ResurrectQueue.clear();
     }
@@ -475,8 +466,6 @@ inline void Battleground::_ProcessJoin(uint32 diff)
         m_Events |= BG_STARTING_EVENT_2;
         if (StartMessageIds[BG_STARTING_EVENT_SECOND])
             SendBroadcastText(StartMessageIds[BG_STARTING_EVENT_SECOND], CHAT_MSG_BG_SYSTEM_NEUTRAL);
-        m_Map->InsureCommander(GetTypeID());
-        m_Map->ReadyCommander();
     }
     // After 30 or 15 seconds, warning is signaled
     else if (GetStartDelayTime() <= StartDelayTimes[BG_STARTING_EVENT_THIRD] && !(m_Events & BG_STARTING_EVENT_3))
@@ -484,8 +473,6 @@ inline void Battleground::_ProcessJoin(uint32 diff)
         m_Events |= BG_STARTING_EVENT_3;
         if (StartMessageIds[BG_STARTING_EVENT_THIRD])
             SendBroadcastText(StartMessageIds[BG_STARTING_EVENT_THIRD], CHAT_MSG_BG_SYSTEM_NEUTRAL);
-        m_Map->InsureCommander(GetTypeID());
-        m_Map->ReadyCommander();
     }
     // Delay expired (after 2 or 1 minute)
     else if (GetStartDelayTime() <= 0 && !(m_Events & BG_STARTING_EVENT_4))
@@ -1106,12 +1093,6 @@ void Battleground::Reset()
         delete itr->second;
     PlayerScores.clear();
 
-    if (m_Map)
-    {
-        m_Map->InsureCommander(GetTypeID());
-        m_Map->ResetCommander();
-    }
-
     ResetBGSubclass();
 }
 
@@ -1126,12 +1107,6 @@ void Battleground::StartBattleground()
     // This must be done here, because we need to have already invited some players when first BG::Update() method is executed
     // and it doesn't matter if we call StartBattleground() more times, because m_Battlegrounds is a map and instance id never changes
     sBattlegroundMgr->AddBattleground(this);
-
-    if (m_Map)
-    {
-        m_Map->InsureCommander(GetTypeID());
-        m_Map->InitCommander();
-    }
 
     if (m_IsRated)
         TC_LOG_DEBUG("bg.arena", "Arena match type: %u for Team1Id: %u - Team2Id: %u started.", m_ArenaType, m_ArenaGroupIds[TEAM_ALLIANCE], m_ArenaGroupIds[TEAM_HORDE]);
