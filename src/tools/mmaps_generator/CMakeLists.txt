@@ -27,7 +27,21 @@ target_link_libraries(mmaps_generator
     Recast
     Detour
     zlib
-    bzip2)
+    bzip2
+    fkYAML)
+
+# Copy the YAML config template next to the executable so a fresh build can
+# be run from its bin/ directory without supplying --config.
+add_custom_command(TARGET mmaps_generator POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/mmaps-config.yaml"
+    "$<TARGET_FILE_DIR:mmaps_generator>/mmaps-config.yaml")
+
+if(UNIX)
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/mmaps-config.yaml DESTINATION bin)
+elseif(WIN32)
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/mmaps-config.yaml DESTINATION "${CMAKE_INSTALL_PREFIX}")
+endif()
 
 CollectIncludeDirectories(
   ${CMAKE_CURRENT_SOURCE_DIR}

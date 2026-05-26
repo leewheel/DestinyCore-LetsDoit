@@ -17,6 +17,7 @@
  */
 
 #include "Banner.h"
+#include "Config.h"
 #include "DB2FileLoader.h"
 #include "DB2FileSystemSource.h"
 #include "ExtractorDB2LoadInfo.h"
@@ -26,6 +27,7 @@
 #include "VMapFactory.h"
 #include "VMapManager2.h"
 #include <boost/filesystem/operations.hpp>
+#include <filesystem>
 #include <unordered_map>
 #include <vector>
 
@@ -86,35 +88,27 @@ bool checkDirectories(bool debugOutput, std::vector<std::string>& dbcLocales)
 }
 
 bool handleArgs(int argc, char** argv,
-               int &mapnum,
-               int &tileX,
-               int &tileY,
-               float &maxAngle,
-               bool &skipLiquid,
-               bool &skipContinents,
-               bool &skipJunkMaps,
-               bool &skipBattlegrounds,
-               bool &debugOutput,
-               bool &silent,
-               bool &bigBaseUnit,
-               char* &offMeshInputPath,
-               char* &file,
+               int& mapnum,
+               int& tileX,
+               int& tileY,
+               std::string& configFilePath,
+               bool& silent,
+               char*& offMeshInputPath,
+               char*& file,
                unsigned int& threads)
 {
-    char* param = NULL;
+    bool hasCustomConfigPath = false;
+    char* param = nullptr;
     for (int i = 1; i < argc; ++i)
     {
-        if (strcmp(argv[i], "--maxAngle") == 0)
+        if (strcmp(argv[i], "--config") == 0)
         {
             param = argv[++i];
             if (!param)
                 return false;
 
-            float maxangle = atof(param);
-            if (maxangle <= 90.f && maxangle >= 45.f)
-                maxAngle = maxangle;
-            else
-                printf("invalid option for '--maxAngle', using default\n");
+            hasCustomConfigPath = true;
+            configFilePath = param;
         }
         else if (strcmp(argv[i], "--threads") == 0)
         {
@@ -137,7 +131,7 @@ bool handleArgs(int argc, char** argv,
                 return false;
 
             char* stileX = strtok(param, ",");
-            char* stileY = strtok(NULL, ",");
+            char* stileY = strtok(nullptr, ",");
             int tilex = atoi(stileX);
             int tiley = atoi(stileY);
 
@@ -152,87 +146,9 @@ bool handleArgs(int argc, char** argv,
                 return false;
             }
         }
-        else if (strcmp(argv[i], "--skipLiquid") == 0)
-        {
-            param = argv[++i];
-            if (!param)
-                return false;
-
-            if (strcmp(param, "true") == 0)
-                skipLiquid = true;
-            else if (strcmp(param, "false") == 0)
-                skipLiquid = false;
-            else
-                printf("invalid option for '--skipLiquid', using default\n");
-        }
-        else if (strcmp(argv[i], "--skipContinents") == 0)
-        {
-            param = argv[++i];
-            if (!param)
-                return false;
-
-            if (strcmp(param, "true") == 0)
-                skipContinents = true;
-            else if (strcmp(param, "false") == 0)
-                skipContinents = false;
-            else
-                printf("invalid option for '--skipContinents', using default\n");
-        }
-        else if (strcmp(argv[i], "--skipJunkMaps") == 0)
-        {
-            param = argv[++i];
-            if (!param)
-                return false;
-
-            if (strcmp(param, "true") == 0)
-                skipJunkMaps = true;
-            else if (strcmp(param, "false") == 0)
-                skipJunkMaps = false;
-            else
-                printf("invalid option for '--skipJunkMaps', using default\n");
-        }
-        else if (strcmp(argv[i], "--skipBattlegrounds") == 0)
-        {
-            param = argv[++i];
-            if (!param)
-                return false;
-
-            if (strcmp(param, "true") == 0)
-                skipBattlegrounds = true;
-            else if (strcmp(param, "false") == 0)
-                skipBattlegrounds = false;
-            else
-                printf("invalid option for '--skipBattlegrounds', using default\n");
-        }
-        else if (strcmp(argv[i], "--debugOutput") == 0)
-        {
-            param = argv[++i];
-            if (!param)
-                return false;
-
-            if (strcmp(param, "true") == 0)
-                debugOutput = true;
-            else if (strcmp(param, "false") == 0)
-                debugOutput = false;
-            else
-                printf("invalid option for '--debugOutput', using default true\n");
-        }
         else if (strcmp(argv[i], "--silent") == 0)
         {
             silent = true;
-        }
-        else if (strcmp(argv[i], "--bigBaseUnit") == 0)
-        {
-            param = argv[++i];
-            if (!param)
-                return false;
-
-            if (strcmp(param, "true") == 0)
-                bigBaseUnit = true;
-            else if (strcmp(param, "false") == 0)
-                bigBaseUnit = false;
-            else
-                printf("invalid option for '--bigBaseUnit', using default false\n");
         }
         else if (strcmp(argv[i], "--offMeshInput") == 0)
         {
@@ -253,6 +169,23 @@ bool handleArgs(int argc, char** argv,
                 return false;
             }
         }
+    }
+
+    if (!hasCustomConfigPath)
+    {
+        FILE* f = fopen(configFilePath.c_str(), "r");
+        if (!f)
+        {
+            auto execRelPath = std::filesystem::path(executableDirectoryPath()) / configFilePath;
+            f = fopen(execRelPath.string().c_str(), "r");
+            if (!f)
+            {
+                printf("Failed to load configuration. Ensure that 'mmaps-config.yaml' exists in the current directory or specify its path using the --config option.\n");
+                return false;
+            }
+            configFilePath = execRelPath.string();
+        }
+        fclose(f);
     }
 
     return true;
@@ -308,40 +241,43 @@ int main(int argc, char** argv)
 
     unsigned int threads = std::thread::hardware_concurrency();
     int mapnum = -1;
-    float maxAngle = 70.0f;
     int tileX = -1, tileY = -1;
-    bool skipLiquid = false,
-         skipContinents = false,
-         skipJunkMaps = true,
-         skipBattlegrounds = false,
-         debugOutput = false,
-         silent = false,
-         bigBaseUnit = false;
-    char* offMeshInputPath = NULL;
-    char* file = NULL;
+    bool silent = false;
+    char* offMeshInputPath = nullptr;
+    char* file = nullptr;
+    std::string configFilePath = "mmaps-config.yaml";
 
     bool validParam = handleArgs(argc, argv, mapnum,
-                                 tileX, tileY, maxAngle,
-                                 skipLiquid, skipContinents, skipJunkMaps, skipBattlegrounds,
-                                 debugOutput, silent, bigBaseUnit, offMeshInputPath, file, threads);
+                                 tileX, tileY, configFilePath, silent, offMeshInputPath, file, threads);
 
     if (!validParam)
         return silent ? -1 : finish("You have specified invalid parameters", -1);
 
-    if (mapnum == -1 && debugOutput)
+    auto config = Config::FromFile(configFilePath);
+    if (!config)
+        return silent ? -1 : finish("Failed to load configuration. Ensure that 'mmaps-config.yaml' exists in the current directory or specify its path using the --config option.", -1);
+
+    if (mapnum == -1 && config->IsDebugOutputEnabled())
     {
         if (silent)
             return -2;
 
-        printf("You have specifed debug output, but didn't specify a map to generate.\n");
+        printf("You have specified debug output, but didn't specify a map to generate.\n");
         printf("This will generate debug output for ALL maps.\n");
         printf("Are you sure you want to continue? (y/n) ");
         if (getchar() != 'y')
             return 0;
     }
 
+    // Switch working directory to the resolved data dir so that subsequent
+    // relative paths ("dbc", "maps", "vmaps", "mmaps", "meshes") work as before.
+    std::error_code ec;
+    std::filesystem::current_path(config->DataDirPath(), ec);
+    if (ec)
+        return silent ? -3 : finish(("Failed to chdir to data dir: " + ec.message() + "\n").c_str(), -3);
+
     std::vector<std::string> dbcLocales;
-    if (!checkDirectories(debugOutput, dbcLocales))
+    if (!checkDirectories(config->IsDebugOutputEnabled(), dbcLocales))
         return silent ? -3 : finish("Press ENTER to close...", -3);
 
     _liquidTypes = LoadLiquid(dbcLocales[0]);
@@ -359,8 +295,7 @@ int main(int argc, char** argv)
         return itr != _liquidTypes.end() ? (1 << itr->second) : 0;
     };
 
-    MapBuilder builder(maxAngle, skipLiquid, skipContinents, skipJunkMaps,
-                       skipBattlegrounds, debugOutput, bigBaseUnit, mapnum, offMeshInputPath);
+    MapBuilder builder(&config.value(), mapnum, offMeshInputPath);
 
     uint32 start = getMSTime();
     if (file)

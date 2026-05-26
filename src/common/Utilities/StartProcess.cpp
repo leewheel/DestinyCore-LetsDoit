@@ -15,36 +15,38 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-// compatibility for Boost 1.74 (no boost/process/v1/) and 1.88+ (no boost/process/)
-#if __has_include(<boost/process/v1/args.hpp>)
-#define BOOST_PROCESS_V1_HEADER(header) <boost/process/v1/header>
-#define BOOST_PROCESS_VERSION 1
-#else
-#define BOOST_PROCESS_V1_HEADER(header) <boost/process/header>
-#endif
-
 #include "StartProcess.h"
 #include "Errors.h"
 #include "Log.h"
 #include "Optional.h"
 
 #include <boost/algorithm/string/join.hpp>
-#include BOOST_PROCESS_V1_HEADER(args.hpp)
-#include BOOST_PROCESS_V1_HEADER(child.hpp)
-#include BOOST_PROCESS_V1_HEADER(env.hpp)
-#include BOOST_PROCESS_V1_HEADER(error.hpp)
-#include BOOST_PROCESS_V1_HEADER(exe.hpp)
-#include BOOST_PROCESS_V1_HEADER(io.hpp)
-#include BOOST_PROCESS_V1_HEADER(pipe.hpp)
-#include BOOST_PROCESS_V1_HEADER(search_path.hpp)
+#include <boost/version.hpp>
+#include <filesystem>
+
+// Boost.Process v1 lives under <boost/process/v1/> starting with Boost 1.88
+// (the legacy <boost/process/*> umbrella was removed). Earlier versions only
+// have the legacy headers, which are pulled in via <boost/process.hpp>.
+#if BOOST_VERSION < 108800
+#include <boost/process.hpp>
+namespace bp = boost::process;
+#else
+#include <boost/process/v1/args.hpp>
+#include <boost/process/v1/child.hpp>
+#include <boost/process/v1/env.hpp>
+#include <boost/process/v1/error.hpp>
+#include <boost/process/v1/exe.hpp>
+#include <boost/process/v1/io.hpp>
+#include <boost/process/v1/pipe.hpp>
+#include <boost/process/v1/search_path.hpp>
+namespace bp = boost::process::v1;
+#endif
 
 #include <atomic>
 #include <cstdio>
 #include <future>
 #include <memory>
 #include <system_error>
-
-namespace bp = boost::process;
 
 namespace Trinity
 {

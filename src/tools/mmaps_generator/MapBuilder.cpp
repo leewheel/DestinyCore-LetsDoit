@@ -31,24 +31,17 @@
 
 namespace MMAP
 {
-    MapBuilder::MapBuilder(float maxWalkableAngle, bool skipLiquid,
-        bool skipContinents, bool skipJunkMaps, bool skipBattlegrounds,
-        bool debugOutput, bool bigBaseUnit, int mapid, const char* offMeshFilePath) :
+    MapBuilder::MapBuilder(Config* config, int mapid, const char* offMeshFilePath) :
+        m_config             (config),
         m_terrainBuilder     (NULL),
-        m_debugOutput        (debugOutput),
         m_offMeshFilePath    (offMeshFilePath),
-        m_skipContinents     (skipContinents),
-        m_skipJunkMaps       (skipJunkMaps),
-        m_skipBattlegrounds  (skipBattlegrounds),
-        m_maxWalkableAngle   (maxWalkableAngle),
-        m_bigBaseUnit        (bigBaseUnit),
         m_mapid              (mapid),
         m_totalTiles         (0u),
         m_totalTilesProcessed(0u),
         m_rcContext          (NULL),
         _cancelationToken    (false)
     {
-        m_terrainBuilder = new TerrainBuilder(skipLiquid);
+        m_terrainBuilder = new TerrainBuilder(m_config->ShouldSkipLiquid());
 
         m_rcContext = new rcContext(false);
 
@@ -546,42 +539,13 @@ namespace MMAP
         int lTriCount = meshData.liquidTris.size() / 3;
         uint8* lTriFlags = meshData.liquidType.getCArray();
 
-        // these are WORLD UNIT based metrics
-        // this are basic unit dimentions
-        // value have to divide GRID_SIZE(533.3333f) ( aka: 0.5333, 0.2666, 0.3333, 0.1333, etc )
-        const static float BASE_UNIT_DIM = m_bigBaseUnit ? 0.5333333f : 0.2666666f;
+        // resolve per-tile Recast parameters (global -> map -> tile cascade)
+        ResolvedMeshConfig cfg = m_config->GetConfigForTile(mapID, tileX, tileY);
+        const float BASE_UNIT_DIM = cfg.baseUnitDim;
+        const int VERTEX_PER_TILE = cfg.vertexPerTileEdge;
+        const int TILES_PER_MAP = cfg.tilesPerMapEdge;
 
-        // All are in UNIT metrics!
-        const static int VERTEX_PER_MAP = int(GRID_SIZE/BASE_UNIT_DIM + 0.5f);
-        const static int VERTEX_PER_TILE = m_bigBaseUnit ? 40 : 80; // must divide VERTEX_PER_MAP
-        const static int TILES_PER_MAP = VERTEX_PER_MAP/VERTEX_PER_TILE;
-
-        rcConfig config;
-        memset(&config, 0, sizeof(rcConfig));
-
-        rcVcopy(config.bmin, bmin);
-        rcVcopy(config.bmax, bmax);
-
-        config.maxVertsPerPoly = DT_VERTS_PER_POLYGON;
-        config.cs = BASE_UNIT_DIM;
-        config.ch = BASE_UNIT_DIM;
-        config.walkableSlopeAngle = m_maxWalkableAngle;
-        config.tileSize = VERTEX_PER_TILE;
-        config.walkableRadius = m_bigBaseUnit ? 1 : 2;
-        config.borderSize = config.walkableRadius + 3;
-        config.maxEdgeLen = VERTEX_PER_TILE + 1;        // anything bigger than tileSize
-        config.walkableHeight = m_bigBaseUnit ? 3 : 6;
-        // a value >= 3|6 allows npcs to walk over some fences
-        // a value >= 4|8 allows npcs to walk over all fences
-        config.walkableClimb = m_bigBaseUnit ? 4 : 8;
-        config.minRegionArea = rcSqr(60);
-        config.mergeRegionArea = rcSqr(50);
-        config.maxSimplificationError = 1.8f;           // eliminates most jagged edges (tiny polygons)
-        config.detailSampleDist = config.cs * 64;
-        config.detailSampleMaxError = config.ch * 2;
-
-        // this sets the dimensions of the heightfield - should maybe happen before border padding
-        rcCalcGridSize(config.bmin, config.bmax, config.cs, &config.width, &config.height);
+        rcConfig config = getRecastConfig(cfg, bmin, bmax);
 
         // allocate subregions : tiles
         Tile* tiles = new Tile[TILES_PER_MAP * TILES_PER_MAP];
@@ -848,6 +812,7 @@ namespace MMAP
             MmapTileHeader header;
             header.usesLiquids = m_terrainBuilder->usesLiquids();
             header.size = uint32(navDataSize);
+            header.recastConfig = cfg.toMMAPTileRecastConfig();
             fwrite(&header, sizeof(MmapTileHeader), 1, file);
 
             // write data
@@ -859,7 +824,7 @@ namespace MMAP
         }
         while (0);
 
-        if (m_debugOutput)
+        if (m_config->IsDebugOutputEnabled())
         {
             // restore padding so that the debug visualization is correct
             for (int i = 0; i < iv.polyMesh->nverts; ++i)
@@ -872,6 +837,39 @@ namespace MMAP
             iv.generateObjFile(mapID, tileX, tileY, meshData);
             iv.writeIV(mapID, tileX, tileY);
         }
+    }
+
+    /**************************************************************************/
+    rcConfig MapBuilder::getRecastConfig(ResolvedMeshConfig const& cfg, float bmin[3], float bmax[3]) const
+    {
+        rcConfig config;
+        memset(&config, 0, sizeof(rcConfig));
+
+        rcVcopy(config.bmin, bmin);
+        rcVcopy(config.bmax, bmax);
+
+        config.maxVertsPerPoly = DT_VERTS_PER_POLYGON;
+        config.cs = cfg.cellSizeHorizontal;
+        config.ch = cfg.cellSizeVertical;
+        config.walkableSlopeAngle = cfg.walkableSlopeAngle;
+        config.tileSize = cfg.vertexPerTileEdge;
+        config.walkableRadius = cfg.walkableRadius;
+        config.borderSize = config.walkableRadius + 3;
+        config.maxEdgeLen = cfg.vertexPerTileEdge + 1;  // anything bigger than tileSize
+        config.walkableHeight = cfg.walkableHeight;
+        // walkableClimb >= 3|6 allows npcs to walk over some fences
+        // walkableClimb >= 4|8 allows npcs to walk over all fences
+        config.walkableClimb = cfg.walkableClimb;
+        config.minRegionArea = rcSqr(60);
+        config.mergeRegionArea = rcSqr(50);
+        config.maxSimplificationError = cfg.maxSimplificationError; // eliminates most jagged edges (tiny polygons)
+        config.detailSampleDist = config.cs * 64;
+        config.detailSampleMaxError = config.ch * 2;
+
+        // this sets the dimensions of the heightfield - should maybe happen before border padding
+        rcCalcGridSize(config.bmin, config.bmax, config.cs, &config.width, &config.height);
+
+        return config;
     }
 
     /**************************************************************************/
@@ -899,7 +897,7 @@ namespace MMAP
         if (m_mapid >= 0)
             return static_cast<uint32>(m_mapid) != mapID;
 
-        if (m_skipContinents)
+        if (m_config->ShouldSkipContinents())
             switch (mapID)
             {
                 case 0:
@@ -914,7 +912,7 @@ namespace MMAP
                     break;
             }
 
-        if (m_skipJunkMaps)
+        if (m_config->ShouldSkipJunkMaps())
             switch (mapID)
             {
                 case 13:    // test.wdt
@@ -966,7 +964,7 @@ namespace MMAP
                     break;
             }
 
-        if (m_skipBattlegrounds)
+        if (m_config->ShouldSkipBattlegrounds())
             switch (mapID)
             {
                 case 30:    // Alterac Valley

@@ -28,6 +28,8 @@
 #include "Map.h"
 #include "Metric.h"
 #include "PhasingHandler.h"
+#include "Player.h"
+#include <cmath>
 
 ////////////////// PathGenerator //////////////////
 PathGenerator::PathGenerator(const Unit* owner) :
@@ -659,7 +661,7 @@ void PathGenerator::UpdateFilter()
     }
 }
 
-NavTerrainFlag PathGenerator::GetNavTerrain(float x, float y, float z)
+NavTerrainFlag PathGenerator::GetNavTerrain(float x, float y, float z) const
 {
     LiquidData data;
     ZLiquidStatus liquidStatus = _sourceUnit->GetMap()->getLiquidStatus(_sourceUnit->GetPhaseShift(), x, y, z, MAP_ALL_LIQUIDS, &data);
@@ -961,4 +963,90 @@ void PathGenerator::ReducePathLenghtByDist(float dist)
 bool PathGenerator::IsInvalidDestinationZ(Unit const* target) const
 {
     return (target->GetPositionZ() - GetActualEndPosition().z) > 5.0f;
+}
+
+// --- Backported helpers (AzerothCore) ---
+// Lightweight per-segment validators used by SmartWanderGenerator and other
+// pre-flight checks that don't want to incur the cost of a full A* path.
+
+namespace
+{
+    // Absolute angle (radians) between the segment (sx,sy,sz)->(dx,dy,dz)
+    // and the horizontal plane. Mirrors AzerothCore's getSlopeAngleAbs() —
+    // we inline it here to avoid pulling in a shared geometry header for a
+    // single call site.
+    inline float SlopeAngleAbs(float sx, float sy, float sz, float dx, float dy, float dz)
+    {
+        float floorDist = std::sqrt((sx - dx) * (sx - dx) + (sy - dy) * (sy - dy));
+        if (floorDist <= 0.0f)
+            return float(M_PI_2); // vertical
+        return std::atan(std::abs(dz - sz) / floorDist);
+    }
+
+    // Best-effort collision height for an arbitrary Unit. Player exposes a
+    // proper mounted/unmounted value; for creatures we fall back to a sane
+    // human-sized default — the climb formula degrades gracefully.
+    constexpr float DEFAULT_UNIT_COLLISION_HEIGHT = 2.0f;
+    inline float UnitCollisionHeight(Unit const* u)
+    {
+        if (Player const* p = u->ToPlayer())
+            return p->GetCollisionHeight(p->IsMounted());
+        return DEFAULT_UNIT_COLLISION_HEIGHT;
+    }
+}
+
+bool PathGenerator::IsWalkableClimb(float const* v1, float const* v2) const
+{
+    // Detour vectors are stored YZX, world coords are XYZ.
+    return IsWalkableClimb(v1[2], v1[0], v1[1], v2[2], v2[0], v2[1]);
+}
+
+bool PathGenerator::IsWalkableClimb(float x, float y, float z, float destX, float destY, float destZ) const
+{
+    return IsWalkableClimb(x, y, z, destX, destY, destZ, UnitCollisionHeight(_sourceUnit));
+}
+
+bool PathGenerator::IsWalkableClimb(float x, float y, float z, float destX, float destY, float destZ, float sourceHeight)
+{
+    float diffHeight = std::abs(destZ - z);
+    float reqHeight = GetRequiredHeightToClimb(x, y, z, destX, destY, destZ, sourceHeight);
+    return diffHeight <= reqHeight;
+}
+
+float PathGenerator::GetRequiredHeightToClimb(float x, float y, float z, float destX, float destY, float destZ, float sourceHeight)
+{
+    float slopeAngle = SlopeAngleAbs(x, y, z, destX, destY, destZ);
+    float slopeAngleDegree = slopeAngle * 180.0f / float(M_PI);
+    // AC formula: climbable height scales down linearly with slope angle (deg/100).
+    // At 0°: full sourceHeight; near 100°+: ~0 — i.e. effectively unwalkable.
+    return sourceHeight - sourceHeight * (slopeAngleDegree / 100.0f);
+}
+
+bool PathGenerator::IsSwimmableSegment(float const* v1, float const* v2, bool checkSwim) const
+{
+    return IsSwimmableSegment(v1[2], v1[0], v1[1], v2[2], v2[0], v2[1], checkSwim);
+}
+
+bool PathGenerator::IsSwimmableSegment(float x, float y, float z, float destX, float destY, float destZ, bool checkSwim) const
+{
+    Map const* map = _sourceUnit->GetMap();
+    PhaseShift const& phase = _sourceUnit->GetPhaseShift();
+    Creature const* sourceCreature = _sourceUnit->ToCreature();
+
+    return map->IsInWater(phase, x, y, z) &&
+           map->IsInWater(phase, destX, destY, destZ) &&
+           (!checkSwim || !sourceCreature || sourceCreature->CanSwim());
+}
+
+bool PathGenerator::IsWaterPath(Movement::PointsArray pathPoints) const
+{
+    // Every point of the candidate path must be over (or in) liquid for the
+    // segment to be considered a "swim path". One dry point breaks the chain.
+    for (uint32 i = 0; i < pathPoints.size(); ++i)
+    {
+        NavTerrainFlag terrain = GetNavTerrain(pathPoints[i].x, pathPoints[i].y, pathPoints[i].z);
+        if (terrain != NAV_WATER && terrain != NAV_MAGMA_SLIME)
+            return false;
+    }
+    return true;
 }

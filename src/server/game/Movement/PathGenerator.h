@@ -63,9 +63,29 @@ class TC_GAME_API PathGenerator
         bool CalculatePath(G3D::Vector3 start, G3D::Vector3 dest, bool forceDest = false, bool straightLine = false);
         bool IsInvalidDestinationZ(Unit const* target) const;
 
+        // Backported helpers (AzerothCore) — light-weight segment validators
+        // for callers that want to reject candidate destinations *before* asking
+        // for a full A* path. Used by SmartWanderGenerator and friends.
+        [[nodiscard]] bool IsWalkableClimb(float const* v1, float const* v2) const;
+        [[nodiscard]] bool IsWalkableClimb(float x, float y, float z, float destX, float destY, float destZ) const;
+        [[nodiscard]] static bool IsWalkableClimb(float x, float y, float z, float destX, float destY, float destZ, float sourceHeight);
+        [[nodiscard]] static float GetRequiredHeightToClimb(float x, float y, float z, float destX, float destY, float destZ, float sourceHeight);
+
+        [[nodiscard]] bool IsSwimmableSegment(float const* v1, float const* v2, bool checkSwim = true) const;
+        [[nodiscard]] bool IsSwimmableSegment(float x, float y, float z, float destX, float destY, float destZ, bool checkSwim = true) const;
+        [[nodiscard]] bool IsWaterPath(Movement::PointsArray pathPoints) const;
+
         // option setters - use optional
         void SetUseStraightPath(bool useStraightPath) { _useStraightPath = useStraightPath; }
         void SetPathLengthLimit(float distance) { _pointPathLimit = std::min<uint32>(uint32(distance/SMOOTH_PATH_STEP_SIZE), MAX_POINT_PATH_LENGTH); }
+        // _straightLine is consumed by CalculatePath; SetUseRaycast lets callers
+        // toggle it without having to re-route through the CalculatePath overload.
+        void SetUseRaycast(bool useRaycast) { _straightLine = useRaycast; }
+        // Toggle: callers can ask the generator to discard candidate segments
+        // whose slope exceeds the unit's climb ability. Off by default — does
+        // not affect existing CalculatePath callers.
+        void SetSlopeCheck(bool checkSlope) { _slopeCheck = checkSlope; }
+        [[nodiscard]] bool GetSlopeCheck() const { return _slopeCheck; }
 
         // result getters
         G3D::Vector3 const& GetStartPosition() const { return _startPosition; }
@@ -90,6 +110,7 @@ class TC_GAME_API PathGenerator
         bool _forceDestination; // when set, we will always arrive at given point
         uint32 _pointPathLimit; // limit point path size; min(this, MAX_POINT_PATH_LENGTH)
         bool _straightLine;     // use raycast if true for a straight line path
+        bool _slopeCheck = false; // reject candidate segments whose slope exceeds the unit's climb ability
 
         G3D::Vector3 _startPosition;        // {x, y, z} of current location
         G3D::Vector3 _endPosition;          // {x, y, z} of the destination
@@ -124,7 +145,7 @@ class TC_GAME_API PathGenerator
         void BuildPointPath(float const* startPoint, float const* endPoint);
         void BuildShortcut();
 
-        NavTerrainFlag GetNavTerrain(float x, float y, float z);
+        [[nodiscard]] NavTerrainFlag GetNavTerrain(float x, float y, float z) const;
         void CreateFilter();
         void UpdateFilter();
 

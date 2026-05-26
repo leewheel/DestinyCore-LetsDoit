@@ -26,6 +26,7 @@
 #include <atomic>
 #include <thread>
 
+#include "Config.h"
 #include "TerrainBuilder.h"
 #include "IntermediateValues.h"
 
@@ -76,14 +77,8 @@ namespace MMAP
     class MapBuilder
     {
         public:
-            MapBuilder(float maxWalkableAngle   = 70.f,
-                bool skipLiquid          = false,
-                bool skipContinents      = false,
-                bool skipJunkMaps        = true,
-                bool skipBattlegrounds   = false,
-                bool debugOutput         = false,
-                bool bigBaseUnit         = false,
-                int mapid                = -1,
+            MapBuilder(Config* config,
+                int mapid = -1,
                 const char* offMeshFilePath = NULL);
 
             ~MapBuilder();
@@ -99,6 +94,10 @@ namespace MMAP
             void buildAllMaps(unsigned int threads);
 
             void WorkerThread();
+
+            const Config& getConfig() const { return *m_config; }
+
+            rcConfig getRecastConfig(ResolvedMeshConfig const& cfg, float bmin[3], float bmax[3]) const;
 
         private:
             // detect maps and tiles
@@ -129,18 +128,11 @@ namespace MMAP
 
             uint32 percentageDone(uint32 totalTiles, uint32 totalTilesDone);
 
+            Config* m_config;
             TerrainBuilder* m_terrainBuilder;
             TileList m_tiles;
 
-            bool m_debugOutput;
-
             const char* m_offMeshFilePath;
-            bool m_skipContinents;
-            bool m_skipJunkMaps;
-            bool m_skipBattlegrounds;
-
-            float m_maxWalkableAngle;
-            bool m_bigBaseUnit;
 
             int32 m_mapid;
 
