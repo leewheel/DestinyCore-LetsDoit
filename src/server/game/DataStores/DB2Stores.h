@@ -167,6 +167,7 @@ TC_GAME_API extern DB2Storage<LockEntry>                            sLockStore;
 TC_GAME_API extern DB2Storage<MailTemplateEntry>                    sMailTemplateStore;
 TC_GAME_API extern DB2Storage<MapEntry>                             sMapStore;
 TC_GAME_API extern DB2Storage<MapChallengeModeEntry>                sMapChallengeModeStore;
+TC_GAME_API extern DB2Storage<MapDifficultyXConditionEntry>         sMapDifficultyXConditionStore;
 TC_GAME_API extern DB2Storage<ModifierTreeEntry>                    sModifierTreeStore;
 TC_GAME_API extern DB2Storage<MountCapabilityEntry>                 sMountCapabilityStore;
 TC_GAME_API extern DB2Storage<MountEntry>                           sMountStore;
@@ -282,6 +283,7 @@ public:
     DEFINE_DB2_SET_COMPARATOR(MountTypeXCapabilityEntry)
 
     typedef std::vector<ItemBonusEntry const*> ItemBonusList;
+    typedef std::vector<MapDifficultyXConditionEntry const*> MapDifficultyConditionList;
     typedef std::unordered_map<uint32, std::unordered_map<uint32, MapDifficultyEntry const*>> MapDifficultyContainer;
     typedef std::set<MountTypeXCapabilityEntry const*, MountTypeXCapabilityEntryComparator> MountTypeXCapabilitySet;
     typedef std::vector<MountXDisplayEntry const*> MountXDisplayContainer;
@@ -326,6 +328,7 @@ public:
     std::vector<uint32> const* GetGlyphBindableSpells(uint32 glyphPropertiesId) const;
     std::vector<uint32> const* GetGlyphRequiredSpecs(uint32 glyphPropertiesId) const;
     ItemBonusList const* GetItemBonusList(uint32 bonusListId) const;
+    MapDifficultyConditionList const* GetMapDifficultyConditions(uint32 mapDifficultyId) const;
     uint32 GetItemBonusListForItemLevelDelta(int16 delta) const;
     std::set<uint32> GetItemBonusTree(uint32 itemId, uint32 itemContext) const;
     bool HasItemContext(uint32 itemId) const;

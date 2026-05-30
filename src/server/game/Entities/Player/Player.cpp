@@ -20868,75 +20868,46 @@ void Player::SendRaidInfo()
     GetSession()->SendPacket(instanceInfo.Write());
 }
 
-bool Player::Satisfy(AccessRequirement const* ar, uint32 target_map, bool report)
+bool Player::Satisfy(uint32 target_map, Difficulty difficulty, bool report)
 {
-    if (!IsGameMaster() && ar)
+    if (IsGameMaster())
+        return true;
+
+    if (!sMapStore.LookupEntry(target_map))
+        return false;
+
+    if (DisableMgr::IsDisabledFor(DISABLE_TYPE_MAP, target_map, this))
     {
-        uint8 LevelMin = 0;
-        uint8 LevelMax = 0;
-
-        MapEntry const* mapEntry = sMapStore.LookupEntry(target_map);
-        if (!mapEntry)
-            return false;
-
-        if (!sWorld->getBoolConfig(CONFIG_INSTANCE_IGNORE_LEVEL))
-        {
-            if (ar->levelMin && getLevel() < ar->levelMin)
-                LevelMin = ar->levelMin;
-            if (ar->levelMax && getLevel() > ar->levelMax)
-                LevelMax = ar->levelMax;
-        }
-
-        uint32 missingItem = 0;
-        if (ar->item)
-        {
-            if (!HasItemCount(ar->item) &&
-                (!ar->item2 || !HasItemCount(ar->item2)))
-                missingItem = ar->item;
-        }
-        else if (ar->item2 && !HasItemCount(ar->item2))
-            missingItem = ar->item2;
-
-        if (DisableMgr::IsDisabledFor(DISABLE_TYPE_MAP, target_map, this))
-        {
+        if (report)
             GetSession()->SendNotification("%s", GetSession()->GetTrinityString(LANG_INSTANCE_CLOSED));
-            return false;
-        }
+        return false;
+    }
 
-        uint32 missingQuest = 0;
-        if (GetTeam() == ALLIANCE && ar->quest_A && !GetQuestRewardStatus(ar->quest_A))
-            missingQuest = ar->quest_A;
-        else if (GetTeam() == HORDE && ar->quest_H && !GetQuestRewardStatus(ar->quest_H))
-            missingQuest = ar->quest_H;
+    MapDifficultyEntry const* mapDiff = sDB2Manager.GetDownscaledMapDifficultyData(target_map, difficulty);
+    if (!mapDiff)
+        return true;
 
-        uint32 missingAchievement = 0;
-        Player* leader = this;
-        ObjectGuid leaderGuid = GetGroup() ? GetGroup()->GetLeaderGUID() : GetGUID();
-        if (leaderGuid != GetGUID())
-            leader = ObjectAccessor::FindPlayer(leaderGuid);
+    DB2Manager::MapDifficultyConditionList const* conditions = sDB2Manager.GetMapDifficultyConditions(mapDiff->ID);
+    if (!conditions)
+        return true;
 
-        if (ar->achievement)
-            if (!leader || !leader->HasAchieved(ar->achievement))
-                missingAchievement = ar->achievement;
-
-        Difficulty target_difficulty = GetDifficultyID(mapEntry);
-        MapDifficultyEntry const* mapDiff = sDB2Manager.GetDownscaledMapDifficultyData(target_map, target_difficulty);
-        if (LevelMin || LevelMax || missingItem || missingQuest || missingAchievement)
+    LocaleConstant locale = GetSession()->GetSessionDbcLocale();
+    for (MapDifficultyXConditionEntry const* condition : *conditions)
+    {
+        PlayerConditionEntry const* playerCondition = sPlayerConditionStore.LookupEntry(condition->PlayerConditionID);
+        if (playerCondition && !ConditionMgr::IsPlayerMeetingCondition(this, playerCondition))
         {
             if (report)
             {
-                if (missingQuest && !ar->questFailedText.empty())
-                    ChatHandler(GetSession()).PSendSysMessage("%s", ar->questFailedText.c_str());
-                else if (mapDiff->Message->Str[sWorld->GetDefaultDbcLocale()][0] != '\0') // if (missingAchievement) covered by this case
-                    SendTransferAborted(target_map, TRANSFER_ABORT_DIFFICULTY, target_difficulty);
-                else if (missingItem)
-                    GetSession()->SendNotification(GetSession()->GetTrinityString(LANG_LEVEL_MINREQUIRED_AND_ITEM), LevelMin, ASSERT_NOTNULL(sObjectMgr->GetItemTemplate(missingItem))->GetName(GetSession()->GetSessionDbcLocale()));
-                else if (LevelMin)
-                    GetSession()->SendNotification(GetSession()->GetTrinityString(LANG_LEVEL_MINREQUIRED), LevelMin);
+                if (condition->FailureDescription && condition->FailureDescription->Str[locale][0] != '\0')
+                    ChatHandler(GetSession()).PSendSysMessage("%s", condition->FailureDescription->Str[locale]);
+                else
+                    SendTransferAborted(target_map, TRANSFER_ABORT_DIFFICULTY, difficulty);
             }
             return false;
         }
     }
+
     return true;
 }
 

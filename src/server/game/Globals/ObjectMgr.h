@@ -39,7 +39,6 @@
 class Item;
 class Unit;
 class Vehicle;
-struct AccessRequirement;
 struct AreaTriggerData;
 struct DeclinedName;
 struct DungeonEncounterEntry;
@@ -447,18 +446,6 @@ struct AreaTriggerTeleportStruct
     float  target_Y;
     float  target_Z;
     float  target_Orientation;
-};
-
-struct AccessRequirement
-{
-    uint8  levelMin;
-    uint8  levelMax;
-    uint32 item;
-    uint32 item2;
-    uint32 quest_A;
-    uint32 quest_H;
-    uint32 achievement;
-    std::string questFailedText;
 };
 
 typedef std::set<ObjectGuid::LowType> CellGuidSet;
@@ -962,7 +949,6 @@ class TC_GAME_API ObjectMgr
 
         typedef std::unordered_map<uint32, uint32> AreaTriggerScriptContainer;
 
-        typedef std::unordered_map<uint64, AccessRequirement*> AccessRequirementContainer;
 
         typedef std::unordered_map<uint32, RepRewardRate > RepRewardRateContainer;
         typedef std::unordered_map<uint32, ReputationOnKillEntry> RepOnKillContainer;
@@ -1103,7 +1089,6 @@ class TC_GAME_API ObjectMgr
         GraveYardData const* FindGraveYardData(uint32 id, uint32 zone) const;
 
         AreaTriggerTeleportStruct const* GetAreaTrigger(int64 trigger) const;
-        AccessRequirement const* GetAccessRequirement(uint32 mapid, Difficulty difficulty) const;
         AreaTriggerTeleportStruct const* GetGoBackTrigger(uint32 Map) const;
         AreaTriggerTeleportStruct const* GetMapEntranceTrigger(uint32 Map) const;
 
@@ -1270,7 +1255,6 @@ class TC_GAME_API ObjectMgr
         void LoadNPCText();
 
         void LoadAreaTriggerTeleports();
-        void LoadAccessRequirements();
         void LoadQuestAreaTriggers();
         void LoadQuestGreetings();
         void LoadAreaTriggerScripts();
@@ -1713,7 +1697,6 @@ class TC_GAME_API ObjectMgr
         QuestGreetingLocaleContainer _questGreetingLocaleStore;
         AreaTriggerTeleportContainer _areaTriggerTeleportStore;
         AreaTriggerScriptContainer _areaTriggerScriptStore;
-        AccessRequirementContainer _accessRequirementStore;
         DungeonEncounterContainer _dungeonEncounterStore;
         DungeonCreditEncounterMap _DungeonCreditEncounters;
 

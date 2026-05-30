@@ -74,7 +74,6 @@ public:
         static std::vector<ChatCommand> reloadCommandTable =
         {
             { "auctions",                      rbac::RBAC_PERM_COMMAND_RELOAD_AUCTIONS,                         true,  &HandleReloadAuctionsCommand,                   "" },
-            { "access_requirement",            rbac::RBAC_PERM_COMMAND_RELOAD_ACCESS_REQUIREMENT,               true,  &HandleReloadAccessRequirementCommand,          "" },
             { "achievement_reward",            rbac::RBAC_PERM_COMMAND_RELOAD_ACHIEVEMENT_REWARD,               true,  &HandleReloadAchievementRewardCommand,          "" },
             { "all",                           rbac::RBAC_PERM_COMMAND_RELOAD_ALL,                              true,  NULL,                                           "", reloadAllCommandTable },
             { "areatrigger_involvedrelation",  rbac::RBAC_PERM_COMMAND_RELOAD_AREATRIGGER_INVOLVEDRELATION,     true,  &HandleReloadQuestAreaTriggersCommand,          "" },
@@ -196,7 +195,6 @@ public:
         HandleReloadAllGossipsCommand(handler, "");
         HandleReloadAllLocalesCommand(handler, "");
 
-        HandleReloadAccessRequirementCommand(handler, "");
         HandleReloadMailLevelRewardCommand(handler, "");
         HandleReloadCommandCommand(handler, "");
         HandleReloadReservedNameCommand(handler, "");
@@ -332,14 +330,6 @@ public:
         sWorld->LoadConfigSettings(true);
         sMapMgr->InitializeVisibilityDistanceInfo();
         handler->SendGlobalGMSysMessage("World config settings reloaded.");
-        return true;
-    }
-
-    static bool HandleReloadAccessRequirementCommand(ChatHandler* handler, const char* /*args*/)
-    {
-        TC_LOG_INFO("misc", "Re-Loading Access Requirement definitions...");
-        sObjectMgr->LoadAccessRequirements();
-        handler->SendGlobalGMSysMessage("DB table `access_requirement` reloaded.");
         return true;
     }
 

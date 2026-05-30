@@ -2118,8 +2118,6 @@ void World::SetInitialWorldSettings()
     TC_LOG_INFO("server.loading", "Loading AreaTrigger definitions...");
     sObjectMgr->LoadAreaTriggerTeleports();
 
-    TC_LOG_INFO("server.loading", "Loading Access Requirements...");
-    sObjectMgr->LoadAccessRequirements();                        // must be after item template load
 
     TC_LOG_INFO("server.loading", "Loading Quest Area Triggers...");
     sObjectMgr->LoadQuestAreaTriggers();                         // must be after LoadQuests

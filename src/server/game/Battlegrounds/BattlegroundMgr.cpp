@@ -504,8 +504,7 @@ void BattlegroundMgr::LoadBattlegroundTemplates()
     _battlegroundMapTemplates.clear();
     _battlegroundTemplates.clear();
 
-    //                                               0   1                  2                  3       4       5                 6              7             8       9
-    QueryResult result = WorldDatabase.Query("SELECT ID, MinPlayersPerTeam, MaxPlayersPerTeam, MinLvl, MaxLvl, AllianceStartLoc, HordeStartLoc, StartMaxDist, Weight, ScriptName FROM battleground_template");
+    QueryResult result = WorldDatabase.Query("SELECT ID, AllianceStartLoc, HordeStartLoc, StartMaxDist, Weight, ScriptName FROM battleground_template");
     if (!result)
     {
         TC_LOG_ERROR("server.loading", ">> Loaded 0 battlegrounds. DB table `battleground_template` is empty.");
@@ -523,7 +522,6 @@ void BattlegroundMgr::LoadBattlegroundTemplates()
         if (DisableMgr::IsDisabledFor(DISABLE_TYPE_BATTLEGROUND, bgTypeId, NULL))
             continue;
 
-        // can be overwrite by values from DB
         BattlemasterListEntry const* bl = sBattlemasterListStore.LookupEntry(bgTypeId);
         if (!bl)
         {
@@ -533,14 +531,14 @@ void BattlegroundMgr::LoadBattlegroundTemplates()
 
         BattlegroundTemplate bgTemplate;
         bgTemplate.Id                = bgTypeId;
-        bgTemplate.MinPlayersPerTeam = fields[1].GetUInt16();
-        bgTemplate.MaxPlayersPerTeam = fields[2].GetUInt16();
-        bgTemplate.MinLevel          = fields[3].GetUInt8();
-        bgTemplate.MaxLevel          = fields[4].GetUInt8();
-        float dist                   = fields[7].GetFloat();
+        bgTemplate.MinPlayersPerTeam = bl->MinPlayers;
+        bgTemplate.MaxPlayersPerTeam = bl->MaxPlayers;
+        bgTemplate.MinLevel          = bl->MinLevel;
+        bgTemplate.MaxLevel          = bl->MaxLevel;
+        float dist                   = fields[3].GetFloat();
         bgTemplate.MaxStartDistSq    = dist * dist;
-        bgTemplate.Weight            = fields[8].GetUInt8();
-        bgTemplate.ScriptId          = sObjectMgr->GetScriptId(fields[9].GetString());
+        bgTemplate.Weight            = fields[4].GetUInt8();
+        bgTemplate.ScriptId          = sObjectMgr->GetScriptId(fields[5].GetString());
         bgTemplate.BattlemasterEntry = bl;
         if (bgTypeId == BATTLEGROUND_NA || bgTypeId == BATTLEGROUND_RL)
             bgTemplate.Weight = 5;
@@ -565,7 +563,7 @@ void BattlegroundMgr::LoadBattlegroundTemplates()
 
         if (bgTemplate.Id != BATTLEGROUND_AA && bgTemplate.Id != BATTLEGROUND_RB)
         {
-            uint32 startId = fields[5].GetUInt32();
+            uint32 startId = fields[1].GetUInt32();
             if (WorldSafeLocsEntry const* start = sWorldSafeLocsStore.LookupEntry(startId))
             {
                 bgTemplate.StartLocation[TEAM_ALLIANCE].Relocate(start->Loc.X, start->Loc.Y, start->Loc.Z, (start->Facing * M_PI) / 180);
@@ -576,7 +574,7 @@ void BattlegroundMgr::LoadBattlegroundTemplates()
                 continue;
             }
 
-            startId = fields[6].GetUInt32();
+            startId = fields[2].GetUInt32();
             if (WorldSafeLocsEntry const* start = sWorldSafeLocsStore.LookupEntry(startId))
             {
                 bgTemplate.StartLocation[TEAM_HORDE].Relocate(start->Loc.X, start->Loc.Y, start->Loc.Z, (start->Facing * M_PI) / 180);

@@ -200,6 +200,7 @@ DB2Storage<MailTemplateEntry>                   sMailTemplateStore("MailTemplate
 DB2Storage<MapEntry>                            sMapStore("Map.db2", MapLoadInfo::Instance());
 DB2Storage<MapChallengeModeEntry>               sMapChallengeModeStore("MapChallengeMode.db2", MapChallengeModeLoadInfo::Instance());
 DB2Storage<MapDifficultyEntry>                  sMapDifficultyStore("MapDifficulty.db2", MapDifficultyLoadInfo::Instance());
+DB2Storage<MapDifficultyXConditionEntry>        sMapDifficultyXConditionStore("MapDifficultyXCondition.db2", MapDifficultyXConditionLoadInfo::Instance());
 DB2Storage<ModifierTreeEntry>                   sModifierTreeStore("ModifierTree.db2", ModifierTreeLoadInfo::Instance());
 DB2Storage<MountCapabilityEntry>                sMountCapabilityStore("MountCapability.db2", MountCapabilityLoadInfo::Instance());
 DB2Storage<MountEntry>                          sMountStore("Mount.db2", MountLoadInfo::Instance());
@@ -405,6 +406,7 @@ namespace
     GlyphBindableSpellsContainer _glyphBindableSpells;
     GlyphRequiredSpecsContainer _glyphRequiredSpecs;
     ItemBonusListContainer _itemBonusLists;
+    std::unordered_map<uint32, std::vector<MapDifficultyXConditionEntry const*>> _mapDifficultyConditions;
     ItemBonusListLevelDeltaContainer _itemLevelDeltaToBonusListContainer;
     ItemBonusTreeContainer _itemBonusTrees;
     ItemChildEquipmentContainer _itemChildEquipment;
@@ -723,6 +725,7 @@ void DB2Manager::LoadStores(std::string const& dataPath, uint32 defaultLocale)
     LOAD_DB2(sMapStore);
     LOAD_DB2(sMapChallengeModeStore);
     LOAD_DB2(sMapDifficultyStore);
+    LOAD_DB2(sMapDifficultyXConditionStore);
     LOAD_DB2(sModifierTreeStore);
     LOAD_DB2(sMountCapabilityStore);
     LOAD_DB2(sMountStore);
@@ -1012,6 +1015,9 @@ void DB2Manager::LoadStores(std::string const& dataPath, uint32 defaultLocale)
 
     for (ItemBonusEntry const* bonus : sItemBonusStore)
         _itemBonusLists[bonus->ParentItemBonusListID].push_back(bonus);
+
+    for (MapDifficultyXConditionEntry const* condition : sMapDifficultyXConditionStore)
+        _mapDifficultyConditions[condition->MapDifficultyID].push_back(condition);
 
     for (ItemBonusListLevelDeltaEntry const* itemBonusListLevelDelta : sItemBonusListLevelDeltaStore)
         _itemLevelDeltaToBonusListContainer[itemBonusListLevelDelta->ItemLevelDelta] = itemBonusListLevelDelta->ID;
@@ -1826,6 +1832,15 @@ DB2Manager::ItemBonusList const* DB2Manager::GetItemBonusList(uint32 bonusListId
 {
     auto itr = _itemBonusLists.find(bonusListId);
     if (itr != _itemBonusLists.end())
+        return &itr->second;
+
+    return nullptr;
+}
+
+DB2Manager::MapDifficultyConditionList const* DB2Manager::GetMapDifficultyConditions(uint32 mapDifficultyId) const
+{
+    auto itr = _mapDifficultyConditions.find(mapDifficultyId);
+    if (itr != _mapDifficultyConditions.end())
         return &itr->second;
 
     return nullptr;

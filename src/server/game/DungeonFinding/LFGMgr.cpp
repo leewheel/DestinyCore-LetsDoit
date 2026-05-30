@@ -1893,23 +1893,8 @@ LfgLockMap LFGMgr::GetLockedDungeons(ObjectGuid guid)
             lockStatus = LFG_LOCKSTATUS_NOT_IN_SEASON;
         else if (dungeon->requiredItemLevel > player->GetAverageItemLevelEquipped())
             lockStatus = LFG_LOCKSTATUS_TOO_LOW_GEAR_SCORE;
-        else if (AccessRequirement const* ar = sObjectMgr->GetAccessRequirement(dungeon->map, Difficulty(dungeon->difficulty)))
-        {
-            if (ar->achievement && !player->HasAchieved(ar->achievement))
-                lockStatus = LFG_LOCKSTATUS_MISSING_ACHIEVEMENT;
-            else if (player->GetTeam() == ALLIANCE && ar->quest_A && !player->GetQuestRewardStatus(ar->quest_A))
-                lockStatus = LFG_LOCKSTATUS_QUEST_NOT_COMPLETED;
-            else if (player->GetTeam() == HORDE && ar->quest_H && !player->GetQuestRewardStatus(ar->quest_H))
-                lockStatus = LFG_LOCKSTATUS_QUEST_NOT_COMPLETED;
-            else
-                if (ar->item)
-                {
-                    if (!player->HasItemCount(ar->item) && (!ar->item2 || !player->HasItemCount(ar->item2)))
-                        lockStatus = LFG_LOCKSTATUS_MISSING_ITEM;
-                }
-                else if (ar->item2 && !player->HasItemCount(ar->item2))
-                    lockStatus = LFG_LOCKSTATUS_MISSING_ITEM;
-        }
+        else if (!player->Satisfy(dungeon->map, Difficulty(dungeon->difficulty)))
+            lockStatus = LFG_LOCKSTATUS_QUEST_NOT_COMPLETED;
 
         /* @todo VoA closed if WG is not under team control (LFG_LOCKSTATUS_RAID_LOCKED)
         lockData = LFG_LOCKSTATUS_TOO_HIGH_GEAR_SCORE;

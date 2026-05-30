@@ -777,6 +777,11 @@ void HotfixDatabaseConnection::DoPrepareStatements()
         "ItemContextPickerID, MapID FROM map_difficulty ORDER BY ID DESC", CONNECTION_SYNCH);
     PREPARE_LOCALE_STMT(HOTFIX_SEL_MAP_DIFFICULTY, "SELECT ID, Message_lang FROM map_difficulty_locale WHERE locale = ?", CONNECTION_SYNCH);
 
+    // MapDifficultyXCondition.db2
+    PrepareStatement(HOTFIX_SEL_MAP_DIFFICULTY_X_CONDITION, "SELECT ID, FailureDescription, PlayerConditionID, OrderIndex, MapDifficultyID "
+        "FROM map_difficulty_x_condition ORDER BY ID DESC", CONNECTION_SYNCH);
+    PREPARE_LOCALE_STMT(HOTFIX_SEL_MAP_DIFFICULTY_X_CONDITION, "SELECT ID, FailureDescription_lang FROM map_difficulty_x_condition_locale WHERE locale = ?", CONNECTION_SYNCH);
+
     // ModifierTree.db2
     PrepareStatement(HOTFIX_SEL_MODIFIER_TREE, "SELECT ID, Asset, SecondaryAsset, Parent, Type, TertiaryAsset, Operator, Amount FROM modifier_tree"
         " ORDER BY ID DESC", CONNECTION_SYNCH);

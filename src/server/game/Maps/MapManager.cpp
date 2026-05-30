@@ -229,7 +229,7 @@ Map::EnterState MapManager::PlayerCannotEnter(uint32 mapid, Player* player, bool
     }
 
     //Other requirements
-    if (player->Satisfy(sObjectMgr->GetAccessRequirement(mapid, targetDifficulty), mapid, true))
+    if (player->Satisfy(mapid, targetDifficulty, true))
         return Map::CAN_ENTER;
     else
         return Map::CANNOT_ENTER_UNSPECIFIED_REASON;

@@ -2324,6 +2324,15 @@ struct MapDifficultyEntry
     }
 };
 
+struct MapDifficultyXConditionEntry
+{
+    uint32 ID;
+    LocalizedString* FailureDescription;
+    int32 PlayerConditionID;
+    int32 OrderIndex;
+    int32 MapDifficultyID;
+};
+
 struct ModifierTreeEntry
 {
     uint32 ID;
