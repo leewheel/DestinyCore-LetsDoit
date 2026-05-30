@@ -22,6 +22,7 @@
 #include "Common.h"
 #include "Errors.h"
 #include "ObjectGuid.h"
+#include "Optional.h"
 #include "Position.h"
 #include "MoveSplineInitArgs.h"
 #include "SharedDefines.h"
@@ -59,20 +60,20 @@ enum MovementGeneratorType : uint8
 {
     IDLE_MOTION_TYPE                = 0,                  // IdleMovementGenerator.h
     RANDOM_MOTION_TYPE              = 1,                  // RandomMovementGenerator.h
-    WAYPOINT_MOTION_TYPE            = 2,                  // WaypointMovementGenerator.h
+    WAYPOINT_MOTION_TYPE            = 2,                  // WaypointGenerator.h
     MAX_DB_MOTION_TYPE              = 3,                  // Below motion types can't be set in DB.
     ANIMAL_RANDOM_MOTION_TYPE       = MAX_DB_MOTION_TYPE, // AnimalRandomMovementGenerator.h
     CONFUSED_MOTION_TYPE            = 4,                  // ConfusedMovementGenerator.h
-    CHASE_MOTION_TYPE               = 5,                  // TargetedMovementGenerator.h
+    CHASE_MOTION_TYPE               = 5,                  // ChaseGenerator.h
     HOME_MOTION_TYPE                = 6,                  // HomeMovementGenerator.h
-    FLIGHT_MOTION_TYPE              = 7,                  // WaypointMovementGenerator.h
+    FLIGHT_MOTION_TYPE              = 7,                  // FlightPathMovementGenerator.h
     POINT_MOTION_TYPE               = 8,                  // PointMovementGenerator.h
     FLEEING_MOTION_TYPE             = 9,                  // FleeingMovementGenerator.h
     DISTRACT_MOTION_TYPE            = 10,                 // IdleMovementGenerator.h
     ASSISTANCE_MOTION_TYPE          = 11,                 // PointMovementGenerator.h (first part of flee for assistance)
     ASSISTANCE_DISTRACT_MOTION_TYPE = 12,                 // IdleMovementGenerator.h (second part of flee for assistance)
     TIMED_FLEEING_MOTION_TYPE       = 13,                 // FleeingMovementGenerator.h (alt.second part of flee for assistance)
-    FOLLOW_MOTION_TYPE              = 14,
+    FOLLOW_MOTION_TYPE              = 14,                 // FollowGenerator.h
     ROTATE_MOTION_TYPE              = 15,
     EFFECT_MOTION_TYPE              = 16,
     NULL_MOTION_TYPE                = 17,
@@ -108,6 +109,38 @@ struct JumpArrivalCastArgs
     uint32 SpellId;
     ObjectGuid Caster;
     ObjectGuid Target;
+};
+
+// Owner stays inside [MinTolerance, MaxTolerance] around the target; stepping
+// outside triggers a replan.
+//   - Single-arg ctor: band centered on `range` with CONTACT_DISTANCE
+//     hysteresis. Standard melee chase (range = 0 → "in contact").
+//   - Two-arg ctor: range with no minimum (caster keep-distance).
+//   - Four-arg ctor: full control.
+struct TC_GAME_API ChaseRange
+{
+    ChaseRange(float range);
+    ChaseRange(float minRange, float maxRange);
+    ChaseRange(float minRange, float minTolerance, float maxTolerance, float maxRange);
+
+    float MinRange;
+    float MinTolerance;
+    float MaxRange;
+    float MaxTolerance;
+};
+
+// Angle relative to the target's facing (0 = in front, π = behind). Tolerance
+// is the half-width of the acceptable arc.
+struct TC_GAME_API ChaseAngle
+{
+    ChaseAngle(float angle, float tolerance = float(M_PI_4));
+
+    float RelativeAngle;
+    float Tolerance;
+
+    [[nodiscard]] float UpperBound() const;
+    [[nodiscard]] float LowerBound() const;
+    [[nodiscard]] bool IsAngleOkay(float relativeAngle) const;
 };
 
 class TC_GAME_API MotionMaster

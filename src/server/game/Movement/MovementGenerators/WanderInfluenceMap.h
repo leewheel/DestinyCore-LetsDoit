@@ -1,17 +1,17 @@
 /*
  * Copyright (C) DestinyCore <https://www.destinycore.org/>
  *
- * WanderInfluenceMap — sparse density grid keyed by world cell.
+ * WanderInfluenceMap - sparse density grid keyed by world cell.
  *
  * SmartWanderGenerator queries this to penalise candidate destinations
  * already populated by other wanderers (anti-clumping). Per-Map instance
  * so reads/writes are serialised by Legion's existing per-Map update lock.
  *
- * Cells are 8m squares — big enough to avoid coordinate jitter false-negatives,
+ * Cells are 8m squares - big enough to avoid coordinate jitter false-negatives,
  * small enough that "another wanderer is here" is geometrically meaningful at
  * the SmartWander range scale (3..30y).
  *
- * Memory: ~O(N_active_wanderers) entries — sparse. Typical capital with 2000
+ * Memory: ~O(N_active_wanderers) entries - sparse. Typical capital with 2000
  * spread wanderers ~= 2000 cells * 16 bytes = 32KB. Negligible.
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -44,7 +44,7 @@ public:
     void Add(float x, float y);
 
     // Decrement the count in the cell containing (x, y). No-op if the cell
-    // was already at 0 (defensive — late finalize after teleport, etc).
+    // was already at 0 (defensive - late finalize after teleport, etc).
     void Remove(float x, float y);
 
     // Convenience: Remove(oldX, oldY) + Add(newX, newY) when both coordinates
@@ -52,7 +52,7 @@ public:
     void Move(float oldX, float oldY, float newX, float newY);
 
     // Read-only density for the cell containing (x, y). 0 if no entry exists
-    // (the unordered_map is sparse — absence == 0).
+    // (the unordered_map is sparse - absence == 0).
     uint16 GetDensity(float x, float y) const;
 
     // For testing / debug commands.
@@ -62,7 +62,7 @@ private:
     static uint64 KeyFor(float x, float y);
 
     // uint16 = up to 65535 wanderers per 8m cell. Comfortably impossible in
-    // practice — even in raid spawns we cap at a few hundred per zone.
+    // practice - even in raid spawns we cap at a few hundred per zone.
     std::unordered_map<uint64, uint16> _cells;
 };
 

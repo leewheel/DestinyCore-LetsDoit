@@ -18,9 +18,11 @@
 
 #include "Creature.h"
 #include "ConfusedMovementGenerator.h"
-#include "PathGenerator.h"
+#include "Map.h"
 #include "MoveSplineInit.h"
 #include "MoveSpline.h"
+#include "MovementServices.h"
+#include "PathPlanner.h"
 #include "Player.h"
 #include "Random.h"
 
@@ -79,17 +81,31 @@ bool ConfusedMovementGenerator<T>::DoUpdate(T* unit, uint32 diff)
             pos.Relocate(i_x, i_y, i_z);
             unit->MovePositionToFirstCollision(pos, dest, 0.0f);
 
-            PathGenerator path(unit);
-            path.SetPathLengthLimit(30.0f);
-            bool result = path.CalculatePath(pos.m_positionX, pos.m_positionY, pos.m_positionZ);
-            if (!result || (path.GetPathType() & PATHFIND_NOPATH))
+            Movement::PathPlanner* planner = nullptr;
+            if (Map* map = unit->GetMap())
+                if (Movement::MovementServices* services = map->GetMovementServices())
+                    planner = services->GetPathPlanner();
+            if (!planner)
+            {
+                i_nextMoveTime.Reset(100);
+                return true;
+            }
+
+            Movement::PathRequest request;
+            request.ownerGuid = unit->GetGUID();
+            request.from = unit->GetPosition();
+            request.to = pos;
+            request.pointLimit = 15;  // 30y at SMOOTH_PATH_STEP_SIZE 2y/step
+
+            Movement::PathResult result = planner->RequestPathSync(unit, request);
+            if (!result.success || (result.type & PATHFIND_NOPATH))
             {
                 i_nextMoveTime.Reset(100);
                 return true;
             }
 
             Movement::MoveSplineInit init(unit);
-            init.MovebyPath(path.GetPath());
+            init.MovebyPath(result.points);
             init.SetWalk(true);
             init.Launch();
         }

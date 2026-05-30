@@ -19,6 +19,8 @@
 #include "Battleground.h"
 #include "BrawlersGuild.h"
 #include "CellImpl.h"
+#include "MovementServices.h"
+#include "PathPlanner.h"
 #include "WanderInfluenceMap.h"
 #include "WanderTickScheduler.h"
 #include "Conversation.h"
@@ -96,6 +98,10 @@ Map::~Map()
 
     if (m_parentMap == this)
         delete m_childTerrainMaps;
+
+    // Must tear down before MMapManager unload: worker threads still hold
+    // dtNavMesh / dtNavMeshQuery pointers from in-flight requests.
+    _movementServices.reset();
 
     MMAP::MMapFactory::createOrGetMMapManager()->unloadMapInstance(GetId(), i_InstanceId);
 #ifdef ELUNA
@@ -336,6 +342,8 @@ _defaultLight(DB2Manager::GetDefaultMapLight(id))
     GetGuidSequenceGenerator<HighGuid::Transport>().Set(sObjectMgr->GetGenerator<HighGuid::Transport>().GetNextAfterMaxUsed());
 
     MMAP::MMapFactory::createOrGetMMapManager()->loadMapInstance(sWorld->GetDataPath(), GetId(), i_InstanceId);
+
+    _movementServices = std::make_unique<Movement::MovementServices>(this);
 
     // Create brawler guild only for this map
     if (id == 369 || id == 1043)
@@ -910,6 +918,9 @@ void Map::Update(const uint32 t_diff)
     if (!m_mapRefManager.isEmpty() || !m_activeNonPlayers.empty())
         ProcessRelocationNotifies(t_diff);
 
+    if (_movementServices)
+        _movementServices->Update(t_diff);
+
     sScriptMgr->OnMapUpdate(this, t_diff);
 }
 
@@ -1006,6 +1017,9 @@ void Map::RemovePlayerFromMap(Player* player, bool remove)
 {
     sScriptMgr->OnPlayerLeaveMap(this, player);
 
+    if (_movementServices)
+        _movementServices->OnUnitRemoved(player);
+
     player->RemoveFromWorld();
     SendRemoveTransports(player);
 
@@ -1032,7 +1046,11 @@ void Map::RemoveFromMap(T *obj, bool remove)
     obj->ResetMap();
 
     if (Creature* creature = obj->ToCreature())
+    {
         RemoveBattlePet(creature);
+        if (_movementServices)
+            _movementServices->OnUnitRemoved(creature);
+    }
 
     if (remove)
     {

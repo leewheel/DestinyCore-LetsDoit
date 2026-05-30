@@ -19,10 +19,12 @@
 #include "Creature.h"
 #include "CreatureAI.h"
 #include "FleeingMovementGenerator.h"
-#include "PathGenerator.h"
+#include "Map.h"
+#include "MovementServices.h"
 #include "ObjectAccessor.h"
 #include "MoveSplineInit.h"
 #include "MoveSpline.h"
+#include "PathPlanner.h"
 #include "PhasingHandler.h"
 #include "Player.h"
 #include "VMapFactory.h"
@@ -61,17 +63,31 @@ void FleeingMovementGenerator<T>::_setTargetLocation(T* owner)
         return;
     }
 
-    PathGenerator path(owner);
-    path.SetPathLengthLimit(30.0f);
-    bool result = path.CalculatePath(x, y, z);
-    if (!result || (path.GetPathType() & PATHFIND_NOPATH))
+    Movement::PathPlanner* planner = nullptr;
+    if (Map* map = owner->GetMap())
+        if (Movement::MovementServices* services = map->GetMovementServices())
+            planner = services->GetPathPlanner();
+    if (!planner)
+    {
+        i_nextCheckTime.Reset(100);
+        return;
+    }
+
+    Movement::PathRequest request;
+    request.ownerGuid = owner->GetGUID();
+    request.from = owner->GetPosition();
+    request.to = Position(x, y, z);
+    request.pointLimit = 15;  // 30y at SMOOTH_PATH_STEP_SIZE 2y/step
+
+    Movement::PathResult result = planner->RequestPathSync(owner, request);
+    if (!result.success || (result.type & PATHFIND_NOPATH))
     {
         i_nextCheckTime.Reset(100);
         return;
     }
 
     Movement::MoveSplineInit init(owner);
-    init.MovebyPath(path.GetPath());
+    init.MovebyPath(result.points);
     init.SetWalk(false);
     int32 traveltime = init.Launch();
     i_nextCheckTime.Reset(traveltime + urand(800, 1500));

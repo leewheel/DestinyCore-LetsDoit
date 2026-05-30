@@ -49,10 +49,9 @@ void PointMovementGenerator<T>::DoInitialize(T* unit)
         init.SetSpellEffectExtraData(*i_spellEffectExtra);
     init.Launch();
 
-    // Call for creature group update
     if (Creature* creature = unit->ToCreature())
         if (creature->GetFormation() && creature->GetFormation()->getLeader() == creature)
-            creature->GetFormation()->LeaderStartedMoving();
+            creature->GetFormation()->LeaderMoveTo(i_x, i_y, i_z);
 }
 
 template<class T>
@@ -78,10 +77,11 @@ bool PointMovementGenerator<T>::DoUpdate(T* unit, uint32 /*diff*/)
             init.SetVelocity(speed);
         init.Launch();
 
-        // Call for creature group update
+        // Push the destination to the formation so members can compute their
+        // slot positions around where the leader is heading.
         if (Creature* creature = unit->ToCreature())
             if (creature->GetFormation() && creature->GetFormation()->getLeader() == creature)
-                creature->GetFormation()->LeaderStartedMoving();
+                creature->GetFormation()->LeaderMoveTo(i_x, i_y, i_z);
     }
 
     return !unit->movespline->Finalized();

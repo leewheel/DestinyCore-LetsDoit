@@ -135,6 +135,7 @@ namespace Movement
 
         uint32 GetId() const { return m_Id; }
         bool Finalized() const { return splineflags.done; }
+        int32 timeRemainingMs() const { return Duration() - time_passed; }
         bool isCyclic() const { return splineflags.cyclic; }
         bool isFalling() const { return splineflags.falling; }
         Vector3 const& FinalDestination() const { return Initialized() ? spline.getPoint(spline.last()) : Vector3::zero(); }

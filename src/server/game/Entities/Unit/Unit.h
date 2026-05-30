@@ -20,8 +20,6 @@
 
 #include "Object.h"
 #include "EventProcessor.h"
-#include "FollowerReference.h"
-#include "FollowerRefManager.h"
 #include "HostileRefManager.h"
 #include "MovementPackets.h"
 #include "SpellAuraDefines.h"
@@ -1876,9 +1874,6 @@ class TC_GAME_API Unit : public WorldObject
         void  ModSpellCastTime(SpellInfo const* spellProto, int32& castTime, Spell* spell = NULL);
         void  ModSpellDurationTime(SpellInfo const* spellProto, int32& castTime, Spell* spell = NULL);
 
-        void addFollower(FollowerReference* pRef) { m_FollowingRefManager.insertFirst(pRef); }
-        void removeFollower(FollowerReference* /*pRef*/) { /* nothing to do yet */ }
-
         MotionMaster* GetMotionMaster() { return i_motionMaster; }
         const MotionMaster* GetMotionMaster() const { return i_motionMaster; }
 
@@ -2146,8 +2141,6 @@ class TC_GAME_API Unit : public WorldObject
         Diminishing m_Diminishing;
         // Manage all Units that are threatened by us
         HostileRefManager m_HostileRefManager;
-
-        FollowerRefManager m_FollowingRefManager;
 
         RedirectThreatInfo _redirectThreadInfo;
 

@@ -72,6 +72,7 @@ target_link_libraries(game
   PRIVATE
     trinity-core-interface
     efsw
+    RVO2
   PUBLIC
     game-interface)
 

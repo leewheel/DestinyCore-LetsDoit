@@ -1,7 +1,7 @@
 /*
  * Copyright (C) DestinyCore <https://www.destinycore.org/>
  *
- * WanderProfileMgr — SQL-backed cache of SmartWander::Profile.
+ * WanderProfileMgr - SQL-backed cache of SmartWander::Profile.
  *
  * Profiles are loaded once at world startup from the `wander_profile` table
  * and never mutated afterwards (callers borrow stable pointers). Reloading
@@ -27,7 +27,7 @@ public:
 
     // Pulls every row from `wander_profile`. Safe to call multiple times
     // (clears the cache first). Pointers returned by GetProfile() are
-    // invalidated by a reload — callers must not retain them across a reload.
+    // invalidated by a reload - callers must not retain them across a reload.
     void LoadAll();
 
     // Returns a borrowed pointer to the profile with the given id, or

@@ -22,18 +22,24 @@
 #include "ScriptSystem.h"
 #include "Log.h"
 #include "Map.h"
+#include "ChaseGenerator.h"
 #include "ConfusedMovementGenerator.h"
 #include "FleeingMovementGenerator.h"
 #include "FormationMovementGenerator.h"
 #include "HomeMovementGenerator.h"
+#include "ObjectDefines.h"
+#include "Position.h"
 #include "SmartWanderGenerator.h"
 #include "WanderProfileMgr.h"
+#include <algorithm>
+#include <cmath>
 #include "ObjectMgr.h"
 #include "CreatureData.h"
 #include "IdleMovementGenerator.h"
 #include "PointMovementGenerator.h"
-#include "TargetedMovementGenerator.h"
-#include "WaypointMovementGenerator.h"
+#include "FollowGenerator.h"
+#include "FlightPathMovementGenerator.h"
+#include "WaypointGenerator.h"
 #include "SplineChainMovementGenerator.h"
 #include "MoveSpline.h"
 #include "MoveSplineInit.h"
@@ -42,6 +48,52 @@
 inline bool IsStatic(MovementGenerator* movement)
 {
     return (movement == &si_idleMovement);
+}
+
+ChaseRange::ChaseRange(float range)
+    : MinRange(range > CONTACT_DISTANCE ? range - CONTACT_DISTANCE : 0.0f),
+      MinTolerance(range),
+      MaxRange(range + CONTACT_DISTANCE),
+      MaxTolerance(range)
+{
+}
+
+ChaseRange::ChaseRange(float minRange, float maxRange)
+    : MinRange(minRange),
+      MinTolerance(minRange + (maxRange - minRange) * 0.5f),
+      MaxRange(maxRange),
+      MaxTolerance(minRange + (maxRange - minRange) * 0.5f)
+{
+}
+
+ChaseRange::ChaseRange(float minRange, float minTolerance, float maxTolerance, float maxRange)
+    : MinRange(minRange),
+      MinTolerance(minTolerance),
+      MaxRange(maxRange),
+      MaxTolerance(maxTolerance)
+{
+}
+
+ChaseAngle::ChaseAngle(float angle, float tolerance)
+    : RelativeAngle(Position::NormalizeOrientation(angle)),
+      Tolerance(tolerance)
+{
+}
+
+float ChaseAngle::UpperBound() const
+{
+    return Position::NormalizeOrientation(RelativeAngle + Tolerance);
+}
+
+float ChaseAngle::LowerBound() const
+{
+    return Position::NormalizeOrientation(RelativeAngle - Tolerance);
+}
+
+bool ChaseAngle::IsAngleOkay(float relativeAngle) const
+{
+    float const diff = std::fabs(Position::NormalizeOrientation(relativeAngle - RelativeAngle));
+    return diff <= Tolerance;
 }
 
 MotionMaster::~MotionMaster()
@@ -220,7 +272,7 @@ void MotionMaster::MoveTargetedHome()
         if (target)
         {
             TC_LOG_DEBUG("misc", "Following %s", target->GetGUID().ToString().c_str());
-            Mutate(new FollowMovementGenerator<Creature>(target, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE), MOTION_SLOT_ACTIVE);
+            Mutate(new FollowGenerator(target, PET_FOLLOW_DIST, PET_FOLLOW_ANGLE), MOTION_SLOT_ACTIVE);
         }
     }
     else
@@ -251,17 +303,12 @@ void MotionMaster::MoveFollow(Unit* target, float dist, float angle, MovementSlo
     if (!target || target == _owner)
         return;
 
-    //_owner->AddUnitState(UNIT_STATE_FOLLOW);
     if (_owner->GetTypeId() == TYPEID_PLAYER)
-    {
         TC_LOG_DEBUG("misc", "Player (%s) follows (%s)", _owner->GetGUID().ToString().c_str(), target->GetGUID().ToString().c_str());
-        Mutate(new FollowMovementGenerator<Player>(target, dist, angle), slot);
-    }
     else
-    {
         TC_LOG_DEBUG("misc", "Creature (Entry: %u %s) follows (%s)", _owner->GetEntry(), _owner->GetGUID().ToString().c_str(), target->GetGUID().ToString().c_str());
-        Mutate(new FollowMovementGenerator<Creature>(target, dist, angle), slot);
-    }
+
+    Mutate(new FollowGenerator(target, dist, angle), slot);
 }
 
 void MotionMaster::MoveFormation(Unit* leader, float range, float angle, uint32 point1, uint32 point2, MovementSlot slot)
@@ -289,26 +336,17 @@ void MotionMaster::MoveSmartWander(SmartWander::Profile const* profile, Movement
 
 void MotionMaster::MoveChase(Unit* target, float dist, float angle)
 {
-    // ignore movement request if target not exist
     if (!target || target == _owner)
         return;
 
-    //_owner->ClearUnitState(UNIT_STATE_FOLLOW);
-    if (_owner->GetTypeId() == TYPEID_PLAYER)
-    {
-        TC_LOG_DEBUG("misc", "Player (%s) chase (%s)",
-            _owner->GetGUID().ToString().c_str(),
-            target->GetGUID().ToString().c_str());
-        Mutate(new ChaseMovementGenerator<Player>(target, dist, angle), MOTION_SLOT_ACTIVE);
-    }
-    else
-    {
-        TC_LOG_DEBUG("misc", "Creature (Entry: %u %s) chase %s",
-            _owner->GetEntry(),
-            _owner->GetGUID().ToString().c_str(),
-            target->GetGUID().ToString().c_str());
-        Mutate(new ChaseMovementGenerator<Creature>(target, dist, angle), MOTION_SLOT_ACTIVE);
-    }
+    Optional<ChaseRange> range;
+    if (dist > 0.0f)
+        range.emplace(dist);
+    Optional<ChaseAngle> chaseAngle;
+    if (angle != 0.0f)
+        chaseAngle.emplace(angle);
+
+    Mutate(new ChaseGenerator(target, range, chaseAngle), MOTION_SLOT_ACTIVE);
 }
 
 void MotionMaster::MoveConfused()
@@ -810,7 +848,7 @@ void MotionMaster::MovePath(uint32 path_id, bool repeatable)
     if (!path_id)
         return;
 
-    Mutate(new WaypointMovementGenerator<Creature>(path_id, repeatable), MOTION_SLOT_IDLE);
+    Mutate(new WaypointGenerator(path_id, repeatable), MOTION_SLOT_IDLE);
 
     TC_LOG_DEBUG("misc", "%s starts moving over path (Id:%u, repeatable: %s).",
         _owner->GetGUID().ToString().c_str(), path_id, repeatable ? "YES" : "NO");
@@ -818,7 +856,7 @@ void MotionMaster::MovePath(uint32 path_id, bool repeatable)
 
 void MotionMaster::MovePath(WaypointPath& path, bool repeatable)
 {
-    Mutate(new WaypointMovementGenerator<Creature>(path, repeatable), MOTION_SLOT_IDLE);
+    Mutate(new WaypointGenerator(path, repeatable), MOTION_SLOT_IDLE);
 
     TC_LOG_DEBUG("misc", "%s starts moving over path (repeatable: %s).",
         _owner->GetGUID().ToString().c_str(), repeatable ? "YES" : "NO");

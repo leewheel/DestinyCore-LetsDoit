@@ -63,7 +63,7 @@ class TC_GAME_API PathGenerator
         bool CalculatePath(G3D::Vector3 start, G3D::Vector3 dest, bool forceDest = false, bool straightLine = false);
         bool IsInvalidDestinationZ(Unit const* target) const;
 
-        // Backported helpers (AzerothCore) — light-weight segment validators
+        // Backported helpers (AzerothCore) - light-weight segment validators
         // for callers that want to reject candidate destinations *before* asking
         // for a full A* path. Used by SmartWanderGenerator and friends.
         [[nodiscard]] bool IsWalkableClimb(float const* v1, float const* v2) const;
@@ -82,7 +82,7 @@ class TC_GAME_API PathGenerator
         // toggle it without having to re-route through the CalculatePath overload.
         void SetUseRaycast(bool useRaycast) { _straightLine = useRaycast; }
         // Toggle: callers can ask the generator to discard candidate segments
-        // whose slope exceeds the unit's climb ability. Off by default — does
+        // whose slope exceeds the unit's climb ability. Off by default - does
         // not affect existing CalculatePath callers.
         void SetSlopeCheck(bool checkSlope) { _slopeCheck = checkSlope; }
         [[nodiscard]] bool GetSlopeCheck() const { return _slopeCheck; }

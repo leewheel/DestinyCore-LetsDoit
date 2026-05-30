@@ -5,20 +5,21 @@
 # modifications, as long as this notice is preserved.
 #
 # This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
-# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 set(Recast_STAT_SRCS
-    Source/Recast.cpp 
-    Source/RecastAlloc.cpp 
-    Source/RecastArea.cpp 
-    Source/RecastContour.cpp 
-    Source/RecastFilter.cpp 
+    Source/Recast.cpp
+    Source/RecastAlloc.cpp
+    Source/RecastArea.cpp
+    Source/RecastAssert.cpp
+    Source/RecastContour.cpp
+    Source/RecastFilter.cpp
     Source/RecastLayers.cpp
-    Source/RecastMesh.cpp 
-    Source/RecastMeshDetail.cpp 
-    Source/RecastRasterization.cpp 
-    Source/RecastRegion.cpp 
+    Source/RecastMesh.cpp
+    Source/RecastMeshDetail.cpp
+    Source/RecastRasterization.cpp
+    Source/RecastRegion.cpp
 )
 
 add_library(Recast STATIC ${Recast_STAT_SRCS})

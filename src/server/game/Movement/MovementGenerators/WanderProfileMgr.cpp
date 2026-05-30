@@ -1,7 +1,7 @@
 /*
  * Copyright (C) DestinyCore <https://www.destinycore.org/>
  *
- * WanderProfileMgr implementation — see WanderProfileMgr.h.
+ * WanderProfileMgr implementation - see WanderProfileMgr.h.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -43,7 +43,7 @@ void WanderProfileMgr::LoadAll()
         uint32 id = fields[0].GetUInt32();
         if (id == 0)
         {
-            // Id 0 is the implicit "default profile" sentinel — reject so we
+            // Id 0 is the implicit "default profile" sentinel - reject so we
             // don't accidentally shadow SmartWander::Profile::Default() and
             // create a hard-to-debug mismatch between code and DB.
             TC_LOG_ERROR("sql.sql", "wander_profile row with Id 0 is forbidden (reserved for built-in default).");

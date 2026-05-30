@@ -91,7 +91,7 @@ enum Events
 enum Other
 {
     POINT_HIGH  = 1,
-    DATA_PHASE  = 2, // don't change that! Related with TargetedMovementGenerator
+    DATA_PHASE  = 2,
     POINT_DOWN  = 3,
 };
 

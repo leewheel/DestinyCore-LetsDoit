@@ -32,7 +32,7 @@ EndScriptData */
 #include "ObjectAccessor.h"
 #include "Player.h"
 #include "WaypointDefines.h"
-#include "WaypointMovementGenerator.h"
+#include "WaypointGenerator.h"
 
 enum Points
 {
@@ -255,7 +255,7 @@ void npc_escortAI::UpdateAI(uint32 diff)
                     m_bStarted = true;
                     me->GetMotionMaster()->MovePath(_path, false);
                 }
-                else if (WaypointMovementGenerator<Creature>* move = dynamic_cast<WaypointMovementGenerator<Creature>*>(me->GetMotionMaster()->top()))
+                else if (WaypointGenerator* move = dynamic_cast<WaypointGenerator*>(me->GetMotionMaster()->top()))
                     WaypointStart(move->GetCurrentNode());
             }
         }
@@ -343,10 +343,10 @@ void npc_escortAI::MovementInform(uint32 moveType, uint32 pointId)
 
         TC_LOG_DEBUG("scripts", "EscortAI Waypoint %u reached", pointId);
 
-        WaypointMovementGenerator<Creature>* move = dynamic_cast<WaypointMovementGenerator<Creature>*>(me->GetMotionMaster()->top());
+        WaypointGenerator* move = dynamic_cast<WaypointGenerator*>(me->GetMotionMaster()->top());
 
         if (move)
-            m_uiWPWaitTimer = move->GetTrackerTimer().GetExpiry();
+            m_uiWPWaitTimer = move->GetRemainingPauseMs();
 
         //Call WP start function
         if (!m_uiWPWaitTimer && !HasEscortState(STATE_ESCORT_PAUSED) && move)
@@ -539,7 +539,7 @@ void npc_escortAI::SetEscortPaused(bool on)
     else
     {
         RemoveEscortState(STATE_ESCORT_PAUSED);
-        if (WaypointMovementGenerator<Creature>* move = dynamic_cast<WaypointMovementGenerator<Creature>*>(me->GetMotionMaster()->top()))
-            move->GetTrackerTimer().Reset(1);
+        if (WaypointGenerator* move = dynamic_cast<WaypointGenerator*>(me->GetMotionMaster()->top()))
+            move->Resume();
     }
 }

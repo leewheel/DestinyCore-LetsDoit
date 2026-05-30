@@ -36,7 +36,7 @@ EndScriptData */
 #include "PhasingHandler.h"
 #include "Player.h"
 #include "RBAC.h"
-#include "TargetedMovementGenerator.h"                      // for HandleNpcUnFollowCommand
+#include "FollowGenerator.h"                                // for HandleNpcUnFollowCommand
 #include "Transport.h"
 #include "World.h"
 #include "WorldSession.h"
@@ -1323,9 +1323,10 @@ public:
             return false;
         }
 
-        FollowMovementGenerator<Creature> const* mgen = static_cast<FollowMovementGenerator<Creature> const*>((creature->GetMotionMaster()->top()));
+        FollowGenerator const* mgen = static_cast<FollowGenerator const*>(creature->GetMotionMaster()->top());
+        Unit* followTarget = ObjectAccessor::GetUnit(*creature, mgen->GetTargetGuid());
 
-        if (mgen->GetTarget() != player)
+        if (followTarget != player)
         {
             handler->PSendSysMessage(LANG_CREATURE_NOT_FOLLOW_YOU, creature->GetName().c_str());
             handler->SetSentErrorMessage(true);
