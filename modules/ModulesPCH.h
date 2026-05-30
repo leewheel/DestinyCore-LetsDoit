@@ -18,9 +18,31 @@
 #ifndef _MODULES_PRECOMPILED_H_
 #define _MODULES_PRECOMPILED_H_
 
+// Modules are scripts living outside the core tree, so the prefix mirrors the
+// stable gameplay API a module commonly consumes (see ScriptPCH.h).
+//
+// Order matters: the object model is listed before the scripting layer because
+// inline accessors (e.g. ScriptedAI) need complete Map/Creature types.
+
+#include "Common.h"
+
+// Object model
+#include "Map.h"
+#include "ObjectAccessor.h"
+#include "Creature.h"
+#include "GameObject.h"
 #include "Player.h"
+
+// Scripting framework
+#include "ScriptMgr.h"
 #include "ScriptedCreature.h"
 #include "ScriptedGossip.h"
-#include "ScriptMgr.h"
+
+// Common helpers
+#include "Chat.h"
+#include "Config.h"
+#include "Log.h"
+#include "WorldSession.h"
 
 #endif
+
