@@ -20,7 +20,6 @@
 #define TRINITY_POINTMOVEMENTGENERATOR_H
 
 #include "MovementGenerator.h"
-#include "FollowerReference.h"
 
 class Creature;
 namespace Movement

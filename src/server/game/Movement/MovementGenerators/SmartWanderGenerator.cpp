@@ -1,17 +1,6 @@
 /*
  * Copyright (C) DestinyCore <https://www.destinycore.org/>
  *
- * SmartWanderGenerator implementation — see SmartWanderGenerator.h for the
- * design rationale.
- *
- * Implementation notes:
- *   - All scoring helpers, the sampler, and the picker live in an anonymous
- *     namespace at the top of this file. Once Phase 2.2.6 (SQL profiles) and
- *     2.2.4 (influence map) land we can split them out cleanly.
- *   - The navmesh score builds a real PathGenerator per candidate. This is
- *     expensive, so we gate it on the other (cheap) criteria first — only
- *     candidates that already look good get the A* check.
- *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
@@ -24,7 +13,9 @@
 #include "Map.h"
 #include "MoveSpline.h"
 #include "MoveSplineInit.h"
-#include "PathGenerator.h"
+#include "MovementServices.h"
+#include "PathGenerator.h"           // GetRequiredHeightToClimb helper
+#include "PathPlanner.h"
 #include "PhasingHandler.h"
 #include "Random.h"
 #include "Util.h"
@@ -38,23 +29,15 @@
 #include <cmath>
 #include <optional>
 
-// --- LOD tuning -----------------------------------------------------------
-// Range beyond which we consider "nobody can see this creature": 1.5x the
-// player visibility distance, so creatures right at the edge of someone's
-// screen still get full quality (no popping when they cross threshold).
+// 1.5x visibility distance leaves a margin so creatures don't pop quality at
+// the screen edge.
 static constexpr float LOD_NEAR_PLAYER_RANGE = DEFAULT_VISIBILITY_DISTANCE * 1.5f;
-// TTL for the "is a player near?" cache. SmartWander decisions fire every
-// 4-8 seconds, so 5s means at most one player search per tick. Stale entries
-// for ~5s are acceptable — a player who teleports next to the creature will
-// see degraded behaviour for at most 5s, then full-quality kicks back in.
 static constexpr uint32 LOD_REFRESH_MS = 5000;
 
 namespace SmartWander
 {
     Profile const& Profile::Default()
     {
-        // Default-initialized POD: polar sampler, 8 candidates, top-K 3,
-        // weights distance/slope/navmesh/memory enabled, water/LOS off.
         static const Profile defaultProfile{};
         return defaultProfile;
     }
@@ -91,7 +74,7 @@ namespace
 
     Vec3 SampleHalton(uint32 seq, Vec3 const& origin, float minR, float maxR)
     {
-        // Classic 2,3 Halton pair — angle from base-2, radius from base-3.
+        // Classic 2,3 Halton pair - angle from base-2, radius from base-3.
         float angle = HaltonComponent(seq + 1, 2) * 2.0f * float(M_PI);
         float r = minR + HaltonComponent(seq + 1, 3) * std::max(0.0f, maxR - minR);
         return Vec3(origin.x + std::cos(angle) * r,
@@ -108,9 +91,8 @@ namespace
 
         if (profile.samplerMode == SmartWander::SAMPLER_HALTON)
         {
-            // Per-call random offset to avoid every NPC sampling the exact same
-            // points at the exact same time — preserves the low-discrepancy
-            // property within a tick but decorrelates across NPCs.
+            // Per-call offset preserves low-discrepancy within a tick while
+            // decorrelating across NPCs.
             uint32 seed = rand32() % 4096;
             for (uint8 i = 0; i < sampleCount; ++i)
                 out.push_back(SampleHalton(seed + i, origin, profile.minRadius, effectiveMaxR));
@@ -131,9 +113,8 @@ namespace
         float score;
     };
 
-    // Trapezoidal response curve: 0 outside [lo,hi], 1 in [plateauLo,plateauHi],
-    // linear ramp on the shoulders. Used for distance scoring (we want neither
-    // too close nor too far from spawn).
+    // Returns 0 outside [lo,hi], 1 in [plateauLo,plateauHi], linear ramp on
+    // the shoulders.
     float TrapezoidCurve(float v, float lo, float plateauLo, float plateauHi, float hi)
     {
         if (v <= lo || v >= hi)
@@ -161,9 +142,8 @@ namespace
         float x = creature->GetPositionX();
         float y = creature->GetPositionY();
         float z = creature->GetPositionZ();
-        // Use a conservative "human-sized" 2.0f height — the actual collision
-        // height isn't worth computing here, and the static formula already
-        // tolerates a wide range.
+        // Conservative human-sized 2.0f height - per-creature collision height
+        // isn't worth computing here.
         float reqH = PathGenerator::GetRequiredHeightToClimb(x, y, z,
                                                              candidate.x, candidate.y, candidate.z,
                                                              2.0f);
@@ -178,19 +158,30 @@ namespace
 
     float ScoreNavmesh(Creature* creature, Vec3 const& candidate)
     {
-        // PathGenerator construction is cheap but the path search itself isn't.
-        // Caller should already have gated this on cheaper criteria.
-        PathGenerator path(creature);
-        if (!path.CalculatePath(candidate.x, candidate.y, candidate.z, false))
+        // Expensive: gate this behind cheaper criteria first.
+        Movement::PathPlanner* planner = nullptr;
+        if (Map* map = creature->GetMap())
+            if (Movement::MovementServices* services = map->GetMovementServices())
+                planner = services->GetPathPlanner();
+        if (!planner)
             return 0.0f;
 
-        PathType type = path.GetPathType();
+        Movement::PathRequest req;
+        req.ownerGuid = creature->GetGUID();
+        req.from = creature->GetPosition();
+        req.to = Position(candidate.x, candidate.y, candidate.z);
+
+        Movement::PathResult result = planner->RequestPathSync(creature, req);
+        if (!result.success)
+            return 0.0f;
+
+        PathType const type = result.type;
         if (type & PATHFIND_NOPATH)
             return 0.0f;
         if (!(type & PATHFIND_NORMAL))
-            return 0.3f; // partial / shortcut paths — usable but penalised
+            return 0.3f; // partial / shortcut paths - usable but penalised
 
-        auto const& pts = path.GetPath();
+        auto const& pts = result.points;
         if (pts.size() < 2)
             return 1.0f;
 
@@ -204,8 +195,7 @@ namespace
         if (euclidean <= 0.01f)
             return 0.0f;
 
-        // AC-style heuristic: a "good" path is at most 1.85× the straight-line
-        // distance; beyond 3× we treat it as garbage (detour around the world).
+        // <= 1.85x = good, >= 3x = detour around the world.
         float ratio = pathLen / euclidean;
         if (ratio <= 1.85f)
             return 1.0f;
@@ -221,7 +211,6 @@ namespace
                                       candidate.x, candidate.y, candidate.z);
         if (creature->CanSwim())
             return inWater ? 1.0f : 0.5f;
-        // Landlubber: reject water hard
         return inWater ? 0.0f : 1.0f;
     }
 
@@ -238,7 +227,7 @@ namespace
             if (d < minD)
                 minD = d;
         }
-        // <1y from a recent spot: same place; >10y: unrelated. Linear in-between.
+        // <1y = same place, >10y = unrelated.
         if (minD < 1.0f)
             return 0.0f;
         if (minD > 10.0f)
@@ -246,12 +235,7 @@ namespace
         return (minD - 1.0f) / 9.0f;
     }
 
-    // Facing score: rewards candidates lying in roughly the same direction
-    // the creature is currently facing. 0 rad (dead ahead) = 1.0, π rad
-    // (behind) = 0.0, linear in between. Killing the 180°-snap-turn jank
-    // between two consecutive splines without making the wander predictable
-    // — the weight is intentionally low (default 0.4) so this only "breaks
-    // ties" between geometrically equivalent candidates.
+    // 0 rad (ahead) = 1.0, π rad (behind) = 0.0, linear in between.
     float ScoreFacing(Creature const* creature, Vec3 const& candidate)
     {
         float dx = candidate.x - creature->GetPositionX();
@@ -266,12 +250,8 @@ namespace
         return 1.0f - diff / float(M_PI);
     }
 
-    // Density score: penalise candidates whose cell is already crowded with
-    // other smart-wanderers. We bias the saturation point at 5 wanderers per
-    // 8m cell — past that, the cell is "full" and the candidate scores 0.
-    // We do NOT subtract this creature's own claim: candidates rarely land in
-    // exactly the same cell as the previous claim, and when they do, a small
-    // density penalty actually helps push the creature out of its current spot.
+    // Saturates at 5 wanderers per 8m cell. The creature's own claim is left
+    // in - a small self-penalty helps push out of the current spot.
     float ScoreDensity(Creature* creature, Vec3 const& candidate)
     {
         uint16 d = creature->GetMap()->GetWanderInfluence().GetDensity(candidate.x, candidate.y);
@@ -285,8 +265,7 @@ namespace
     float ScoreLOSToSpawn(Creature const* creature, Vec3 const& candidate, Vec3 const& spawn)
     {
         Map const* map = creature->GetMap();
-        // +2.0z to "stand up" the LOS rays so we test creature-eye to creature-eye
-        // rather than feet-to-feet (which would always hit the ground triangle).
+        // +2.0z lifts the ray off the ground triangle (eye-to-eye, not feet).
         bool los = map->isInLineOfSight(creature->GetPhaseShift(),
                                         spawn.x, spawn.y, spawn.z + 2.0f,
                                         candidate.x, candidate.y, candidate.z + 2.0f,
@@ -294,14 +273,8 @@ namespace
         return los ? 1.0f : 0.0f;
     }
 
-    // ---- Reservoir top-K picker -----------------------------------------
-
-    // Sorts the top-K by score (descending), then performs a weighted random
-    // pick across the top-K. Returns nullopt if no positive-scored candidate
-    // exists. Weighted pick is a single-pass cumulative-sum scan (so
-    // technically "weighted roulette wheel", not reservoir sampling — but the
-    // semantics callers care about are "pick proportional to score from top-K"
-    // and that's what this does in one pass over the bucket).
+    // Weighted roulette over the top-K (single-pass cumulative scan).
+    // Returns nullopt when no candidate has a positive score.
     std::optional<Vec3> PickTopK(std::vector<ScoredCandidate>& candidates, uint8 topK)
     {
         if (candidates.empty())
@@ -314,7 +287,6 @@ namespace
                           [](ScoredCandidate const& a, ScoredCandidate const& b)
                           { return a.score > b.score; });
 
-        // Drop trailing zero-scored entries from the pool
         while (k > 0 && candidates[k - 1].score <= 0.0f)
             --k;
         if (k == 0)
@@ -350,7 +322,7 @@ SmartWanderGenerator::SmartWanderGenerator(SmartWander::Profile const* profile, 
 
 float SmartWanderGenerator::ResolveMaxRadius(Creature const* owner) const
 {
-    // Cascade: explicit ctor arg > profile > creature respawn radius > 10y.
+    // explicit ctor arg > profile > respawn radius > 10y fallback.
     if (_explicitMaxRadius > 0.0f)
         return _explicitMaxRadius;
     if (_profile->maxRadius > 0.0f)
@@ -376,15 +348,12 @@ void SmartWanderGenerator::DoInitialize(Creature* owner)
     _memory.clear();
     _isMoving = false;
 
-    // Stake our claim in the WanderInfluenceMap at the spawn cell. We'll
-    // migrate this claim each time we pick a new destination.
     _influenceClaimedPos = _spawnPos;
     owner->GetMap()->GetWanderInfluence().Add(_spawnPos.x, _spawnPos.y);
     _hasInfluenceClaim = true;
 
-    // Get a stable scheduler slot once. DoReset re-enters DoInitialize but we
-    // keep the existing slot to avoid bunching all reset generators into the
-    // same slot bucket (e.g. after a mass evade event).
+    // Keep the slot stable across DoReset to avoid bunching reset generators
+    // into the same bucket (mass evade events).
     if (!_slotRegistered)
     {
         _tickSlot = owner->GetMap()->GetWanderScheduler().RegisterSlot();
@@ -392,7 +361,9 @@ void SmartWanderGenerator::DoInitialize(Creature* owner)
     }
 
     owner->AddUnitState(UNIT_STATE_ROAMING);
-    _nextTickTimer.Reset(0);
+    // Scatter the first decision so a freshly-loaded grid doesn't fire a
+    // synchronised wave of moves (compounded by the 8-slot dispatcher).
+    _nextTickTimer.Reset(urand(0, _profile->tickMsMax));
 }
 
 void SmartWanderGenerator::DoFinalize(Creature* owner)
@@ -401,8 +372,6 @@ void SmartWanderGenerator::DoFinalize(Creature* owner)
     if (owner->IsAlive() && _isMoving)
         owner->StopMoving();
 
-    // Release the cell we were claiming so we don't leak density forever
-    // when the generator is replaced (combat reset, despawn, possession...).
     if (_hasInfluenceClaim && owner->FindMap())
     {
         owner->GetMap()->GetWanderInfluence().Remove(_influenceClaimedPos.x, _influenceClaimedPos.y);
@@ -429,15 +398,12 @@ bool SmartWanderGenerator::DoUpdate(Creature* owner, uint32 diff)
         return true;
     }
 
-    // Mid-spline: let it finish.
     if (_isMoving)
     {
         if (owner->movespline->Finalized())
         {
             _isMoving = false;
             owner->ClearUnitState(UNIT_STATE_ROAMING_MOVE);
-            // Inter-move pause is sampled fresh each time — variable rhythm
-            // hides the underlying tick cadence from the player's eye.
             uint32 pause = urand(_profile->tickMsMin, _profile->tickMsMax);
             _nextTickTimer.Reset(pause);
         }
@@ -448,18 +414,12 @@ bool SmartWanderGenerator::DoUpdate(Creature* owner, uint32 diff)
     if (!_nextTickTimer.Passed())
         return true;
 
-    // Time-budgeted dispatch: even if our timer is up, we only run the
-    // heavy decision pipeline when our slot is active this frame. With 8
-    // slots and ~16ms per Map update the wait is bounded to ~128ms — well
-    // below any player-perceivable threshold for idle wander cadence.
+    // Heavy decision pipeline only runs on the active slot (~128ms max wait).
     if (!owner->GetMap()->GetWanderScheduler().IsActiveSlot(_tickSlot))
         return true;
 
     if (!TryLaunchMove(owner))
-    {
-        // No usable candidate this tick — back off briefly rather than spin.
         _nextTickTimer.Reset(1000);
-    }
     return true;
 }
 
@@ -470,9 +430,6 @@ bool SmartWanderGenerator::IsFarFromPlayers(Creature* owner)
         return _lodActive;
 
     _lodLastCheckedMs = now;
-    // FindNearestPlayer iterates surrounding grid cells. Cheap if grids are
-    // sparse (typical case for distant zones) but it's still the most
-    // expensive thing in the LOD path — hence the TTL above.
     _lodActive = owner->FindNearestPlayer(LOD_NEAR_PLAYER_RANGE) == nullptr;
     return _lodActive;
 }
@@ -482,9 +439,7 @@ bool SmartWanderGenerator::TryLaunchMove(Creature* owner)
     bool lod = IsFarFromPlayers(owner);
     float maxR = ResolveMaxRadius(owner);
 
-    // LOD mode: halve the candidate count, skip expensive criteria entirely.
-    // The trapezoidal distance + slope + memory checks remain since they're
-    // cheap and keep behaviour sane even off-camera.
+    // LOD mode: halve the candidate count, skip expensive criteria.
     uint8 effectiveSampleCount = lod
         ? std::max<uint8>(2, _profile->sampleCount / 2)
         : _profile->sampleCount;
@@ -501,9 +456,7 @@ bool SmartWanderGenerator::TryLaunchMove(Creature* owner)
     Map const* map = owner->GetMap();
 
     bool const canFly = owner->CanFly();
-    // For flyers, vary Z around spawn altitude with a fraction of the wander
-    // range — keeps them aloft without yo-yoing in 3D. Conservatively biased
-    // upward (more headroom) than downward (don't drop too close to the floor).
+    // Flyers vary altitude around spawn Z, biased upward for headroom.
     float const flyDzUp    = canFly ? std::max(2.0f, maxR * 0.25f) : 0.0f;
     float const flyDzDown  = canFly ? std::max(1.0f, maxR * 0.15f) : 0.0f;
 
@@ -517,7 +470,7 @@ bool SmartWanderGenerator::TryLaunchMove(Creature* owner)
             c.z = _spawnPos.z + frand(-flyDzDown, flyDzUp);
             float floorZ = map->GetWaterOrGroundLevel(owner->GetPhaseShift(), c.x, c.y, c.z);
             if (floorZ >= c.z)
-                continue; // would clip into terrain/water — try next candidate
+                continue; // would clip into terrain/water - try next candidate
         }
         else
         {
@@ -551,16 +504,12 @@ bool SmartWanderGenerator::TryLaunchMove(Creature* owner)
             weightedSum += w.memory * ScoreMemory(c, _memory);
             weightTotal += w.memory;
         }
-        // Facing bias is cheap (atan2 + 1 subtract) and crucial visually —
-        // keep it on even under LOD.
         if (w.facing > 0.0f)
         {
             weightedSum += w.facing * ScoreFacing(owner, c);
             weightTotal += w.facing;
         }
-        // LOS, density and navmesh A* are skipped entirely under LOD — none of
-        // them produce a perceptible difference for a creature no player is
-        // looking at, and they're by far the most expensive criteria.
+        // LOS, density, navmesh A* are LOD-skipped (the expensive criteria).
         if (!lod && w.losSpawn > 0.0f)
         {
             weightedSum += w.losSpawn * ScoreLOSToSpawn(owner, c, _spawnPos);
@@ -572,10 +521,8 @@ bool SmartWanderGenerator::TryLaunchMove(Creature* owner)
             weightTotal += w.density;
         }
 
-        // Cheap-first gate: only spend an A* on candidates that already look
-        // viable on the basis of geometry + memory + density. Threshold 0.3
-        // is empirical — low enough to allow recovery from a bad memory hit
-        // or a moderately crowded cell, high enough to skip broken candidates.
+        // Only spend an A* on candidates that already look viable on the cheap
+        // criteria. 0.3 threshold is empirical.
         if (!lod && w.navmesh > 0.0f && weightTotal > 0.0f && (weightedSum / weightTotal) > 0.3f)
         {
             weightedSum += w.navmesh * ScoreNavmesh(owner, c);
@@ -592,42 +539,37 @@ bool SmartWanderGenerator::TryLaunchMove(Creature* owner)
 
     Movement::MoveSplineInit init(owner);
 
-    // Smooth-path the chosen destination: re-run PathGenerator on the winner
-    // and feed the full navmesh path through MovebyPath + catmullrom. This is
-    // an extra A* (we already ran one in scoring on the same candidate, but
-    // discarded the points), but it costs ~1/N of total scoring work — fine
-    // tradeoff for visibly smoother movement.
-    //
-    // LOD: don't bother smoothing for creatures no player is looking at.
-    // The catmullrom curve is purely visual; out of sight it's wasted A*.
-    //
-    // - Path size <= 1 OR NOPATH/NOT_USING_PATH: fall back to direct MoveTo
-    //   (catmullrom needs 2+ points; otherwise it would degenerate).
-    // - Path size == 2: catmullrom degrades to linear, same as MoveTo.
-    // - Path size >= 3 (obstacle avoidance): visible curve through waypoints.
+    // Re-run the planner on the winner to feed Catmull-Rom through MovebyPath.
+    // The first call cached this result, so the second usually hits the cache.
+    // Skipped under LOD: smoothing is visual-only.
     bool smoothLaunched = false;
     if (!lod)
     {
-        PathGenerator pathfinder(owner);
-        if (pathfinder.CalculatePath(picked->x, picked->y, picked->z, false))
+        Movement::PathPlanner* planner = nullptr;
+        if (Map* map = owner->GetMap())
+            if (Movement::MovementServices* services = map->GetMovementServices())
+                planner = services->GetPathPlanner();
+
+        if (planner)
         {
-            PathType type = pathfinder.GetPathType();
-            if (!(type & PATHFIND_NOPATH) && !(type & PATHFIND_NOT_USING_PATH))
+            Movement::PathRequest req;
+            req.ownerGuid = owner->GetGUID();
+            req.from = owner->GetPosition();
+            req.to = Position(picked->x, picked->y, picked->z);
+            Movement::PathResult const result = planner->RequestPathSync(owner, req);
+            if (result.success && !(result.type & PATHFIND_NOPATH) && !(result.type & PATHFIND_NOT_USING_PATH))
             {
-                Movement::PointsArray const& points = pathfinder.GetPath();
-                // >= 3 points = real obstacle-avoiding detour. 2-point paths
-                // are straight lines and catmullrom can overshoot near tight
-                // corners — see TargetedMovementGenerator.cpp for the same
-                // reasoning. We accept linear motion for trivial paths.
-                if (points.size() >= 3)
+                // 2-point paths are straight lines; Catmull-Rom on them can
+                // overshoot near corners, so play them linearly.
+                if (result.points.size() >= 3)
                 {
-                    init.MovebyPath(points);
+                    init.MovebyPath(result.points);
                     init.SetSmooth();
                     smoothLaunched = true;
                 }
-                else if (points.size() == 2)
+                else if (result.points.size() == 2)
                 {
-                    init.MovebyPath(points);
+                    init.MovebyPath(result.points);
                     smoothLaunched = true;
                 }
             }
@@ -639,8 +581,6 @@ bool SmartWanderGenerator::TryLaunchMove(Creature* owner)
     init.SetWalk(owner->GetMovementMode() != 1);
     init.Launch();
 
-    // Migrate our influence claim to the new target cell. Map::GetWanderInfluence
-    // is a no-op if old and new map to the same cell.
     owner->GetMap()->GetWanderInfluence().Move(_influenceClaimedPos.x, _influenceClaimedPos.y,
                                                picked->x, picked->y);
     _influenceClaimedPos = *picked;

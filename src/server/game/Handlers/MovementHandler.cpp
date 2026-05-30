@@ -31,7 +31,7 @@
 #include "SpellInfo.h"
 #include "Transport.h"
 #include "Vehicle.h"
-#include "WaypointMovementGenerator.h"
+#include "FlightPathMovementGenerator.h"
 #include "SpellMgr.h"
 
 #define MOVEMENT_PACKET_TIME_DELAY 0

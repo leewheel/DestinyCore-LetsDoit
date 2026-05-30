@@ -20,10 +20,16 @@
 #include "Creature.h"
 #include "CreatureAI.h"
 #include "DatabaseEnv.h"
+#include "FormationMovementGenerator.h"
 #include "Log.h"
 #include "Map.h"
 #include "MotionMaster.h"
 #include "ObjectMgr.h"
+#include "Util.h"
+#include <algorithm>
+#include <cmath>
+#include <limits>
+#include <vector>
 
 FormationMgr::~FormationMgr()
 {
@@ -223,27 +229,129 @@ void CreatureGroup::FormationReset(bool dismiss)
     m_Formed = !dismiss;
 }
 
-void CreatureGroup::LeaderStartedMoving()
+void CreatureGroup::LeaderMoveTo(float x, float y, float z)
 {
     if (!m_leader)
         return;
 
-    for (CreatureGroupMemberType::iterator itr = m_members.begin(); itr != m_members.end(); ++itr)
+    // Destination -> leader direction so the DB convention angle=0 stays
+    // "behind the leader". Inverting these args flips the formation 180°.
+    float const pathAngle = std::atan2(m_leader->GetPositionY() - y, m_leader->GetPositionX() - x);
+
+    struct Slot
     {
-        Creature* member = itr->first;
-        FormationInfo const* info = itr->second;
+        Creature* member;
+        FormationInfo const* info;
+        float x, y, z;
+        bool taken;
+    };
+    std::vector<Slot> slots;
+    slots.reserve(m_members.size());
 
-        if (member == m_leader || !member->IsAlive() || member->GetVictim() ||
-            !(info->groupAI & FLAG_IDLE_IN_FORMATION))
+    for (auto const& entry : m_members)
+    {
+        Creature* member = entry.first;
+        FormationInfo const* info = entry.second;
+
+        if (member == m_leader || !member->IsAlive() || member->GetVictim())
             continue;
-
+        if (!(info->groupAI & FLAG_IDLE_IN_FORMATION))
+            continue;
         if (member->HasUnitState(UNIT_STATE_NOT_MOVE) || member->HasUnitFlag(UNIT_FLAG_PLAYER_CONTROLLED))
             continue;
 
-        if (member->GetMotionMaster()->GetCurrentMovementGeneratorType() == FORMATION_MOTION_TYPE)
+        // Mirror the angle at scripted turn-around waypoints so the formation
+        // pivots cleanly around the leader.
+        float angle = info->follow_angle;
+        if (info->point_1)
+        {
+            uint32 const wp = m_leader->GetCurrentWaypointID();
+            if (wp == info->point_1 - 1 || wp == info->point_2 - 1)
+                angle = float(M_PI) * 2.0f - angle;
+        }
+
+        float const dist = info->follow_dist;
+        float dx = x + std::cos(angle + pathAngle) * dist;
+        float dy = y + std::sin(angle + pathAngle) * dist;
+        float dz = z;
+
+        Trinity::NormalizeMapCoord(dx);
+        Trinity::NormalizeMapCoord(dy);
+
+        if (!member->IsFlying())
+            member->UpdateGroundPositionZ(dx, dy, dz);
+
+        slots.push_back({member, info, dx, dy, dz, false});
+    }
+
+    if (slots.empty())
+        return;
+
+    // Greedy closest-slot reassignment. On a 180° turn this picks the
+    // mirrored slot, so trajectories don't cross.
+    std::sort(slots.begin(), slots.end(),
+              [](Slot const& a, Slot const& b) { return a.member->GetGUID() < b.member->GetGUID(); });
+
+    constexpr float FORMATION_CATCHUP_CAP = 3.0f;
+    constexpr float FORMATION_CATCHUP_TRIGGER = 15.0f;
+    bool const leaderWalking = m_leader->IsWalking();
+    float const leaderRunSpeed = m_leader->GetSpeed(MOVE_RUN);
+    float const leaderWalkSpeed = m_leader->GetSpeed(MOVE_WALK);
+    float const leaderSpeed = leaderWalking ? leaderWalkSpeed : leaderRunSpeed;
+
+    // In normal flow each slot is ~segmentLength ahead of the member;
+    // anything beyond that + trigger is a real straggler.
+    float const segmentLength = std::sqrt(
+        (x - m_leader->GetPositionX()) * (x - m_leader->GetPositionX()) +
+        (y - m_leader->GetPositionY()) * (y - m_leader->GetPositionY()));
+
+    for (auto const& cur : slots)
+    {
+        Slot* best = nullptr;
+        float bestDist = std::numeric_limits<float>::max();
+        for (auto& cand : slots)
+        {
+            if (cand.taken)
+                continue;
+            float const d = cur.member->GetExactDist2d(cand.x, cand.y);
+            if (d < bestDist)
+            {
+                bestDist = d;
+                best = &cand;
+            }
+        }
+        if (!best)
             continue;
 
-        member->GetMotionMaster()->MoveFormation(m_leader, info->follow_dist, info->follow_angle,
-                                                 info->point_1, info->point_2);
+        bool const isStraggler = bestDist > segmentLength + FORMATION_CATCHUP_TRIGGER;
+        bool const walk = !isStraggler && leaderWalking;
+        float velocity;
+        if (isStraggler)
+        {
+            // Scale catch-up velocity with how far behind, capped at CAP×run.
+            float const referenceDist = std::max(leaderRunSpeed, 1.0f);
+            float const velocityMod = std::clamp(bestDist / referenceDist, 1.0f, FORMATION_CATCHUP_CAP);
+            velocity = leaderRunSpeed * velocityMod;
+        }
+        else
+        {
+            velocity = leaderSpeed;
+        }
+
+        Position const slotPos(best->x, best->y, best->z);
+
+        MotionMaster* mm = cur.member->GetMotionMaster();
+        FormationMovementGenerator* fmg = dynamic_cast<FormationMovementGenerator*>(mm->top());
+        if (!fmg)
+        {
+            // Just woke up or returned from combat - start a generator.
+            mm->MoveFormation(m_leader, cur.info->follow_dist, cur.info->follow_angle,
+                              cur.info->point_1, cur.info->point_2);
+            fmg = dynamic_cast<FormationMovementGenerator*>(mm->top());
+        }
+        if (fmg)
+            fmg->SetSlot(slotPos, velocity, walk);
+
+        best->taken = true;
     }
 }

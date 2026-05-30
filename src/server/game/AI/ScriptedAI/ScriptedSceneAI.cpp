@@ -25,7 +25,7 @@
 #include "ObjectAccessor.h"
 #include "Player.h"
 #include "WaypointDefines.h"
-#include "WaypointMovementGenerator.h"
+#include "WaypointGenerator.h"
 
 enum Points
 {
@@ -266,7 +266,7 @@ void npc_sceneAI::UpdateAI(uint32 diff)
                     m_bStarted = true;
                     me->GetMotionMaster()->MovePath(_path, false);
                 }
-                else if (WaypointMovementGenerator<Creature>* move = dynamic_cast<WaypointMovementGenerator<Creature>*>(me->GetMotionMaster()->top()))
+                else if (WaypointGenerator* move = dynamic_cast<WaypointGenerator*>(me->GetMotionMaster()->top()))
                     WaypointStart(move->GetCurrentNode());
             }
         }
@@ -357,10 +357,10 @@ void npc_sceneAI::MovementInform(uint32 moveType, uint32 pointId)
 
         TC_LOG_DEBUG("scripts", "SceneAI Waypoint %u reached", pointId);
 
-        WaypointMovementGenerator<Creature>* move = dynamic_cast<WaypointMovementGenerator<Creature>*>(me->GetMotionMaster()->top());
+        WaypointGenerator* move = dynamic_cast<WaypointGenerator*>(me->GetMotionMaster()->top());
 
         if (move)
-            m_uiWPWaitTimer = move->GetTrackerTimer().GetExpiry();
+            m_uiWPWaitTimer = move->GetRemainingPauseMs();
 
         //Call WP start function
         if (!m_uiWPWaitTimer && !HasSceneState(STATE_SCENE_PAUSED) && move)
@@ -559,7 +559,7 @@ void npc_sceneAI::SetScenePaused(bool on)
     else
     {
         RemoveSceneState(STATE_SCENE_PAUSED);
-        if (WaypointMovementGenerator<Creature>* move = dynamic_cast<WaypointMovementGenerator<Creature>*>(me->GetMotionMaster()->top()))
-            move->GetTrackerTimer().Reset(1);
+        if (WaypointGenerator* move = dynamic_cast<WaypointGenerator*>(me->GetMotionMaster()->top()))
+            move->Resume();
     }
 }

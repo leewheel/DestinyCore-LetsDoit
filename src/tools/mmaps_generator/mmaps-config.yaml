@@ -43,8 +43,12 @@ mmapsConfig:
     walkableHeight: 6
 
     # Maximum height difference (cell units) NPCs can step up or down.
-    # Legion uses 8 to allow stepping over Legion-era fences / props.
-    walkableClimb: 8
+    # 4 = NPCs walk AROUND fences/ledges (visually cleaner, matches classic WotLK feel).
+    # 6 = NPCs hop over short fences (vanilla WotLK behavior).
+    # 8 = permissive, NPCs step over Legion-era props (was the stock Legion default).
+    # Lower values produce more natural movement at the cost of less navmesh coverage
+    # near small obstacles. Raise per-map below if a specific zone needs it.
+    walkableClimb: 4
 
     # Minimum distance (cell units) around walkable surfaces.
     # Prevents NPCs from clipping into walls and narrow gaps.

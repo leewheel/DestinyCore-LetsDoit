@@ -46,7 +46,8 @@
 #include "SpellAuras.h"
 #include "SpellHistory.h"
 #include "SpellMgr.h"
-#include "TargetedMovementGenerator.h"
+#include "ChaseGenerator.h"
+#include "FollowGenerator.h"
 #include "Transport.h"
 #include "Weather.h"
 #include "WeatherMgr.h"
@@ -2229,11 +2230,8 @@ public:
                     break;
                 case CHASE_MOTION_TYPE:
                 {
-                    Unit* target = NULL;
-                    if (unit->GetTypeId() == TYPEID_PLAYER)
-                        target = static_cast<ChaseMovementGenerator<Player> const*>(movementGenerator)->GetTarget();
-                    else
-                        target = static_cast<ChaseMovementGenerator<Creature> const*>(movementGenerator)->GetTarget();
+                    ObjectGuid const targetGuid = static_cast<ChaseGenerator const*>(movementGenerator)->GetTargetGuid();
+                    Unit* target = ObjectAccessor::GetUnit(*unit, targetGuid);
 
                     if (!target)
                         handler->SendSysMessage(LANG_MOVEGENS_CHASE_NULL);
@@ -2245,11 +2243,8 @@ public:
                 }
                 case FOLLOW_MOTION_TYPE:
                 {
-                    Unit* target = NULL;
-                    if (unit->GetTypeId() == TYPEID_PLAYER)
-                        target = static_cast<FollowMovementGenerator<Player> const*>(movementGenerator)->GetTarget();
-                    else
-                        target = static_cast<FollowMovementGenerator<Creature> const*>(movementGenerator)->GetTarget();
+                    ObjectGuid const targetGuid = static_cast<FollowGenerator const*>(movementGenerator)->GetTargetGuid();
+                    Unit* target = ObjectAccessor::GetUnit(*unit, targetGuid);
 
                     if (!target)
                         handler->SendSysMessage(LANG_MOVEGENS_FOLLOW_NULL);

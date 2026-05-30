@@ -438,7 +438,7 @@ class TC_GAME_API Creature : public Unit, public GridObject<Creature>, public Ma
     private:
         bool CheckNoGrayAggroConfig(uint32 playerLevel, uint32 creatureLevel) const; // No aggro from gray creatures
 
-        //WaypointMovementGenerator vars
+        //WaypointGenerator vars
         uint32 m_waypointID;
         uint32 m_path_id;
 

@@ -15,8 +15,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef DB2STRUCTURE_H
-#define DB2STRUCTURE_H
+#ifndef DESTINYCORE_DB2STRUCTURE_H
+#define DESTINYCORE_DB2STRUCTURE_H
 
 #include "Define.h"
 #include "DBCEnums.h"
@@ -542,6 +542,21 @@ struct CharacterFacialHairStylesEntry
     uint8 RaceID;
     uint8 SexID;
     uint8 VariationID;
+};
+
+struct CharacterLoadoutEntry
+{
+    int32       ID;
+    int64       RaceMask;
+    uint8       ChrClassID;
+    uint8       Purpose;
+};
+
+struct CharacterLoadoutItemEntry
+{
+    int32       ID;
+    int32       ItemID;
+    uint16      CharacterLoadoutID;
 };
 
 struct CharBaseSectionEntry

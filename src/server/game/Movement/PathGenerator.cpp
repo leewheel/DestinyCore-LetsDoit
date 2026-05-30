@@ -965,27 +965,16 @@ bool PathGenerator::IsInvalidDestinationZ(Unit const* target) const
     return (target->GetPositionZ() - GetActualEndPosition().z) > 5.0f;
 }
 
-// --- Backported helpers (AzerothCore) ---
-// Lightweight per-segment validators used by SmartWanderGenerator and other
-// pre-flight checks that don't want to incur the cost of a full A* path.
-
 namespace
 {
-    // Absolute angle (radians) between the segment (sx,sy,sz)->(dx,dy,dz)
-    // and the horizontal plane. Mirrors AzerothCore's getSlopeAngleAbs() —
-    // we inline it here to avoid pulling in a shared geometry header for a
-    // single call site.
     inline float SlopeAngleAbs(float sx, float sy, float sz, float dx, float dy, float dz)
     {
         float floorDist = std::sqrt((sx - dx) * (sx - dx) + (sy - dy) * (sy - dy));
         if (floorDist <= 0.0f)
-            return float(M_PI_2); // vertical
+            return float(M_PI_2);
         return std::atan(std::abs(dz - sz) / floorDist);
     }
 
-    // Best-effort collision height for an arbitrary Unit. Player exposes a
-    // proper mounted/unmounted value; for creatures we fall back to a sane
-    // human-sized default — the climb formula degrades gracefully.
     constexpr float DEFAULT_UNIT_COLLISION_HEIGHT = 2.0f;
     inline float UnitCollisionHeight(Unit const* u)
     {
@@ -1017,8 +1006,6 @@ float PathGenerator::GetRequiredHeightToClimb(float x, float y, float z, float d
 {
     float slopeAngle = SlopeAngleAbs(x, y, z, destX, destY, destZ);
     float slopeAngleDegree = slopeAngle * 180.0f / float(M_PI);
-    // AC formula: climbable height scales down linearly with slope angle (deg/100).
-    // At 0°: full sourceHeight; near 100°+: ~0 — i.e. effectively unwalkable.
     return sourceHeight - sourceHeight * (slopeAngleDegree / 100.0f);
 }
 

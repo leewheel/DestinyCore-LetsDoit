@@ -28,7 +28,7 @@
 #include "Player.h"
 #include "TaxiPackets.h"
 #include "TaxiPathGraph.h"
-#include "WaypointMovementGenerator.h"
+#include "FlightPathMovementGenerator.h"
 
 void WorldSession::HandleEnableTaxiNodeOpcode(WorldPackets::Taxi::EnableTaxiNode& enableTaxiNode)
 {

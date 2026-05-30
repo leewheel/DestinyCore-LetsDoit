@@ -5,16 +5,17 @@
 # modifications, as long as this notice is preserved.
 #
 # This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
-# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 set(Detour_STAT_SRCS
-    Source/DetourAlloc.cpp 
-    Source/DetourCommon.cpp 
-    Source/DetourNavMesh.cpp 
-    Source/DetourNavMeshBuilder.cpp 
-    Source/DetourNavMeshQuery.cpp 
-    Source/DetourNode.cpp 
+    Source/DetourAlloc.cpp
+    Source/DetourAssert.cpp
+    Source/DetourCommon.cpp
+    Source/DetourNavMesh.cpp
+    Source/DetourNavMeshBuilder.cpp
+    Source/DetourNavMeshQuery.cpp
+    Source/DetourNode.cpp
 )
 
 add_library(Detour STATIC ${Detour_STAT_SRCS})

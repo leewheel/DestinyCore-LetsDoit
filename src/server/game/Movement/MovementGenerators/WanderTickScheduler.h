@@ -1,7 +1,7 @@
 /*
  * Copyright (C) DestinyCore <https://www.destinycore.org/>
  *
- * WanderTickScheduler — time-budgeted dispatcher for SmartWanderGenerator.
+ * WanderTickScheduler - time-budgeted dispatcher for SmartWanderGenerator.
  *
  * Without this, every wanderer in a map whose internal pause expires the
  * same frame fires its full decision pipeline (sampler + scoring + up to
@@ -13,7 +13,7 @@
  * registration time, round-robin. Each Map update increments an "active
  * slot" counter; only generators whose slot matches the current active
  * slot are allowed to actually decide this frame. Generators whose pause
- * has expired but whose slot is not active simply wait — up to SLOTS-1
+ * has expired but whose slot is not active simply wait - up to SLOTS-1
  * frames extra latency (~128ms at 60Hz with SLOTS=8), which is well below
  * any player-perceivable threshold for wander cadence.
  *
@@ -40,7 +40,7 @@ public:
     static constexpr uint8 SLOTS = 8;
 
     // Round-robin slot assignment for new generators. Stable across DoUpdate
-    // calls — generators store the returned value and use it for their
+    // calls - generators store the returned value and use it for their
     // lifetime (unregistered via Map teardown, no explicit free list).
     uint8 RegisterSlot();
 

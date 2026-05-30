@@ -78,6 +78,7 @@ enum WeatherState : uint32;
 namespace Trinity { struct ObjectUpdater; }
 namespace G3D { class Plane; }
 namespace VMAP { enum class ModelIgnoreFlags : uint32; }
+namespace Movement { class MovementServices; }
 
 struct ScriptAction
 {
@@ -467,6 +468,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
 
         class WanderInfluenceMap& GetWanderInfluence() { return *_wanderInfluence; }
         class WanderTickScheduler& GetWanderScheduler() { return *_wanderScheduler; }
+        Movement::MovementServices* GetMovementServices() const { return _movementServices.get(); }
 
         void UpdateIteratorBack(Player* player);
 
@@ -746,6 +748,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
 
         std::unique_ptr<WanderInfluenceMap> _wanderInfluence;
         std::unique_ptr<WanderTickScheduler> _wanderScheduler;
+        std::unique_ptr<Movement::MovementServices> _movementServices;
 
         typedef std::multimap<time_t, ScriptAction> ScriptScheduleMap;
         ScriptScheduleMap m_scriptSchedule;

@@ -66,9 +66,11 @@ class TC_GAME_API FormationMgr
 
 class TC_GAME_API CreatureGroup
 {
+    public:
+        typedef std::map<Creature*, FormationInfo*>  CreatureGroupMemberType;
+
     private:
         Creature* m_leader; //Important do not forget sometimes to work with pointers instead synonims :D:D
-        typedef std::map<Creature*, FormationInfo*>  CreatureGroupMemberType;
         CreatureGroupMemberType m_members;
 
         ObjectGuid::LowType m_groupID;
@@ -83,12 +85,22 @@ class TC_GAME_API CreatureGroup
         ObjectGuid::LowType GetId() const { return m_groupID; }
         bool isEmpty() const { return m_members.empty(); }
         bool isFormed() const { return m_Formed; }
+        CreatureGroupMemberType const& GetMembers() const { return m_members; }
 
         void AddMember(Creature* member);
         void RemoveMember(Creature* member);
         void FormationReset(bool dismiss);
 
-        void LeaderStartedMoving();
+        // Push-model formation drive: called by the leader's generator when
+        // it launches a new spline toward (x, y, z). Computes each member's
+        // slot from the leader's motion direction, applies our two
+        // formation improvements - closest-pair slot reassignment (so
+        // members don't cross paths on turns) and catch-up speed boost
+        // for stragglers - then pushes the slot directly to each member's
+        // FormationMovementGenerator. Members that aren't yet in formation
+        // are switched into it on the fly.
+        void LeaderMoveTo(float x, float y, float z);
+
         void MemberAttackStart(Creature* member, Unit* target);
 };
 

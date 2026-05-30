@@ -1,9 +1,6 @@
 /*
  * Copyright (C) DestinyCore <https://www.destinycore.org/>
  *
- * Ported from AzerothCore (FormationMovementGenerator).
- * Adapted for Legion 7.x — see FormationMovementGenerator.h for notes.
- *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
@@ -13,27 +10,46 @@
 #include "FormationMovementGenerator.h"
 #include "Creature.h"
 #include "CreatureAI.h"
-#include "CreatureGroups.h"
+#include "Map.h"
 #include "MoveSpline.h"
-#include "MoveSplineInit.h"
+#include "MovementServices.h"
+#include "ObjectAccessor.h"
+#include "PathPlanner.h"
+#include "SplineExecutor.h"
+
+namespace
+{
+    Movement::PathPlanner* GetPlanner(Unit* owner)
+    {
+        if (!owner)
+            return nullptr;
+        Map* map = owner->GetMap();
+        Movement::MovementServices* services = map ? map->GetMovementServices() : nullptr;
+        return services ? services->GetPathPlanner() : nullptr;
+    }
+}
 
 FormationMovementGenerator::FormationMovementGenerator(Unit* leader, float range, float angle, uint32 point1, uint32 point2)
-    : TargetedMovementGeneratorBase(leader),
+    : _leaderGuid(leader ? leader->GetGUID() : ObjectGuid::Empty),
       _range(range), _angle(angle), _point1(point1), _point2(point2),
-      _lastLeaderSplineID(0), _hasPredictedDestination(false), _isMoving(false),
-      _nextMoveTimer(0)
+      _slotVelocity(0.0f), _slotWalk(false), _slotPending(false), _isMoving(false)
 {
 }
 
 void FormationMovementGenerator::DoInitialize(Creature* owner)
 {
+    if (!_splineExecutor)
+        _splineExecutor = std::make_unique<Movement::SplineExecutor>(owner);
+
     if (owner->HasUnitState(UNIT_STATE_NOT_MOVE) || owner->IsMovementPreventedByCasting())
     {
         owner->StopMoving();
         return;
     }
 
-    _nextMoveTimer.Reset(0);
+    // Wait for the leader's first SetSlot push.
+    _slotPending = false;
+    _isMoving = false;
 }
 
 void FormationMovementGenerator::DoFinalize(Creature* owner)
@@ -46,128 +62,72 @@ void FormationMovementGenerator::DoReset(Creature* owner)
     DoInitialize(owner);
 }
 
-bool FormationMovementGenerator::DoUpdate(Creature* owner, uint32 diff)
+void FormationMovementGenerator::SetSlot(Position const& slot, float velocity, bool walk)
 {
-    Unit* target = GetTarget();
-    if (!owner || !target)
+    _targetSlot = slot;
+    _slotVelocity = velocity;
+    _slotWalk = walk;
+    _slotPending = true;
+}
+
+bool FormationMovementGenerator::DoUpdate(Creature* owner, uint32 /*diff*/)
+{
+    if (!owner)
         return false;
 
     if (owner->HasUnitState(UNIT_STATE_NOT_MOVE) || owner->IsMovementPreventedByCasting())
     {
         owner->StopMoving();
-        _nextMoveTimer.Reset(0);
-        _hasPredictedDestination = false;
         _isMoving = false;
         return true;
     }
 
-    // Leader has reached the destination we predicted for him — settle.
-    if (target->movespline->Finalized() && target->movespline->GetId() == _lastLeaderSplineID && _hasPredictedDestination)
-    {
-        owner->StopMoving();
-        _nextMoveTimer.Reset(0);
-        _hasPredictedDestination = false;
-        _isMoving = false;
-        return true;
-    }
-
-    // Mid-movement: lock down our home position so an evade reset doesn't snap us.
+    // Pin home position so an evade reset doesn't snap us back mid-patrol.
     if (!owner->movespline->Finalized())
         owner->SetHomePosition(owner->GetPosition());
 
-    // Leader just started a new spline — react.
-    if (!target->movespline->Finalized() && target->movespline->GetId() != _lastLeaderSplineID)
+    if (_slotPending)
     {
-        // Waypoint flip support: at the configured waypoint indices we mirror
-        // our follow angle so the formation pivots cleanly around the leader.
-        if (_point1 && target->IsCreature())
-        {
-            if (CreatureGroup* formation = target->ToCreature()->GetFormation())
-            {
-                if (Creature* leader = formation->getLeader())
-                {
-                    uint32 currentWaypoint = leader->GetCurrentWaypointID() + 1;
-                    if (currentWaypoint == _point1 || currentWaypoint == _point2)
-                        _angle = Position::NormalizeOrientation(float(2 * M_PI) - _angle);
-                }
-            }
-        }
-
-        LaunchMovement(owner, target);
-        _lastLeaderSplineID = target->movespline->GetId();
-        return true;
-    }
-
-    // Leader is idle — periodically check that we haven't drifted (or the
-    // leader teleported) and re-anchor on him.
-    _nextMoveTimer.Update(diff);
-    if (_nextMoveTimer.Passed())
-    {
-        _nextMoveTimer.Reset(FORMATION_MOVEMENT_INTERVAL);
-
-        if (_lastLeaderPosition != target->GetPosition())
-        {
-            LaunchMovement(owner, target);
-            return true;
-        }
+        _slotPending = false;
+        LaunchToSlot(owner);
     }
 
     if (_isMoving && owner->movespline->Finalized())
     {
         _isMoving = false;
-        owner->SetFacingTo(target->GetOrientation());
+        if (Unit* leader = ObjectAccessor::GetUnit(*owner, _leaderGuid))
+            owner->SetFacingTo(leader->GetOrientation());
         MovementInform(owner);
     }
 
     return true;
 }
 
-void FormationMovementGenerator::LaunchMovement(Creature* owner, Unit* target)
+void FormationMovementGenerator::LaunchToSlot(Creature* owner)
 {
-    float relativeAngle = 0.0f;
-
-    if (!target->movespline->Finalized())
+    // Sync planner request: must launch this tick to keep up with the leader.
+    Movement::PointsArray path;
+    if (Movement::PathPlanner* planner = GetPlanner(owner))
     {
-        G3D::Vector3 const leaderDestination = target->movespline->CurrentDestination();
-        relativeAngle = target->GetRelativeAngle(leaderDestination.x, leaderDestination.y);
+        Movement::PathRequest req;
+        req.ownerGuid = owner->GetGUID();
+        req.from = owner->GetPosition();
+        req.to = _targetSlot;
+        Movement::PathResult const result = planner->RequestPathSync(owner, req);
+        if (result.success && !result.points.empty())
+            path = result.points;
+    }
+    if (path.empty())
+    {
+        path.emplace_back(owner->GetPositionX(), owner->GetPositionY(), owner->GetPositionZ());
+        path.emplace_back(_targetSlot.GetPositionX(), _targetSlot.GetPositionY(), _targetSlot.GetPositionZ());
     }
 
-    Position dest = target->GetPosition();
-    float velocity = 0.0f;
+    Movement::SplineLaunchOptions opts;
+    opts.walk = _slotWalk;
+    opts.velocityOverride = (_slotVelocity > 0.0f) ? _slotVelocity : owner->GetSpeed(MOVE_WALK);
+    _splineExecutor->LaunchAlongPath(path, opts);
 
-    if (!target->movespline->Finalized())
-    {
-        // Legion's MoveSpline does not expose Velocity() like AC does. Fall
-        // back to the leader's run/walk speed — close enough for the predictive
-        // dead-reckoning below, and we further damp it via velocityMod.
-        velocity = target->IsWalking() ? target->GetSpeed(MOVE_WALK) : target->GetSpeed(MOVE_RUN);
-
-        // Predict 1.65 seconds of leader travel and aim for that.
-        float travelDist = velocity * 1.65f;
-        target->MovePositionToFirstCollision(dest, travelDist, relativeAngle);
-        target->MovePositionToFirstCollision(dest, _range, _angle + relativeAngle);
-
-        float distance = owner->GetExactDist(dest);
-        float velocityMod = std::min<float>(distance / travelDist, 1.5f);
-
-        velocity *= velocityMod;
-        _hasPredictedDestination = true;
-    }
-    else
-    {
-        target->MovePositionToFirstCollision(dest, _range, _angle + relativeAngle);
-        _hasPredictedDestination = false;
-    }
-
-    if (velocity == 0.0f)
-        velocity = target->GetSpeed(MOVE_WALK);
-
-    Movement::MoveSplineInit init(owner);
-    init.MoveTo(dest.GetPositionX(), dest.GetPositionY(), dest.GetPositionZ());
-    init.SetVelocity(velocity);
-    init.Launch();
-
-    _lastLeaderPosition.Relocate(target->GetPosition());
     _isMoving = true;
     owner->AddUnitState(UNIT_STATE_FOLLOW_MOVE);
 }

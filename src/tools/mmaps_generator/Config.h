@@ -109,7 +109,7 @@ namespace MMAP
             float walkableSlopeAngle = 70.0f;
             int walkableRadius = 2;
             int walkableHeight = 6;
-            int walkableClimb = 8;
+            int walkableClimb = 4;
             int vertexPerMapEdge = 2000;
             int vertexPerTileEdge = 80;
             float maxSimplificationError = 1.8f;

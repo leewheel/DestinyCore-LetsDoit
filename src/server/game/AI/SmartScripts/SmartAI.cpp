@@ -26,7 +26,7 @@
 #include "PetDefines.h"
 #include "Player.h"
 #include "ScriptMgr.h"
-#include "WaypointMovementGenerator.h"
+#include "WaypointGenerator.h"
 
 SmartAI::SmartAI(Creature* c) : CreatureAI(c)
 {
@@ -294,8 +294,8 @@ void SmartAI::ResumePath()
     mWPPauseTimer = 0;
     SetRun(mRun);
 
-    if (WaypointMovementGenerator<Creature>* move = dynamic_cast<WaypointMovementGenerator<Creature>*>(me->GetMotionMaster()->top()))
-        move->GetTrackerTimer().Reset(1);
+    if (WaypointGenerator* move = dynamic_cast<WaypointGenerator*>(me->GetMotionMaster()->top()))
+        move->Resume();
 }
 
 void SmartAI::ReturnToLastOOCPos()

@@ -93,7 +93,6 @@
 #include "VMapManager2.h"
 #include "WardenCheckMgr.h"
 #include "WaypointManager.h"
-#include "WaypointMovementGenerator.h"
 #include "WeatherMgr.h"
 #ifdef ELUNA
 #include "LuaEngine.h"
