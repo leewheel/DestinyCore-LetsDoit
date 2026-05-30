@@ -1,0 +1,17 @@
+#
+# Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+#
+
+[worldserver]
+
+########################################
+# Skeleton module configuration
+########################################
+#
+#    SkeletonModule.Enable
+#        Description: Greet players with a "Hello world" message on login.
+#        Default:     1 - Enabled
+#                     0 - Disabled
+#
+
+SkeletonModule.Enable = 1

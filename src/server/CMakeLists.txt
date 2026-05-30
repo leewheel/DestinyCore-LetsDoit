@@ -29,4 +29,7 @@ add_subdirectory(shared)
 add_subdirectory(bnetserver)
 add_subdirectory(game)
 add_subdirectory(scripts)
+# The modules tree lives at the repository root but is built here so it shares
+# the worldserver's scope (target visibility and dependency propagation).
+add_subdirectory(${CMAKE_SOURCE_DIR}/modules ${CMAKE_BINARY_DIR}/modules)
 add_subdirectory(worldserver)

@@ -42,6 +42,7 @@
 #include "ProcessPriority.h"
 #include "RASession.h"
 #include "RealmList.h"
+#include "ModulesScriptLoader.h"
 #include "ScriptLoader.h"
 #include "ScriptMgr.h"
 #include "ScriptReloadMgr.h"
@@ -180,6 +181,10 @@ extern int main(int argc, char** argv)
     // If logs are supposed to be handled async then we need to pass the IoContext into the Log singleton
     sLog->Initialize(sConfigMgr->GetBoolDefault("Log.Async.Enable", false) ? ioContext.get() : nullptr);
 
+    // Merge any module config placed next to the worldserver config. Done after
+    // the logger is up so the loaded files are reported.
+    sConfigMgr->LoadModulesConfigs();
+
     Destiny::Banner::Show("worldserver-daemon",
         [](char const* text)
         {
@@ -271,6 +276,7 @@ extern int main(int argc, char** argv)
     });
 
     sScriptMgr->SetScriptLoader(AddScripts);
+    sScriptMgr->SetModulesLoader(AddModulesScripts);
     std::shared_ptr<void> sScriptMgrHandle(nullptr, [](void*)
     {
         sScriptMgr->Unload();

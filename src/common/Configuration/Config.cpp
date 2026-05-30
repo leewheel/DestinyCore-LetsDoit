@@ -19,12 +19,14 @@
 #include "Config.h"
 #include "Log.h"
 #include "Util.h"
+#include <boost/filesystem/operations.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <algorithm>
 #include <memory>
 #include <mutex>
 
 namespace bpt = boost::property_tree;
+namespace fs = boost::filesystem;
 
 namespace
 {
@@ -32,6 +34,38 @@ namespace
     std::vector<std::string> _args;
     bpt::ptree _config;
     std::mutex _configLock;
+
+    // Merges the keys of the first section of the given ini file into _config,
+    // overriding any existing entry. Module configs reuse the [worldserver]
+    // section like the main config, so we only ever read the first section.
+    // The caller must hold _configLock.
+    bool MergeAdditionalFile(std::string const& file)
+    {
+        try
+        {
+            bpt::ptree additionalTree;
+            bpt::ini_parser::read_ini(file, additionalTree);
+
+            if (additionalTree.empty())
+                return false;
+
+            // '\01' as separator keeps dotted keys (e.g. "Module.Enable") as a
+            // single node, matching how the main config is read back.
+            for (bpt::ptree::value_type const& key : additionalTree.begin()->second)
+                _config.put(bpt::ptree::path_type(key.first, '\01'), key.second.data());
+        }
+        catch (bpt::ini_parser::ini_parser_error const& e)
+        {
+            if (e.line() == 0)
+                TC_LOG_ERROR("server.loading", "Error in module config %s", e.message().c_str());
+            else
+                TC_LOG_ERROR("server.loading", "Error in module config %s:%u - %s",
+                    e.filename().c_str(), uint32(e.line()), e.message().c_str());
+            return false;
+        }
+
+        return true;
+    }
 }
 
 bool ConfigMgr::LoadInitial(std::string const& file, std::vector<std::string> args,
@@ -74,9 +108,44 @@ ConfigMgr* ConfigMgr::instance()
     return &instance;
 }
 
+bool ConfigMgr::LoadModulesConfigs(bool isReload /*= false*/)
+{
+    std::lock_guard<std::mutex> lock(_configLock);
+
+    // Module configs live in a "modules" directory next to the main config file.
+    fs::path const modulesPath = fs::path(_filename).parent_path() / "modules";
+
+    boost::system::error_code ec;
+    if (!fs::is_directory(modulesPath, ec))
+        return true;
+
+    std::vector<std::string> loadedFiles;
+    for (fs::directory_iterator itr(modulesPath, ec), end; itr != end && !ec; itr.increment(ec))
+    {
+        fs::path const& file = itr->path();
+        if (file.extension() != ".conf")
+            continue;
+
+        if (MergeAdditionalFile(file.string()))
+            loadedFiles.push_back(file.filename().string());
+    }
+
+    if (!isReload && !loadedFiles.empty())
+    {
+        TC_LOG_INFO("server.loading", "Using modules configuration:");
+        for (std::string const& name : loadedFiles)
+            TC_LOG_INFO("server.loading", "> %s", name.c_str());
+    }
+
+    return true;
+}
+
 bool ConfigMgr::Reload(std::string& error)
 {
-    return LoadInitial(_filename, std::move(_args), error);
+    if (!LoadInitial(_filename, std::move(_args), error))
+        return false;
+
+    return LoadModulesConfigs(true);
 }
 
 template<class T>

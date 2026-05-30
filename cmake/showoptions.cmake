@@ -29,6 +29,12 @@ else()
   message("* Build with scripts     : No")
 endif()
 
+if(MODULES AND (NOT MODULES STREQUAL "none"))
+  message("* Build with modules     : Yes (${MODULES})")
+else()
+  message("* Build with modules     : No")
+endif()
+
 if(ELUNA)
   message("* Build Eluna LuaEngine  : Yes (default)")
   add_definitions(-DELUNA)

@@ -34,6 +34,11 @@ public:
     /// Method used only for loading main configuration files (bnetserver.conf and worldserver.conf)
     bool LoadInitial(std::string const& file, std::vector<std::string> args, std::string& error);
 
+    /// Merges every *.conf placed in the "modules" directory next to the main
+    /// config file into the running configuration. Safe to call when no module
+    /// config exists. Called once at startup and again on every Reload().
+    bool LoadModulesConfigs(bool isReload = false);
+
     static ConfigMgr* instance();
 
     bool Reload(std::string& error);

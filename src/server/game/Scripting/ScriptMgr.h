@@ -1068,12 +1068,20 @@ class TC_GAME_API ScriptMgr
         uint32 GetScriptCount() const { return _scriptCount; }
 
         typedef void(*ScriptLoaderCallbackType)();
+        typedef void(*ModulesLoaderCallbackType)();
 
         /// Sets the script loader callback which is invoked to load scripts
         /// (Workaround for circular dependency game <-> scripts)
         void SetScriptLoader(ScriptLoaderCallbackType script_loader_callback)
         {
             _script_loader_callback = script_loader_callback;
+        }
+
+        /// Sets the modules loader callback which is invoked to load modules
+        /// (Workaround for circular dependency game <-> modules)
+        void SetModulesLoader(ModulesLoaderCallbackType modules_loader_callback)
+        {
+            _modules_loader_callback = modules_loader_callback;
         }
 
     public: /* Script contexts */
@@ -1393,6 +1401,7 @@ class TC_GAME_API ScriptMgr
         uint32 _scriptCount;
 
         ScriptLoaderCallbackType _script_loader_callback;
+        ModulesLoaderCallbackType _modules_loader_callback;
 
         std::string _currentContext;
 };

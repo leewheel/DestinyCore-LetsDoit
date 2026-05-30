@@ -1169,7 +1169,7 @@ ScriptObject::~ScriptObject()
 }
 
 ScriptMgr::ScriptMgr()
-  : _scriptCount(0), _script_loader_callback(nullptr)
+  : _scriptCount(0), _script_loader_callback(nullptr), _modules_loader_callback(nullptr)
 {
 }
 
@@ -1207,6 +1207,11 @@ void ScriptMgr::Initialize()
     ASSERT(_script_loader_callback,
            "Script loader callback wasn't registered!");
     _script_loader_callback();
+
+    // Load all static linked modules through the modules loader function.
+    ASSERT(_modules_loader_callback,
+           "Modules loader callback wasn't registered!");
+    _modules_loader_callback();
 
     // Initialize all dynamic scripts
     // and finishes the context switch to do

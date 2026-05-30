@@ -33,12 +33,38 @@ foreach(SCRIPT_MODULE ${SCRIPT_MODULE_LIST})
   set_property(CACHE ${SCRIPT_MODULE_VARIABLE} PROPERTY STRINGS default disabled static dynamic)
 endforeach()
 
+set(MODULES_AVAILABLE_OPTIONS none static dynamic)
+
+# Log a fatal error when the value of the MODULES variable isn't a valid option.
+if (MODULES)
+  list (FIND MODULES_AVAILABLE_OPTIONS "${MODULES}" MODULES_INDEX)
+  if (${MODULES_INDEX} EQUAL -1)
+    message(FATAL_ERROR "The value (${MODULES}) of your MODULES variable is invalid! "
+                        "Allowed values are: ${MODULES_AVAILABLE_OPTIONS}.")
+  endif()
+endif()
+
+set(MODULES "static" CACHE STRING "Build core with modules")
+set_property(CACHE MODULES PROPERTY STRINGS ${MODULES_AVAILABLE_OPTIONS})
+
+# Build a per-module linkage override (-DMODULE_<NAME>=static/dynamic/disabled)
+GetModuleSourceList(MODULE_LIST)
+foreach(MODULE ${MODULE_LIST})
+  ModuleNameToVariable(${MODULE} MODULE_VARIABLE)
+  set(${MODULE_VARIABLE} "default" CACHE STRING "Build type of the ${MODULE} module.")
+  set_property(CACHE ${MODULE_VARIABLE} PROPERTY STRINGS default disabled static dynamic)
+endforeach()
+
 option(TOOLS            "Build map/vmap/mmap extraction/assembler tools"              1)
 option(ELUNA            "Build Eluna Lua Engine"                                      1)
 option(USE_SCRIPTPCH    "Use precompiled headers when compiling scripts"              1)
 option(USE_COREPCH      "Use precompiled headers when compiling servers"              1)
 option(WITH_DYNAMIC_LINKING "Enable dynamic library linking."                         0)
 IsDynamicLinkingRequired(WITH_DYNAMIC_LINKING_FORCED)
+IsDynamicLinkingModulesRequired(WITH_DYNAMIC_LINKING_MODULES_FORCED)
+if (WITH_DYNAMIC_LINKING_MODULES_FORCED)
+  set(WITH_DYNAMIC_LINKING_FORCED ON)
+endif()
 if (WITH_DYNAMIC_LINKING AND WITH_DYNAMIC_LINKING_FORCED)
   set(WITH_DYNAMIC_LINKING_FORCED OFF)
 endif()

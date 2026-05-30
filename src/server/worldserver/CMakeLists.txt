@@ -48,6 +48,7 @@ if (WITH_CPR)
       PRIVATE
         trinity-core-interface
       PUBLIC
+        modules
         scripts
         game
         readline
@@ -57,6 +58,7 @@ else()
       PRIVATE
         trinity-core-interface
       PUBLIC
+        modules
         scripts
         game
         readline)
@@ -91,6 +93,11 @@ set_target_properties(worldserver
 # Add all dynamic projects as dependency to the worldserver
 if (WORLDSERVER_DYNAMIC_SCRIPT_MODULES_DEPENDENCIES)
   add_dependencies(worldserver ${WORLDSERVER_DYNAMIC_SCRIPT_MODULES_DEPENDENCIES})
+endif()
+
+# Add all dynamic modules as dependency to the worldserver
+if (WORLDSERVER_DYNAMIC_MODULE_PROJECTS_DEPENDENCIES)
+  add_dependencies(worldserver ${WORLDSERVER_DYNAMIC_MODULE_PROJECTS_DEPENDENCIES})
 endif()
 
 if( WIN32 )
