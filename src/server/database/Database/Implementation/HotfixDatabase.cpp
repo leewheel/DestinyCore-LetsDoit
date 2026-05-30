@@ -218,6 +218,12 @@ void HotfixDatabaseConnection::DoPrepareStatements()
     PrepareStatement(HOTFIX_SEL_CHARACTER_FACIAL_HAIR_STYLES, "SELECT ID, Geoset1, Geoset2, Geoset3, Geoset4, Geoset5, RaceID, SexID, VariationID"
         " FROM character_facial_hair_styles ORDER BY ID DESC", CONNECTION_SYNCH);
 
+    // CharacterLoadout.db2
+    PrepareStatement(HOTFIX_SEL_CHARACTER_LOADOUT, "SELECT ID, RaceMask, ChrClassID, Purpose FROM character_loadout ORDER BY ID DESC", CONNECTION_SYNCH);
+
+    // CharacterLoadoutItem.db2
+    PrepareStatement(HOTFIX_SEL_CHARACTER_LOADOUT_ITEM, "SELECT ID, ItemID, CharacterLoadoutID FROM character_loadout_item ORDER BY ID DESC", CONNECTION_SYNCH);
+
     // CharBaseSection.db2
     PrepareStatement(HOTFIX_SEL_CHAR_BASE_SECTION, "SELECT ID, VariationEnum, ResolutionVariationEnum, LayoutResType FROM char_base_section"
         " ORDER BY ID DESC", CONNECTION_SYNCH);
