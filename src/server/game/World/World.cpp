@@ -2388,8 +2388,6 @@ void World::SetInitialWorldSettings()
     TC_LOG_INFO("server.loading", "Loading Quest task...");
     sObjectMgr->LoadQuestTasks();
 
-    TC_LOG_INFO("server.loading", "Loading Adventure Map UI...");
-    sObjectMgr->LoadAdventureMapUI();
 
     TC_LOG_INFO("server.loading", "Loading Zones script names...");
     sObjectMgr->LoadZoneScriptNames();

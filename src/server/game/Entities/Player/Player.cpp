@@ -15239,11 +15239,8 @@ void Player::OnGossipSelect(WorldObject* source, uint32 optionIndex, uint32 menu
             GetSession()->SendOpenTransmogrifier(guid);
             break;
         case GOSSIP_OPTION_ADVENTURE_MAP:
-        {
-            uint32 uiMapId = sObjectMgr->GetAdventureMapUIByCreature(source->GetEntry());
             GetSession()->SendPacket(WorldPackets::Garrison::ShowAdventureMap(source->GetGUID()).Write());
             break;
-        }
     }
 
     ModifyMoney(-cost);

@@ -16,6 +16,7 @@
  */
 
 #include "LFGMgr.h"
+#include "ConditionMgr.h"
 #include "DatabaseEnv.h"
 #include "DB2Stores.h"
 #include "DisableMgr.h"
@@ -1893,8 +1894,28 @@ LfgLockMap LFGMgr::GetLockedDungeons(ObjectGuid guid)
             lockStatus = LFG_LOCKSTATUS_NOT_IN_SEASON;
         else if (dungeon->requiredItemLevel > player->GetAverageItemLevelEquipped())
             lockStatus = LFG_LOCKSTATUS_TOO_LOW_GEAR_SCORE;
-        else if (!player->Satisfy(dungeon->map, Difficulty(dungeon->difficulty)))
-            lockStatus = LFG_LOCKSTATUS_QUEST_NOT_COMPLETED;
+        else
+        {
+            Difficulty difficulty = Difficulty(dungeon->difficulty);
+            MapDifficultyEntry const* mapDiff = sDB2Manager.GetDownscaledMapDifficultyData(dungeon->map, difficulty);
+            if (DB2Manager::MapDifficultyConditionList const* conditions = mapDiff ? sDB2Manager.GetMapDifficultyConditions(mapDiff->ID) : nullptr)
+                for (MapDifficultyXConditionEntry const* condition : *conditions)
+                {
+                    PlayerConditionEntry const* playerCondition = sPlayerConditionStore.LookupEntry(condition->PlayerConditionID);
+                    if (!playerCondition || ConditionMgr::IsPlayerMeetingCondition(player, playerCondition))
+                        continue;
+
+                    switch (ConditionMgr::GetConditionFailure(player, playerCondition))
+                    {
+                        case ConditionMgr::PlayerConditionFailure::Level:       lockStatus = LFG_LOCKSTATUS_TOO_LOW_LEVEL; break;
+                        case ConditionMgr::PlayerConditionFailure::Achievement: lockStatus = LFG_LOCKSTATUS_MISSING_ACHIEVEMENT; break;
+                        case ConditionMgr::PlayerConditionFailure::Quest:       lockStatus = LFG_LOCKSTATUS_QUEST_NOT_COMPLETED; break;
+                        case ConditionMgr::PlayerConditionFailure::Item:        lockStatus = LFG_LOCKSTATUS_MISSING_ITEM; break;
+                        default:                                                lockStatus = LFG_LOCKSTATUS_RAID_LOCKED; break;
+                    }
+                    break;
+                }
+        }
 
         /* @todo VoA closed if WG is not under team control (LFG_LOCKSTATUS_RAID_LOCKED)
         lockData = LFG_LOCKSTATUS_TOO_HIGH_GEAR_SCORE;

@@ -2920,3 +2920,82 @@ bool ConditionMgr::IsPlayerMeetingCondition(Player const* player, PlayerConditio
 
     return true;
 }
+
+ConditionMgr::PlayerConditionFailure ConditionMgr::GetConditionFailure(Player const* player, PlayerConditionEntry const* condition)
+{
+    if ((condition->MinLevel && player->getLevel() < condition->MinLevel) ||
+        (condition->MaxLevel && player->getLevel() > condition->MaxLevel))
+        return PlayerConditionFailure::Level;
+
+    if (condition->Achievement[0])
+    {
+        using AchievementCount = std::extent<decltype(condition->Achievement)>;
+
+        std::array<bool, AchievementCount::value> results;
+        results.fill(true);
+        for (std::size_t i = 0; i < AchievementCount::value; ++i)
+            if (condition->Achievement[i])
+                results[i] = player->HasAchieved(condition->Achievement[i]);
+
+        if (!PlayerConditionLogic(condition->AchievementLogic, results))
+            return PlayerConditionFailure::Achievement;
+    }
+
+    if (condition->PrevQuestID[0])
+    {
+        using PrevQuestCount = std::extent<decltype(condition->PrevQuestID)>;
+
+        std::array<bool, PrevQuestCount::value> results;
+        results.fill(true);
+        for (std::size_t i = 0; i < PrevQuestCount::value; ++i)
+            if (uint32 questBit = sDB2Manager.GetQuestUniqueBitFlag(condition->PrevQuestID[i]))
+                results[i] = (player->GetUInt32Value(PLAYER_FIELD_QUEST_COMPLETED + ((questBit - 1) >> 5)) & (1 << ((questBit - 1) & 31))) != 0;
+
+        if (!PlayerConditionLogic(condition->PrevQuestLogic, results))
+            return PlayerConditionFailure::Quest;
+    }
+
+    if (condition->CurrQuestID[0])
+    {
+        using CurrQuestCount = std::extent<decltype(condition->CurrQuestID)>;
+
+        std::array<bool, CurrQuestCount::value> results;
+        results.fill(true);
+        for (std::size_t i = 0; i < CurrQuestCount::value; ++i)
+            if (condition->CurrQuestID[i])
+                results[i] = player->FindQuestSlot(condition->CurrQuestID[i]) != MAX_QUEST_LOG_SIZE;
+
+        if (!PlayerConditionLogic(condition->CurrQuestLogic, results))
+            return PlayerConditionFailure::Quest;
+    }
+
+    if (condition->CurrentCompletedQuestID[0])
+    {
+        using CurrentCompletedQuestCount = std::extent<decltype(condition->CurrentCompletedQuestID)>;
+
+        std::array<bool, CurrentCompletedQuestCount::value> results;
+        results.fill(true);
+        for (std::size_t i = 0; i < CurrentCompletedQuestCount::value; ++i)
+            if (condition->CurrentCompletedQuestID[i])
+                results[i] = player->GetQuestStatus(condition->CurrentCompletedQuestID[i]) == QUEST_STATUS_COMPLETE;
+
+        if (!PlayerConditionLogic(condition->CurrentCompletedQuestLogic, results))
+            return PlayerConditionFailure::Quest;
+    }
+
+    if (condition->ItemID[0])
+    {
+        using ItemCount = std::extent<decltype(condition->ItemID)>;
+
+        std::array<bool, ItemCount::value> results;
+        results.fill(true);
+        for (std::size_t i = 0; i < ItemCount::value; ++i)
+            if (condition->ItemID[i])
+                results[i] = player->GetItemCount(condition->ItemID[i], condition->ItemFlags != 0) >= condition->ItemCount[i];
+
+        if (!PlayerConditionLogic(condition->ItemLogic, results))
+            return PlayerConditionFailure::Item;
+    }
+
+    return PlayerConditionFailure::Other;
+}

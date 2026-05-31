@@ -288,6 +288,9 @@ class TC_GAME_API ConditionMgr
         static uint32 GetPlayerConditionLfgValue(Player const* player, PlayerConditionLfgStatus status);
         static bool IsPlayerMeetingCondition(Player const* player, PlayerConditionEntry const* condition);
 
+        enum class PlayerConditionFailure { Level, Achievement, Quest, Item, Other };
+        static PlayerConditionFailure GetConditionFailure(Player const* player, PlayerConditionEntry const* condition);
+
         struct ConditionTypeInfo
         {
             char const* Name;
