@@ -2082,6 +2082,9 @@ void World::SetInitialWorldSettings()
     TC_LOG_INFO("server.loading", "Loading Quests...");
     sObjectMgr->LoadQuests();                                    // must be loaded after DBCs, creature_template, item_template, gameobject tables
 
+    TC_LOG_INFO("server.loading", "Loading Quest Actions...");
+    sObjectMgr->LoadQuestActions();                              // must be after quest load
+
     TC_LOG_INFO("server.loading", "Checking Quest Disables");
     DisableMgr::CheckQuestDisables();                           // must be after loading quests
 

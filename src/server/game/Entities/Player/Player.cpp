@@ -93,6 +93,7 @@
 #include "OutdoorPvPMgr.h"
 #include "Pet.h"
 #include "PetPackets.h"
+#include "Conversation.h"
 #include "PhasingHandler.h"
 #include "QueryHolder.h"
 #include "QuestDef.h"
@@ -15767,6 +15768,36 @@ bool Player::CanRewardQuest(Quest const* quest, uint32 reward, bool msg) const
     return true;
 }
 
+void Player::ApplyQuestActions(uint32 questId, uint8 type, uint8 objectiveIndex /*= 0*/)
+{
+    std::vector<QuestAction> const* actions = sObjectMgr->GetQuestActions(questId);
+    TC_LOG_ERROR("server.loading", "[quest_action DEBUG] ApplyQuestActions quest=%u type=%u -> %s", questId, uint32(type), actions ? "actions found" : "NO actions (table not loaded?)");
+    if (!actions)
+        return;
+
+    for (QuestAction const& action : *actions)
+    {
+        if (action.Type != type)
+            continue;
+        if (type == QUEST_ACTION_ON_OBJECTIVE_COMPLETE && action.ObjectiveIndex != objectiveIndex)
+            continue;
+
+        TC_LOG_ERROR("server.loading", "[quest_action DEBUG] match quest=%u type=%u conv=%u phaseRefresh=%u", questId, uint32(type), action.ConversationId, uint32(action.UpdatePhaseShift));
+
+        if (action.UpdatePhaseShift)
+            PhasingHandler::OnConditionChange(this);
+        if (action.UpdateZoneAuras)
+            UpdateAreaDependentAuras();
+        if (action.SpellId)
+            CastSpell(this, action.SpellId, true);
+        if (action.ConversationId)
+        {
+            Conversation* conv = Conversation::CreateConversation(action.ConversationId, this, *this, { GetGUID() });
+            TC_LOG_ERROR("server.loading", "[quest_action DEBUG] CreateConversation(%u) -> %s", action.ConversationId, conv ? "OK" : "FAILED (conv not loaded or actor missing)");
+        }
+    }
+}
+
 void Player::AddQuest(Quest const* quest, Object* questGiver)
 {
     uint16 log_slot = FindQuestSlot(0);
@@ -15860,7 +15891,9 @@ void Player::AddQuest(Quest const* quest, Object* questGiver)
 
     sScriptMgr->OnQuestStatusChange(this, quest_id);
     sScriptMgr->OnQuestStatusChange(this, quest, oldStatus, questStatusData.Status);
-    sScriptMgr->OnQuestAccept(this, quest);  
+    sScriptMgr->OnQuestAccept(this, quest);
+
+    ApplyQuestActions(quest_id, QUEST_ACTION_ON_ACCEPT);
 }
 
 void Player::ForceCompleteQuest(uint32 quest_id)
@@ -15930,6 +15963,8 @@ void Player::ForceCompleteQuest(uint32 quest_id)
 
 void Player::CompleteQuest(uint32 quest_id)
 {
+    ApplyQuestActions(quest_id, QUEST_ACTION_ON_QUEST_COMPLETE);
+
     if (quest_id)
     {
         SetQuestStatus(quest_id, QUEST_STATUS_COMPLETE);
@@ -16069,6 +16104,8 @@ void Player::RewardQuestPackage(uint32 questPackageId, uint32 onlyItemId /*= 0*/
 
 void Player::RewardQuest(Quest const* quest, uint32 reward, Object* questGiver, bool announce)
 {
+    ApplyQuestActions(quest->GetQuestId(), QUEST_ACTION_ON_QUEST_REWARD);
+
     //this THING should be here to protect code from quest, which cast on player far teleport as a reward
     //should work fine, cause far teleport will be executed in Player::Update()
     SetCanDelayTeleport(true);
@@ -16328,6 +16365,8 @@ void Player::SetRewardedQuest(uint32 quest_id)
 
 void Player::FailQuest(uint32 questId)
 {
+    ApplyQuestActions(questId, QUEST_ACTION_ON_QUEST_FAIL);
+
     if (Quest const* quest = sObjectMgr->GetQuestTemplate(questId))
     {
         // Already complete quests shouldn't turn failed.
@@ -16377,6 +16416,8 @@ void Player::FailQuest(uint32 questId)
 
 void Player::AbandonQuest(uint32 questId)
 {
+    ApplyQuestActions(questId, QUEST_ACTION_ON_QUEST_ABANDON);
+
     if (Quest const* quest = sObjectMgr->GetQuestTemplate(questId))
     {
         // Destroy quest items on quest abandon.
@@ -17982,6 +18023,9 @@ void Player::SetQuestObjectiveData(QuestObjective const& objective, int32 data)
 
     if (data >= objective.Amount)
         sScriptMgr->OnObjectiveValidate(this, objective.QuestID, objective.ID);
+
+    if (oldData < objective.Amount && data >= objective.Amount)
+        ApplyQuestActions(objective.QuestID, QUEST_ACTION_ON_OBJECTIVE_COMPLETE, objective.StorageIndex);
 
     if (Quest const* quest = sObjectMgr->GetQuestTemplate(objective.QuestID))
         sScriptMgr->OnQuestObjectiveChange(this, quest, objective, oldData, data);

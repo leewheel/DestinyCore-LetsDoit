@@ -1059,6 +1059,12 @@ class TC_GAME_API ObjectMgr
             return itr != _questObjectives.end() ? itr->second : nullptr;
         }
 
+        std::vector<QuestAction> const* GetQuestActions(uint32 questId) const
+        {
+            auto itr = _questActions.find(questId);
+            return itr != _questActions.end() ? &itr->second : nullptr;
+        }
+
         std::unordered_set<uint32> const* GetQuestsForAreaTrigger(uint32 Trigger_ID) const
         {
             auto itr = _questAreaTriggerStore.find(Trigger_ID);
@@ -1144,6 +1150,7 @@ class TC_GAME_API ObjectMgr
         DungeonEncounterList const* GetDungeonEncounterList(uint32 mapId, Difficulty difficulty) const;
 
         void LoadQuests();
+        void LoadQuestActions();
         void LoadQuestStartersAndEnders();
         void LoadGameobjectQuestStarters();
         void LoadGameobjectQuestEnders();
@@ -1681,6 +1688,7 @@ class TC_GAME_API ObjectMgr
 
         QuestMap _questTemplates;
         QuestObjectivesByIdContainer _questObjectives;
+        std::unordered_map<uint32, std::vector<QuestAction>> _questActions;
 
         typedef std::unordered_map<uint32, NpcText> NpcTextContainer;
         typedef std::unordered_map<uint32, std::unordered_set<uint32>> QuestAreaTriggerContainer;

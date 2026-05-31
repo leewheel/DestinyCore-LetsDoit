@@ -329,6 +329,29 @@ struct QuestObjective
 
 typedef std::vector<QuestObjective> QuestObjectives;
 
+// Quest lifecycle moments at which a quest_action effect fires.
+enum QuestActionType : uint8
+{
+    QUEST_ACTION_ON_ACCEPT             = 0,
+    QUEST_ACTION_ON_OBJECTIVE_COMPLETE = 1, // matched against ObjectiveIndex
+    QUEST_ACTION_ON_QUEST_COMPLETE     = 2,
+    QUEST_ACTION_ON_QUEST_REWARD       = 3,
+    QUEST_ACTION_ON_QUEST_ABANDON      = 4,
+    QUEST_ACTION_ON_QUEST_FAIL         = 5,
+    QUEST_ACTION_MAX
+};
+
+// Server-side effect attached to a quest lifecycle moment (table quest_action).
+struct QuestAction
+{
+    uint8  Type             = 0;
+    uint8  ObjectiveIndex   = 0;
+    uint32 SpellId          = 0;
+    uint32 ConversationId   = 0;
+    bool   UpdatePhaseShift = false;
+    bool   UpdateZoneAuras  = false;
+};
+
 // This Quest class provides a convenient way to access a few pretotaled (cached) quest details,
 // all base quest information, and any utility functions such as generating the amount of
 // xp to give

@@ -6128,6 +6128,60 @@ void ObjectMgr::ReturnOrDeleteOldMails(bool serverUp)
     TC_LOG_INFO("server.loading", ">> Processed %u expired mails: %u deleted and %u returned in %u ms", deletedCount + returnedCount, deletedCount, returnedCount, GetMSTimeDiffToNow(oldMSTime));
 }
 
+void ObjectMgr::LoadQuestActions()
+{
+    uint32 oldMSTime = getMSTime();
+
+    _questActions.clear();
+
+    //                                               0        1     2               3        4               5                 6
+    QueryResult result = WorldDatabase.Query("SELECT QuestID, Type, ObjectiveIndex, SpellId, ConversationId, UpdatePhaseShift, UpdateZoneAuras FROM quest_action");
+    if (!result)
+    {
+        TC_LOG_INFO("server.loading", ">> Loaded 0 quest actions. DB table `quest_action` is empty.");
+        return;
+    }
+
+    uint32 count = 0;
+    do
+    {
+        Field* fields = result->Fetch();
+
+        uint32 questId = fields[0].GetUInt32();
+        if (!GetQuestTemplate(questId))
+        {
+            TC_LOG_ERROR("sql.sql", "Table `quest_action` has data for non-existing quest %u, skipped.", questId);
+            continue;
+        }
+
+        QuestAction action;
+        action.Type             = fields[1].GetUInt8();
+        action.ObjectiveIndex   = fields[2].GetUInt8();
+        action.SpellId          = fields[3].GetUInt32();
+        action.ConversationId   = fields[4].GetUInt32();
+        action.UpdatePhaseShift = fields[5].GetBool();
+        action.UpdateZoneAuras  = fields[6].GetBool();
+
+        if (action.Type >= QUEST_ACTION_MAX)
+        {
+            TC_LOG_ERROR("sql.sql", "Table `quest_action` has invalid Type %u for quest %u, skipped.", uint32(action.Type), questId);
+            continue;
+        }
+
+        if (action.SpellId && !sSpellMgr->GetSpellInfo(action.SpellId))
+        {
+            TC_LOG_ERROR("sql.sql", "Table `quest_action` references non-existing spell %u for quest %u, removed.", action.SpellId, questId);
+            action.SpellId = 0;
+        }
+
+        _questActions[questId].push_back(action);
+        ++count;
+    }
+    while (result->NextRow());
+
+    TC_LOG_INFO("server.loading", ">> Loaded %u quest actions in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
+}
+
 void ObjectMgr::LoadQuestAreaTriggers()
 {
     uint32 oldMSTime = getMSTime();
@@ -10384,6 +10438,7 @@ void ObjectMgr::LoadSceneTemplates()
         sceneTemplate.ScenePackageId    = fields[2].GetUInt32();
         sceneTemplate.ScriptId          = sObjectMgr->GetScriptId(fields[3].GetCString());
 
+        ++count;
     } while (templates->NextRow());
 
     TC_LOG_INFO("server.loading", ">> Loaded %u scene templates in %u ms.", count, GetMSTimeDiffToNow(oldMSTime));

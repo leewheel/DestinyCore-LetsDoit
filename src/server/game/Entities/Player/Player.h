@@ -1544,6 +1544,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         bool CanSelectQuestPackageItem(QuestPackageItemEntry const* questPackageItem) const;
         void RewardQuestPackage(uint32 questPackageId, uint32 onlyItemId = 0);
         void RewardQuest(Quest const* quest, uint32 reward, Object* questGiver, bool announce = true);
+        void ApplyQuestActions(uint32 questId, uint8 type, uint8 objectiveIndex = 0);
         void SetRewardedQuest(uint32 quest_id);
         void FailQuest(uint32 quest_id);
         bool SatisfyQuestSkill(Quest const* qInfo, bool msg) const;
