@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -93,7 +93,19 @@ WorldPackets::Character::EnumCharactersResult::CharacterInfo::CharacterInfo(Fiel
         CustomizationFlag = CHAR_CUSTOMIZE_FLAG_RACE;
 
     Flags3 = 0;
+    if (atLoginFlags & AT_LOGIN_CLASS_TRIAL_LOCKED)
+        Flags3 |= CHARACTER_FLAG_3_LOCKED_BY_REVOKED_CHARACTER_UPGRADE;
+
     Flags4 = 0;
+    unkWod61x = 0;
+    if (atLoginFlags & AT_LOGIN_CLASS_TRIAL)
+        Flags4 |= CHARACTER_FLAG_4_TRIAL_BOOST;
+    if (atLoginFlags & AT_LOGIN_CLASS_TRIAL_LOCKED)
+    {
+        Flags4 |= CHARACTER_FLAG_4_TRIAL_BOOST | CHARACTER_FLAG_4_TRIAL_BOOST_LOCKED;
+        unkWod61x = 10;
+    }
+
     FirstLogin = (atLoginFlags & AT_LOGIN_FIRST) != 0;
 
     // show pet at selection character in character list only for non-ghost character

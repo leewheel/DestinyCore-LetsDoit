@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,51 +15,74 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef DEF_SCHOLOMANCE_H
-#define DEF_SCHOLOMANCE_H
+#ifndef SCHOLOMANCE_H
+#define SCHOLOMANCE_H
 
-#include "CreatureAIImpl.h"
+#define MAX_ENCOUNTER 5
 
-#define ScholomanceScriptName "instance_scholomance"
-#define DataHeader "SC"
-
-uint32 const EncounterCount             = 8;
-
-enum SCDataTypes
+enum Data
 {
-    DATA_DOCTORTHEOLENKRASTINOV         = 0,
-    DATA_INSTRUCTORMALICIA              = 1,
-    DATA_LADYILLUCIABAROV               = 2,
-    DATA_LORDALEXEIBAROV                = 3,
-    DATA_LOREKEEPERPOLKELT              = 4,
-    DATA_THERAVENIAN                    = 5,
-    DATA_DARKMASTERGANDLING             = 6,
-    DATA_KIRTONOS                       = 7
+    DATA_INSTRUCTOR_CHILLHEART,
+    DATA_JANDICE_BAROV,
+    DATA_RATTLEGORE,
+    DATA_LILLIAN_VOSS,
+    DATA_GANDLING,
+
+    DATA_PHYLACTERY,
+    DATA_LILLIAN_VOSS_SOUL,
+
+    DATA_COFFER_OF_FORGOTTEN_SOULS,
+    DATA_COFFER_OF_FORGOTTEN_SOULS_HEROIC,
+
+    DATA_RATTLEGORE_EVENT,
+    DATA_LILIAN_ENTRANCE,
+
+    DATA_GANDLING_EVENT,
 };
 
-enum SCCreatureIds
+enum Creatures
 {
-    NPC_DARKMASTER_GANDLING             = 1853,
-    NPC_BONE_MINION                     = 16119
+    NPC_INSTRUCTOR_CHILLHEART = 58633,
+    NPC_JANDICE_BAROV = 59184,
+    NPC_RATTLEGORE = 59153,
+    NPC_LILLIAN_VOSS = 58722,
+    NPC_DARKMASTER_GANDLING = 59080,
+
+    NPC_PHYLACTERY = 58664,
+
+    NPC_LILLIAN_VOSS_SOUL = 58791,
+
+    NPC_DARKMASTER_GANDLING_1 = 58875, // event npc
+
+    NPC_TALKING_SKULL = 64562, // 126155 aura visual
+    NPC_TALKING_SKULL_END = 64563, // 126155 aura visual
+
+    NPC_DOCTOR_THEOLEN_KRASTINOV = 59369, // spawns on heroic after rattlegore's death, 5-10% chance
 };
 
-enum SCGameobjectIds
+enum GameObjects
 {
-    GO_GATE_KIRTONOS                    = 175570,
-    GO_GATE_GANDLING                    = 177374,
-    GO_GATE_RAVENIAN                    = 177372,
-    GO_GATE_THEOLEN                     = 177377,
-    GO_GATE_ILLUCIA                     = 177371,
-    GO_GATE_MALICIA                     = 177375,
-    GO_GATE_BAROV                       = 177373,
-    GO_GATE_POLKELT                     = 177376,
-    GO_BRAZIER_OF_THE_HERALD            = 175564
+    GO_COFFER_OF_FORGOTTEN_SOULS = 211277,
+    GO_COFFER_OF_FORGOTTEN_SOULS_H = 211278,
+
+    ChallengeDoor = 211989
 };
 
-template<typename AI>
-inline AI* GetScholomanceAI(Creature* creature)
+enum eScenarioDatas
 {
-    return GetInstanceAI<AI>(creature, ScholomanceScriptName);
-}
+    ScenarioID = 51,
+    /// Bosses datas
+    Chillheart = 19259,
+    Barov = 19260,
+    RattleGore = 19261,
+    LilianVoss = 19262,
+    Gandling = 19263,
+    Ennemies = 20030,
+    KillCount = 35
+};
+
+#define DOCTOR_THEOLEN_KRASTINOV_CHANCE 8
+
+const Position krastinovPos = { 205.28f, 151.01f, 113.32f, 0.03f };
 
 #endif

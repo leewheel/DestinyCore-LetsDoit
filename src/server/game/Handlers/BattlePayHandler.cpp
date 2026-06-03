@@ -19,10 +19,14 @@
 #include "BattlePayMgr.h"
 #include "BattlePayData.h"
 #include "Bag.h"
+#include "CharacterPackets.h"
 #include "ObjectMgr.h"
 #include "ScriptMgr.h"
 #include "DatabaseEnv.h"
 #include "Player.h"
+#include "DB2Stores.h"
+#include "World.h"
+#include "CharacterService.h"
 
 auto GetBagsFreeSlots = [](Player* player) -> uint32
 {
@@ -101,8 +105,6 @@ void WorldSession::SendMakePurchase(ObjectGuid targetCharacter, uint32 clientTok
     auto mgr = session->GetBattlePayMgr();
 
     auto player = session->GetPlayer();
-    if (!player)
-        return;
 
     auto accountID = session->GetAccountId();
 
@@ -125,7 +127,11 @@ void WorldSession::SendMakePurchase(ObjectGuid targetCharacter, uint32 clientTok
 
     mgr->RegisterStartPurchase(purchase);
 
-    auto accountCredits = player->GetBattlePayCredits();
+    LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_BATTLE_PAY_ACCOUNT_CREDITS);
+    stmt->setUInt32(0, session->GetBattlenetAccountId());
+    PreparedQueryResult result = LoginDatabase.Query(stmt);
+
+    uint32 accountCredits = result ? result->Fetch()[0].GetUInt32() : 0;
     auto purchaseData = mgr->GetPurchase();
     if (!accountCredits)
     {
@@ -139,7 +145,7 @@ void WorldSession::SendMakePurchase(ObjectGuid targetCharacter, uint32 clientTok
         return;
     }
 
-    if (!product.Items.empty())
+    if (player && !product.Items.empty())
     {
         if (product.Items.size() > GetBagsFreeSlots(player))
         {
@@ -149,13 +155,16 @@ void WorldSession::SendMakePurchase(ObjectGuid targetCharacter, uint32 clientTok
         }
     }
 
-    for (auto itr : product.Items)
+    if (player)
     {
-        if (mgr->AlreadyOwnProduct(itr.ItemID))
+        for (auto itr : product.Items)
         {
-            player->SendBattlePayMessage(12, displayInfo->Name1);
-            SendStartPurchaseResponse(session, *purchaseData, Battlepay::Error::PurchaseDenied);
-            return;
+            if (mgr->AlreadyOwnProduct(itr.ItemID))
+            {
+                player->SendBattlePayMessage(12, displayInfo->Name1);
+                SendStartPurchaseResponse(session, *purchaseData, Battlepay::Error::PurchaseDenied);
+                return;
+            }
         }
     }
 
@@ -207,14 +216,19 @@ void WorldSession::HandleBattlePayConfirmPurchase(WorldPackets::BattlePay::Confi
     }
 
     auto player = GetPlayer();
-    auto accountBalance = player->GetBattlePayCredits();
+
+    LoginDatabasePreparedStatement* stmt = LoginDatabase.GetPreparedStatement(LOGIN_SEL_BATTLE_PAY_ACCOUNT_CREDITS);
+    stmt->setUInt32(0, GetBattlenetAccountId());
+    PreparedQueryResult result = LoginDatabase.Query(stmt);
+
+    uint32 accountBalance = result ? result->Fetch()[0].GetUInt32() : 0;
     if (accountBalance < static_cast<int64>(purchase->CurrentPrice))
     {
         SendPurchaseUpdate(this, *purchase, Battlepay::Error::PurchaseDenied);
         return;
     }
 
-    if (product.WebsiteType == Battlepay::BattlePet && player->HasSpell(product.CustomValue))
+    if (player && product.WebsiteType == Battlepay::BattlePet && player->HasSpell(product.CustomValue))
     {
         SendPurchaseUpdate(this, *purchase, Battlepay::Error::TooManyTokens);
         return;
@@ -225,7 +239,7 @@ void WorldSession::HandleBattlePayConfirmPurchase(WorldPackets::BattlePay::Confi
 
     auto displayInfo = sBattlePayDataStore->GetDisplayInfo(product.DisplayInfoID);
 
-    if (!product.Items.empty())
+    if (player && !product.Items.empty())
     {
         if (product.Items.size() > GetBagsFreeSlots(player))
         {
@@ -235,13 +249,16 @@ void WorldSession::HandleBattlePayConfirmPurchase(WorldPackets::BattlePay::Confi
         }
     }
 
-    for (auto itr : product.Items)
+    if (player)
     {
-        if (GetBattlePayMgr()->AlreadyOwnProduct(itr.ItemID))
+        for (auto itr : product.Items)
         {
-            player->SendBattlePayMessage(12, displayInfo->Name1);
-            SendStartPurchaseResponse(this, *purchase, Battlepay::Error::PurchaseDenied);
-            return;
+            if (GetBattlePayMgr()->AlreadyOwnProduct(itr.ItemID))
+            {
+                player->SendBattlePayMessage(12, displayInfo->Name1);
+                SendStartPurchaseResponse(this, *purchase, Battlepay::Error::PurchaseDenied);
+                return;
+            }
         }
     }
 
@@ -250,8 +267,29 @@ void WorldSession::HandleBattlePayConfirmPurchase(WorldPackets::BattlePay::Confi
     GetBattlePayMgr()->SavePurchase(purchase);
     GetBattlePayMgr()->ProcessDelivery(purchase);
 
-    player->UpdateBattlePayCredits(purchase->CurrentPrice);
-    player->SendBattlePayMessage(1, displayInfo->Name1);
+    if (!player)
+    {
+        CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_ENUM);
+        stmt->setUInt32(0, GetAccountId());
+
+        _queryProcessor.AddCallback(CharacterDatabase.AsyncQuery(stmt).WithPreparedCallback(
+            [this](PreparedQueryResult result)
+            {
+                HandleCharEnum(result);
+            }));
+    }
+
+    uint64 newBalance = accountBalance - purchase->CurrentPrice;
+
+    LoginDatabasePreparedStatement* updStmt = LoginDatabase.GetPreparedStatement(LOGIN_UPD_BATTLE_PAY_ACCOUNT_CREDITS);
+    updStmt->setUInt64(0, newBalance);
+    updStmt->setUInt32(1, GetBattlenetAccountId());
+    LoginDatabase.Execute(updStmt);
+
+    if (player)
+        player->SendBattlePayMessage(1, displayInfo->Name1);
+
+    GetBattlePayMgr()->SendAccountCredits();
     GetBattlePayMgr()->SendProductList();
 }
 
@@ -261,10 +299,58 @@ void WorldSession::HandleBattlePayAckFailedResponse(WorldPackets::BattlePay::Bat
 
 void WorldSession::HandleBattlePayQueryClassTrialResult(WorldPackets::BattlePay::BattlePayQueryClassTrialResult& /*packet*/)
 {
+    WorldPackets::BattlePay::CharacterClassTrialCreate response;
+    response.Result = 0;
+    SendPacket(response.Write());
 }
 
-void WorldSession::HandleBattlePayTrialBoostCharacter(WorldPackets::BattlePay::BattlePayTrialBoostCharacter& /*packet*/)
+void WorldSession::HandleBattlePayTrialBoostCharacter(WorldPackets::BattlePay::BattlePayTrialBoostCharacter& packet)
 {
+    if (!sWorld->getBoolConfig(CONFIG_CLASS_TRIAL_ENABLED))
+        return;
+
+    CharacterInfo const* charInfo = sWorld->GetCharacterInfo(packet.Character);
+    if (!charInfo || charInfo->AccountId != GetAccountId())
+        return;
+
+    uint8 charRace = charInfo->Race;
+    bool isAlliance = ((1 << (charRace - 1)) & RACEMASK_ALLIANCE) != 0;
+
+    float x, y, z, o;
+    uint16 mapId, zoneId;
+
+    if (isAlliance)
+    {
+        mapId = 1554;
+        zoneId = 8124;
+        x = -2556.0f;
+        y = 2939.6f;
+        z = 134.6f;
+        o = 1.98f;
+    }
+    else
+    {
+        mapId = 1557;
+        zoneId = 8422;
+        x = 0.721f;
+        y = 1.685f;
+        z = 34.501f;
+        o = 6.2787f;
+    }
+
+    sCharacterService->BoostCharacter(this, packet.Character, 100, mapId, zoneId, x, y, z, o, true, uint16(packet.SpecializationID));
+
+    WorldPackets::BattlePay::CharacterClassTrialCreate response;
+    response.Result = 0;
+    SendPacket(response.Write());
+
+    WorldPackets::BattlePay::UpgradeStarted upgradeStarted;
+    upgradeStarted.CharacterGUID = packet.Character;
+    SendPacket(upgradeStarted.Write());
+
+    WorldPackets::BattlePay::BattlePayCharacterUpgradeQueued upgradeQueued;
+    upgradeQueued.Character = packet.Character;
+    SendPacket(upgradeQueued.Write());
 }
 
 void WorldSession::HandleBattlePayPurchaseDetailsResponse(WorldPackets::BattlePay::BattlePayPurchaseDetailsResponse& packet)

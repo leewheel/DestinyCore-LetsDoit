@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,169 +15,236 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ScriptMgr.h"
-#include "GameObject.h"
-#include "InstanceScript.h"
-#include "Map.h"
-#include "Player.h"
+#include "ScriptPCH.h"
 #include "scholomance.h"
-
-Position const GandlingLoc = { 180.7712f, -5.428603f, 75.57024f, 1.291544f };
+#include "GameObject.h"
 
 class instance_scholomance : public InstanceMapScript
 {
-    public:
-        instance_scholomance() : InstanceMapScript(ScholomanceScriptName, 289) { }
+public:
+    instance_scholomance() : InstanceMapScript("instance_scholomance", 1007) {}
 
-        InstanceScript* GetInstanceScript(InstanceMap* map) const override
+    struct instance_scholomance_InstanceMapScript : public InstanceScript
+    {
+        instance_scholomance_InstanceMapScript(InstanceMap* map) : InstanceScript(map)
         {
-            return new instance_scholomance_InstanceMapScript(map);
         }
 
-        struct instance_scholomance_InstanceMapScript : public InstanceScript
+        void Initialize() override
         {
-            instance_scholomance_InstanceMapScript(InstanceMap* map) : InstanceScript(map)
+            SetBossNumber(MAX_ENCOUNTER);
+
+            chillHeartGUID.Clear();
+            jandiceBarovGUID.Clear();
+            rattlegoreGUID.Clear();
+            lillianVossGUID.Clear();
+            gandlingGUID.Clear();
+            gadlingEventGUID.Clear();
+
+            phylacteryGUID.Clear();
+            lillianVossSoulGUID.Clear();
+
+            cafferOfForgottenSoulsGUID.Clear();
+            cafferOfForgottenSoulsHeroicGUID.Clear();
+
+            rattlegoreEvent = NOT_STARTED;
+            lilianEntrance = NOT_STARTED;
+
+            /*
+            // Need to look into challenge mode before implementing this
+            if (instance->IsChallengeMode())
             {
-                SetHeaders(DataHeader);
-                SetBossNumber(EncounterCount);
+                m_ChallengeController(eScenarioDatas::ScenarioID);
+                m_ChallengeController.AddBossCriteria(Data::DATA_INSTRUCTOR_CHILLHEART, eScenarioDatas::Chillheart);
+                m_ChallengeController.AddBossCriteria(Data::DATA_JANDICE_BAROV, eScenarioDatas::Barov);
+                m_ChallengeController.AddBossCriteria(Data::DATA_RATTLEGORE, eScenarioDatas::RattleGore);
+                m_ChallengeController.AddBossCriteria(Data::DATA_LILLIAN_VOSS, eScenarioDatas::LilianVoss);
+                m_ChallengeController.AddBossCriteria(Data::DATA_GANDLING, eScenarioDatas::Gandling);
+                m_ChallengeController.AddChallengeCriteria(eScenarioDatas::Ennemies, eScenarioDatas::KillCount);
+            }
+            */
+        }
+
+        void OnCreatureKilled(Creature* p_Creature, Player* /*p_Player*/) override
+        {
+            // Challenge Mode-Logik aktuell noch auskommentiert / nicht implementiert
+            if (!instance || !instance->IsChallengeMode() || !IsChallengeModeStarted())
+                return;
+
+            if (!p_Creature)
+                return;
+
+            if (!p_Creature->isElite() || p_Creature->IsDungeonBoss())
+                return;
+
+            // m_ChallengeController.UpdateChallengeCriteria(eScenarioDatas::Ennemies);
+        }
+
+        void OnCreatureCreate(Creature* creature) override
+        {
+            switch (creature->GetEntry())
+            {
+            case NPC_JANDICE_BAROV:
+                jandiceBarovGUID = creature->GetGUID();
+                break;
+            case NPC_RATTLEGORE:
+                rattlegoreGUID = creature->GetGUID();
+                break;
+            case NPC_LILLIAN_VOSS:
+                lillianVossGUID = creature->GetGUID();
+                break;
+            case NPC_LILLIAN_VOSS_SOUL:
+                lillianVossSoulGUID = creature->GetGUID();
+                break;
+            case NPC_DARKMASTER_GANDLING:
+                gandlingGUID = creature->GetGUID();
+                break;
+            case NPC_INSTRUCTOR_CHILLHEART:
+                chillHeartGUID = creature->GetGUID();
+                break;
+            case NPC_PHYLACTERY:
+                phylacteryGUID = creature->GetGUID();
+                break;
+            case NPC_DARKMASTER_GANDLING_1:
+                gadlingEventGUID = creature->GetGUID();
+                break;
+            }
+        }
+
+        void OnGameObjectCreate(GameObject* p_GameObject) override
+        {
+            switch (p_GameObject->GetEntry())
+            {
+            case GO_COFFER_OF_FORGOTTEN_SOULS:
+                cafferOfForgottenSoulsGUID = p_GameObject->GetGUID();
+                break;
+            case GO_COFFER_OF_FORGOTTEN_SOULS_H:
+                cafferOfForgottenSoulsHeroicGUID = p_GameObject->GetGUID();
+                break;
+                /*
+                case GameObjects::ChallengeDoor:
+                    m_ChallengeController.SetChallengeDoorGuid(p_GameObject->GetGUID());
+                    break;
+                */
+            default:
+                break;
+            }
+        }
+
+        void SetData(uint32 type, uint32 data) override
+        {
+            switch (type)
+            {
+            case DATA_RATTLEGORE_EVENT:
+                rattlegoreEvent = data;
+                break;
+            case DATA_LILIAN_ENTRANCE:
+                lilianEntrance = data;
+                break;
+            default:
+                break;
             }
 
-            void OnGameObjectCreate(GameObject* go) override
+            if (data == DONE)
+                SaveToDB();
+        }
+
+        uint32 GetData(uint32 type) const override
+        {
+            switch (type)
             {
-                switch (go->GetEntry())
-                {
-                    case GO_GATE_KIRTONOS:
-                        GateKirtonosGUID = go->GetGUID();
-                        break;
-                    case GO_GATE_GANDLING:
-                        GateGandlingGUID = go->GetGUID();
-                        break;
-                    case GO_GATE_MALICIA:
-                        GateMiliciaGUID = go->GetGUID();
-                        break;
-                    case GO_GATE_THEOLEN:
-                        GateTheolenGUID = go->GetGUID();
-                        break;
-                    case GO_GATE_POLKELT:
-                        GatePolkeltGUID = go->GetGUID();
-                        break;
-                    case GO_GATE_RAVENIAN:
-                        GateRavenianGUID = go->GetGUID();
-                        break;
-                    case GO_GATE_BAROV:
-                        GateBarovGUID = go->GetGUID();
-                        break;
-                    case GO_GATE_ILLUCIA:
-                        GateIlluciaGUID = go->GetGUID();
-                        break;
-                    case GO_BRAZIER_OF_THE_HERALD:
-                        BrazierOfTheHeraldGUID = go->GetGUID();
-                        break;
-                    default:
-                        break;
-                }
+            case DATA_RATTLEGORE_EVENT:
+                return rattlegoreEvent;
+            case DATA_LILIAN_ENTRANCE:
+                return lilianEntrance;
+            default:
+                break;
             }
 
-            bool SetBossState(uint32 type, EncounterState state) override
+            return 0;
+        }
+
+        ObjectGuid GetGuidData(uint32 type) const override
+        {
+            switch (type)
             {
-                if (!InstanceScript::SetBossState(type, state))
-                    return false;
-
-                switch (type)
-                {
-                    case DATA_LORDALEXEIBAROV:
-                    case DATA_DOCTORTHEOLENKRASTINOV:
-                    case DATA_THERAVENIAN:
-                    case DATA_LOREKEEPERPOLKELT:
-                    case DATA_INSTRUCTORMALICIA:
-                    case DATA_LADYILLUCIABAROV:
-                        CheckToSpawnGandling();
-                        break;
-                    default:
-                        break;
-                }
-
-                return true;
+            case DATA_JANDICE_BAROV:
+                return jandiceBarovGUID;
+            case DATA_RATTLEGORE:
+                return rattlegoreGUID;
+            case DATA_LILLIAN_VOSS:
+                return lillianVossGUID;
+            case DATA_LILLIAN_VOSS_SOUL:
+                return lillianVossSoulGUID;
+            case DATA_GANDLING:
+                return gandlingGUID;
+            case DATA_INSTRUCTOR_CHILLHEART:
+                return chillHeartGUID;
+            case DATA_PHYLACTERY:
+                return phylacteryGUID;
+            case DATA_COFFER_OF_FORGOTTEN_SOULS:
+                return cafferOfForgottenSoulsGUID;
+            case DATA_COFFER_OF_FORGOTTEN_SOULS_HEROIC:
+                return cafferOfForgottenSoulsHeroicGUID;
+            case DATA_GANDLING_EVENT:
+                return gadlingEventGUID;
+            default:
+                break;
             }
 
-            ObjectGuid GetGuidData(uint32 type) const override
-            {
-                switch (type)
-                {
-                    case GO_GATE_KIRTONOS:
-                        return GateKirtonosGUID;
-                    case GO_GATE_GANDLING:
-                        return GateGandlingGUID;
-                    case GO_GATE_MALICIA:
-                        return GateMiliciaGUID;
-                    case GO_GATE_THEOLEN:
-                        return GateTheolenGUID;
-                    case GO_GATE_POLKELT:
-                        return GatePolkeltGUID;
-                    case GO_GATE_RAVENIAN:
-                        return GateRavenianGUID;
-                    case GO_GATE_BAROV:
-                        return GateBarovGUID;
-                    case GO_GATE_ILLUCIA:
-                        return GateIlluciaGUID;
-                    case GO_BRAZIER_OF_THE_HERALD:
-                        return BrazierOfTheHeraldGUID;
-                    default:
-                        break;
-                }
+            return ObjectGuid::Empty;
+        }
 
-                return ObjectGuid::Empty;
-            }
+        bool SetBossState(uint32 type, EncounterState state) override
+        {
+            if (!InstanceScript::SetBossState(type, state))
+                return false;
 
-            bool CheckPreBosses(uint32 bossId) const
-            {
-                switch (bossId)
-                {
-                    case DATA_DARKMASTERGANDLING:
-                        if (GetBossState(DATA_LORDALEXEIBAROV) != DONE)
-                            return false;
-                        if (GetBossState(DATA_DOCTORTHEOLENKRASTINOV) != DONE)
-                            return false;
-                        if (GetBossState(DATA_THERAVENIAN) != DONE)
-                            return false;
-                        if (GetBossState(DATA_LOREKEEPERPOLKELT) != DONE)
-                            return false;
-                        if (GetBossState(DATA_INSTRUCTORMALICIA) != DONE)
-                            return false;
-                        if (GetBossState(DATA_LADYILLUCIABAROV) != DONE)
-                            return false;
-                        if (GetBossState(DATA_DARKMASTERGANDLING) == DONE)
-                            return false;
-                        break;
-                    default:
-                        break;
-                }
+            return true;
+        }
 
-                return true;
-            }
+        void WriteSaveDataMore(std::ostringstream& data) override
+        {
+            data << rattlegoreEvent << ' ' << lilianEntrance << ' ';
+        }
 
-            void CheckToSpawnGandling()
-            {
-                if (CheckPreBosses(DATA_DARKMASTERGANDLING))
-                    instance->SummonCreature(NPC_DARKMASTER_GANDLING, GandlingLoc);
-            }
+        void ReadSaveDataMore(std::istringstream& data) override
+        {
+            data >> rattlegoreEvent;
+            if (rattlegoreEvent != DONE)
+                rattlegoreEvent = NOT_STARTED;
 
-            void ReadSaveDataMore(std::istringstream& /*data*/) override
-            {
-                CheckToSpawnGandling();
-            }
+            data >> lilianEntrance;
+            if (lilianEntrance != DONE)
+                lilianEntrance = NOT_STARTED;
+        }
 
-        protected:
-            ObjectGuid GateKirtonosGUID;
-            ObjectGuid GateGandlingGUID;
-            ObjectGuid GateMiliciaGUID;
-            ObjectGuid GateTheolenGUID;
-            ObjectGuid GatePolkeltGUID;
-            ObjectGuid GateRavenianGUID;
-            ObjectGuid GateBarovGUID;
-            ObjectGuid GateIlluciaGUID;
-            ObjectGuid BrazierOfTheHeraldGUID;
-        };
+        void Update(uint32 diff) override
+        {
+            InstanceScript::Update(diff);
+        }
+
+    private:
+        ObjectGuid jandiceBarovGUID;
+        ObjectGuid rattlegoreGUID;
+        ObjectGuid lillianVossGUID;
+        ObjectGuid gandlingGUID;
+        ObjectGuid chillHeartGUID;
+        ObjectGuid phylacteryGUID;
+        ObjectGuid lillianVossSoulGUID;
+        ObjectGuid gadlingEventGUID;
+
+        ObjectGuid cafferOfForgottenSoulsGUID;
+        ObjectGuid cafferOfForgottenSoulsHeroicGUID;
+
+        uint32 rattlegoreEvent;
+        uint32 lilianEntrance;
+    };
+
+    InstanceScript* GetInstanceScript(InstanceMap* map) const override
+    {
+        return new instance_scholomance_InstanceMapScript(map);
+    }
 };
 
 void AddSC_instance_scholomance()

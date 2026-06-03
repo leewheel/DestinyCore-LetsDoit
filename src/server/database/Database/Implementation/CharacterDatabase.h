@@ -15,8 +15,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CHARACTERDATABASE_H
-#define CHARACTERDATABASE_H
+#ifndef DESTINYCORE_CHARACTERDATABASE_H
+#define DESTINYCORE_CHARACTERDATABASE_H
 
 #include "MySQLConnection.h"
 
@@ -678,6 +678,8 @@ enum CharacterDatabaseStatements : uint32
     CHAR_INS_CHALLENGE_OPLOTE_LOOT,
     CHAR_DEL_CHALLENGE_OPLOTE_LOOT,
     CHAR_DEL_CHALLENGE_OPLOTE_LOOT_BY_GUID,
+
+    CHAR_UPD_SPECIALIZATION,
 
     MAX_CHARACTERDATABASE_STATEMENTS
 };

@@ -19,8 +19,8 @@
 /// @{
 /// \file
 
-#ifndef WORLDSESSION_H
-#define WORLDSESSION_H
+#ifndef DESTINYCORE_WORLDSESSION_H
+#define DESTINYCORE_WORLDSESSION_H
 
 #include "AsyncCallbackProcessor.h"
 #include "Common.h"
@@ -565,6 +565,7 @@ namespace WorldPackets
         class ViolenceLevel;
         class PlayerSelectFaction;
         class TimeSyncResponse;
+        class DiscardedTimeSyncAcks;
         class TutorialSetFlag;
         class SetDungeonDifficulty;
         class SetRaidDifficulty;
@@ -594,6 +595,7 @@ namespace WorldPackets
         class MountSetFavorite;
         class PvpPrestigeRankUp;
         class CloseInteraction;
+        class ConversationLineStarted;
         class AdventureJournalOpenQuest;
         class FactionSelect;
         class AdventureJournalStartQuest;
@@ -785,6 +787,7 @@ namespace WorldPackets
         class CancelChannelling;
         class CancelGrowthAura;
         class CancelMountAura;
+        class CancelModSpeedNoControlAuras;
         class PetCancelAura;
         class RequestCategoryCooldowns;
         class CancelCast;
@@ -1587,6 +1590,7 @@ class TC_GAME_API WorldSession
         void HandleCancelAuraOpcode(WorldPackets::Spells::CancelAura& cancelAura);
         void HandleCancelGrowthAuraOpcode(WorldPackets::Spells::CancelGrowthAura& cancelGrowthAura);
         void HandleCancelMountAuraOpcode(WorldPackets::Spells::CancelMountAura& cancelMountAura);
+        void HandleCancelModSpeedNoControlAuras(WorldPackets::Spells::CancelModSpeedNoControlAuras& cancelModSpeedNoControlAuras);
         void HandleUnlearnSpecialization(WorldPackets::Spells::UnlearnSpecialization& packet);
         void HandleCancelAutoRepeatSpellOpcode(WorldPackets::Spells::CancelAutoRepeatSpell& cancelAutoRepeatSpell);
         void HandleUpdateSpellVisualOpcode(WorldPackets::Spells::UpdateSpellVisual& packet);
@@ -1717,6 +1721,7 @@ class TC_GAME_API WorldSession
         void HandleSetRaidDifficultyOpcode(WorldPackets::Misc::SetRaidDifficulty& setRaidDifficulty);
         void HandleSetTitleOpcode(WorldPackets::Character::SetTitle& packet);
         void HandleTimeSyncResponse(WorldPackets::Misc::TimeSyncResponse& packet);
+        void HandleDiscardedTimeSyncAcks(WorldPackets::Misc::DiscardedTimeSyncAcks& packet);
         void HandleWhoIsOpcode(WorldPackets::Who::WhoIsRequest& packet);
         void HandleResetInstancesOpcode(WorldPackets::Instance::ResetInstances& packet);
         void HandleInstanceLockResponse(WorldPackets::Instance::InstanceLockResponse& packet);
@@ -1908,6 +1913,7 @@ class TC_GAME_API WorldSession
         void HandleObjectUpdateRescuedOpcode(WorldPackets::Misc::ObjectUpdateRescued& objectUpdateRescued);
         void HandleRequestCategoryCooldowns(WorldPackets::Spells::RequestCategoryCooldowns& requestCategoryCooldowns);
         void HandleCloseInteraction(WorldPackets::Misc::CloseInteraction& closeInteraction);
+        void HandleConversationLineStarted(WorldPackets::Misc::ConversationLineStarted& conversationLineStarted);
         void HandleAdventureJournalOpenQuest(WorldPackets::Misc::AdventureJournalOpenQuest& packet);
         void HandleSelectFactionOpcode(WorldPackets::Misc::FactionSelect& selectFaction);
         void HandleAdventureJournalStartQuest(WorldPackets::Misc::AdventureJournalStartQuest& packet);
@@ -2094,9 +2100,15 @@ class TC_GAME_API WorldSession
             return _legitCharacters.find(lowGUID) != _legitCharacters.end();
         }
 
+        bool IsClassTrialLockedCharacter(ObjectGuid lowGUID)
+        {
+            return _classTrialLockedCharacters.find(lowGUID) != _classTrialLockedCharacters.end();
+        }
+
         // this stores the GUIDs of the characters who can login
         // characters who failed on Player::BuildEnumData shouldn't login
         GuidSet _legitCharacters;
+        GuidSet _classTrialLockedCharacters;
 
         ObjectGuid::LowType m_GUIDLow;                      // set logined or recently logout player (while m_playerRecentlyLogout set)
         Player* _player;

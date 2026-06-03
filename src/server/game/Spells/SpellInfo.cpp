@@ -4430,6 +4430,7 @@ bool SpellInfo::_IsPositiveEffect(uint32 effIndex, bool deep) const
                     if (effect->TargetA.GetTarget() == TARGET_UNIT_CASTER)
                         return false;
                     break;
+                case SPELL_AURA_PERIODIC_WEAPON_PERCENT_DAMAGE:
                 case SPELL_AURA_MOD_DECREASE_SPEED:         // used in positive spells also
                     // part of positive spell if cast at self
                     if (effect->TargetA.GetTarget() != TARGET_UNIT_CASTER)

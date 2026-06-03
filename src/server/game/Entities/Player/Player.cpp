@@ -383,7 +383,7 @@ Player::Player(WorldSession* session) : Unit(true), m_sceneMgr(this), m_archaeol
 
     m_achievementMgr = new PlayerAchievementMgr(this);
     m_reputationMgr = new ReputationMgr(this);
-    m_questObjectiveCriteriaMgr = Trinity::make_unique<QuestObjectiveCriteriaMgr>(this);
+    m_questObjectiveCriteriaMgr = std::make_unique<QuestObjectiveCriteriaMgr>(this);
 
     m_PlayerBotSetting = new PlayerBotSetting(this);
     m_EquipCombatPower = 0;
@@ -393,7 +393,7 @@ Player::Player(WorldSession* session) : Unit(true), m_sceneMgr(this), m_archaeol
 
     _advancedCombatLoggingEnabled = false;
 
-    _restMgr = Trinity::make_unique<RestMgr>(this);
+    _restMgr = std::make_unique<RestMgr>(this);
 
     m_areaQuestTimer = 0;
 
@@ -19302,11 +19302,11 @@ bool Player::LoadFromDB(ObjectGuid guid, CharacterDatabaseQueryHolder const& hol
     GetArchaeologyMgr().LoadArchaeologyBranchs(holder.GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_ARCHAEOLOGY_BRANCHS));
     GetArchaeologyMgr().LoadArchaeologyHistory(holder.GetPreparedResult(PLAYER_LOGIN_QUERY_LOAD_ARCHAEOLOGY_HISTORY));
 
-    std::unique_ptr<WodGarrison> wodGarrison = Trinity::make_unique<WodGarrison>(this);
+    std::unique_ptr<WodGarrison> wodGarrison = std::make_unique<WodGarrison>(this);
     if (wodGarrison->LoadFromDB())
         _garrisons[GARRISON_TYPE_GARRISON] = std::move(wodGarrison);
 
-    std::unique_ptr<ClassHall> classHall = Trinity::make_unique<ClassHall>(this);
+    std::unique_ptr<ClassHall> classHall = std::make_unique<ClassHall>(this);
     if (classHall->LoadFromDB())
         _garrisons[GARRISON_TYPE_CLASS_HALL] = std::move(classHall);
 
@@ -19367,7 +19367,7 @@ void Player::_LoadCUFProfiles(PreparedQueryResult result)
             continue;
         }
 
-        _CUFProfiles[id] = Trinity::make_unique<CUFProfile>(name, frameHeight, frameWidth, sortBy, healthText, boolOptions, topPoint, bottomPoint, leftPoint, topOffset, bottomOffset, leftOffset);
+        _CUFProfiles[id] = std::make_unique<CUFProfile>(name, frameHeight, frameWidth, sortBy, healthText, boolOptions, topPoint, bottomPoint, leftPoint, topOffset, bottomOffset, leftOffset);
     }
     while (result->NextRow());
 }
@@ -22748,6 +22748,20 @@ void Player::RemovePet(Pet* pet, PetSaveMode mode, bool returnreagent)
     }
 }
 
+void Player::AddPetAura(PetAura const* petSpell)
+{
+    m_petAuras.insert(petSpell);
+    if (Pet* pet = GetPet())
+        pet->CastPetAura(petSpell);
+}
+
+void Player::RemovePetAura(PetAura const* petSpell)
+{
+    m_petAuras.erase(petSpell);
+    if (Pet* pet = GetPet())
+        pet->RemoveAurasDueToSpell(petSpell->GetAura(pet->GetEntry()));
+}
+
 void Player::StopCastingCharm()
 {
     Unit* charm = GetCharm();
@@ -24329,7 +24343,7 @@ void Player::UpdatePvPState(bool onlyFFA)
     /// @todo should we always synchronize UNIT_FIELD_BYTES_2, 1 of controller and controlled?
     // no, we shouldn't, those are checked for affecting player by client
     if (!pvpInfo.IsInNoPvPArea && !IsGameMaster()
-        && (pvpInfo.IsInFFAPvPArea || sWorld->IsFFAPvPRealm()))
+        && (pvpInfo.IsInFFAPvPArea || sWorld->IsFFAPvPRealm() || HasAuraType(SPELL_AURA_SET_FFA_PVP)))
     {
         if (!IsFFAPvP())
         {
@@ -25911,6 +25925,7 @@ bool Player::AddBattlePetWithSpeciesId(BattlePetSpeciesEntry const* entry, uint1
     }
 
     pet->UpdateStats();
+    pet->UpdateAbilities();
     pet->Health = pet->InfoMaxHealth;
     auto guidlow = pet->AddToPlayer(this);
     _battlePets.emplace(pet->JournalID, pet);

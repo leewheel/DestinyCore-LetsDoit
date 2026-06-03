@@ -15,8 +15,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef BATTLEPAYMGR_H
-#define BATTLEPAYMGR_H
+#ifndef DESTINYCORE_BATTLEPAYMGR_H
+#define DESTINYCORE_BATTLEPAYMGR_H
 
 #include "BattlePayPackets.h"
 #include "WorldSession.h"
@@ -168,7 +168,7 @@ namespace Battlepay
         {
             Mount = 1,  // filedataid = 132261
             Pets = 2,  // filedataid = 656556
-            Services = 3,  // filedataid = 134328
+            Services = 22, // WOW_SERVICES_CATEGORY_ID (client hardcoded)
             Golds = 4,  // filedataid = 133784
             Professions = 5,  // filedataid = 132642
             ProfessionItems = 6,  // filedataid = 962048

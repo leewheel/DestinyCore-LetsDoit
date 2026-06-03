@@ -331,6 +331,7 @@ public:
     bool PlayerBotLogout(uint32 account);
     bool AllPlayerLeaveBG(uint32 account);
     void SupplementPlayerBot();
+    void SupplementOneRandomPlayerBotPerAccount();
 
     void OnRealPlayerJoinBattlegroundQueue(uint32 bgTypeId, uint32 level);
     void OnRealPlayerLeaveBattlegroundQueue(uint32 bgTypeId, uint32 level);
@@ -371,6 +372,7 @@ private:
     PlayerBotSession* UpPlayerBotSessionByBaseInfo(PlayerBotBaseInfo* pAcc, bool accountInfo);
     WorldPacket BuildCreatePlayerData(bool group, uint8 prof);
     void CreateOncePlayerBot();
+    bool CreateQueuedPlayerBotForSession(PlayerBotBaseInfo* pInfo, WorldSession* pSession);
 
     void ClearBaseInfo();
     void SupplementAccount();

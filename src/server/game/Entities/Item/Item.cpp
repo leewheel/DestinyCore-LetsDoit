@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -1349,6 +1348,116 @@ void Item::SetGem(uint16 slot, ItemDynamicFieldGems const* gem, uint32 gemScalin
     }
 
     SetDynamicStructuredValue(ITEM_DYNAMIC_FIELD_GEMS, slot, gem);
+}
+
+std::map<uint8, ItemSocketInfo> Item::GetArtifactSockets() const
+{
+    std::map<uint8, ItemSocketInfo> result{};
+    std::vector<uint32> const& values = GetDynamicValues(ITEM_DYNAMIC_FIELD_RELIC_TALENT_DATA);
+    if (values.size() < 6 || values.size() % 6 != 0)
+        return result;
+
+    uint8 i = 0;
+    while (i < values.size())
+    {
+        ItemSocketInfo info;
+        info.unk1 = values[i++];
+        info.socketIndex = values[i++];
+        info.firstTier = values[i++];
+        info.secondTier = values[i++];
+        info.thirdTier = values[i++];
+        info.additionalThirdTier = values[i++];
+
+        result[info.socketIndex] = info;
+    }
+
+    return result;
+}
+
+void Item::AddOrRemoveSocketTalent(uint8 talentIndex, bool add, uint8 socketIndex)
+{
+    uint32 powerId = 0;
+
+    auto relics = GetArtifactSockets();
+    auto relicItr = relics.find(socketIndex);
+    if (relicItr == relics.end())
+        return;
+
+    ItemSocketInfo const& relic = relicItr->second;
+
+    if (talentIndex == 0)
+        powerId = 1739;
+    else
+    {
+        uint32 talentId = 0;
+        if (talentIndex != 5)
+        {
+            SocketTier const tier = MakeSocketTier(
+                (talentIndex == 1 || talentIndex == 2)
+                ? relic.secondTier
+                : relic.thirdTier);
+
+            talentId = (talentIndex % 2) ? tier.FirstSpell : tier.SecondSpell;
+        }
+        else
+            talentId = relic.additionalThirdTier;
+
+        auto relicTalent = sRelicTalentStore.LookupEntry(talentId);
+        if (!relicTalent)
+            return;
+
+        if (relicTalent->ArtifactPowerID != 0)
+            powerId = relicTalent->ArtifactPowerID;
+        else
+        {
+            auto artifactPowers = sDB2Manager.GetArtifactPowers(GetTemplate()->GetArtifactID());
+            for (ArtifactPowerEntry const* artifactPower : artifactPowers)
+            {
+                if (artifactPower->Label == relicTalent->ArtifactPowerLabel)
+                {
+                    powerId = artifactPower->ID;
+                    break;
+                }
+            }
+        }
+    }
+    if (!powerId)
+        return;
+
+    ItemDynamicFieldArtifactPowers const* artifactPower = GetArtifactPower(powerId);
+    if (!artifactPower)
+        return;
+
+    ArtifactPowerEntry const* artifactPowerEntry = sArtifactPowerStore.LookupEntry(artifactPower->ArtifactPowerId);
+    if (!artifactPowerEntry)
+        return;
+
+    uint8 rank = artifactPower->CurrentRankWithBonus;
+
+    if (!add && rank > 0)
+        --rank;
+
+    ArtifactPowerRankEntry const* artifactPowerRank = sDB2Manager.GetArtifactPowerRank(artifactPower->ArtifactPowerId, rank); // need data for next rank, but -1 because of how db2 data is structured
+    if (!artifactPowerRank)
+        return;
+
+    ItemDynamicFieldArtifactPowers newPower = *artifactPower;
+    newPower.CurrentRankWithBonus += add ? 1 : (newPower.CurrentRankWithBonus > 0 ? -1 : 0);
+    SetArtifactPower(&newPower);
+
+    Player* _player = GetOwner();
+    if (_player)
+        if (IsEquipped())
+        {
+            bool needsReapply = GetModsApplied();
+            if (needsReapply)
+                _player->_ApplyItemBonuses(this, GetSlot(), false);
+
+            _player->ApplyArtifactPowerRank(this, artifactPowerRank, newPower.CurrentRankWithBonus != 0);
+
+            if (needsReapply)
+                _player->_ApplyItemBonuses(this, GetSlot(), true);
+        }
 }
 
 bool Item::GemsFitSockets() const

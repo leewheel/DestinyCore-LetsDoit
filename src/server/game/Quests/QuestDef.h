@@ -34,7 +34,7 @@ namespace WorldPackets
     }
 }
 
-#define MAX_QUEST_LOG_SIZE 100
+#define MAX_QUEST_LOG_SIZE 25
 
 #define QUEST_ITEM_DROP_COUNT 4
 #define QUEST_REWARD_CHOICES_COUNT 6

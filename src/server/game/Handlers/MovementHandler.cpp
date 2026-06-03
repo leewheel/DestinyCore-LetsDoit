@@ -580,10 +580,6 @@ void WorldSession::HandleSetCollisionHeightAck(WorldPackets::Movement::MoveSetCo
     GetPlayer()->ValidateMovementInfo(&setCollisionHeightAck.Data.Status);
 }
 
-void WorldSession::HandleMoveTimeSkippedOpcode(WorldPackets::Movement::MoveTimeSkipped& /*moveTimeSkipped*/)
-{
-}
-
 void WorldSession::HandleMoveSplineDoneOpcode(WorldPackets::Movement::MoveSplineDone& moveSplineDone)
 {
     MovementInfo movementInfo = moveSplineDone.Status;
@@ -661,4 +657,28 @@ void WorldSession::HandleMoveSplineDoneOpcode(WorldPackets::Movement::MoveSpline
     GetPlayer()->SetFallInformation(0, GetPlayer()->GetPositionZ());
     if (GetPlayer()->pvpInfo.IsHostile)
         GetPlayer()->CastSpell(GetPlayer(), 2479, true);
+}
+
+void WorldSession::HandleMoveTimeSkippedOpcode(WorldPackets::Movement::MoveTimeSkipped& moveTimeSkipped)
+{
+    Unit* mover = GetPlayer()->m_unitMovedByMe;
+    if (!mover)
+    {
+        TC_LOG_WARN("entities.player", "WorldSession::HandleMoveTimeSkippedOpcode wrong mover state from the unit moved by %s", GetPlayer()->GetGUID().ToString().c_str());
+        return;
+    }
+
+    // prevent tampered movement data
+    if (moveTimeSkipped.MoverGUID != mover->GetGUID())
+    {
+        TC_LOG_WARN("entities.player", "WorldSession::HandleMoveTimeSkippedOpcode wrong guid from the unit moved by %s", GetPlayer()->GetGUID().ToString().c_str());
+        return;
+    }
+
+    mover->m_movementInfo.time += moveTimeSkipped.TimeSkipped;
+
+    WorldPackets::Movement::MoveSkipTime moveSkipTime;
+    moveSkipTime.MoverGUID = moveTimeSkipped.MoverGUID;
+    moveSkipTime.TimeSkipped = moveTimeSkipped.TimeSkipped;
+    mover->SendMessageToSet(moveSkipTime.Write(), _player);
 }

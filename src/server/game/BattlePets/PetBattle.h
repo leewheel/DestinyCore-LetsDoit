@@ -293,6 +293,7 @@ public:
     void Remove(Player* player);
 
     void UpdateStats();
+    void UpdateAbilities();
 
     uint32 AccountID;                              ///< Owner account ID
     ObjectGuid JournalID;                              ///< As companion (db/journal id)

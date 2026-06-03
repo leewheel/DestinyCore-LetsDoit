@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -70,7 +70,7 @@ void CollectionMgr::LoadMountDefinitions()
     TC_LOG_INFO("server.loading", ">> Loaded " SZFMTD " mount definitions in %u ms", FactionSpecificMounts.size(), GetMSTimeDiffToNow(oldMSTime));
 }
 
-CollectionMgr::CollectionMgr(WorldSession* owner) : _owner(owner), _appearances(Trinity::make_unique<boost::dynamic_bitset<uint32>>())
+CollectionMgr::CollectionMgr(WorldSession* owner) : _owner(owner), _appearances(std::make_unique<boost::dynamic_bitset<uint32>>())
 {
 }
 

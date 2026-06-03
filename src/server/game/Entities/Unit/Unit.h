@@ -206,7 +206,6 @@ class Item;
 class Minion;
 class MotionMaster;
 class Pet;
-class PetAura;
 class Spell;
 class SpellCastTargets;
 class SpellEffectInfo;
@@ -1833,7 +1832,7 @@ class TC_GAME_API Unit : public WorldObject
         uint32 SpellHealingBonusTaken(Unit* caster, SpellInfo const* spellProto, uint32 healamount, DamageEffectType damagetype, SpellEffectInfo const* effect, uint32 stack = 1) const;
 
         uint32 MeleeDamageBonusDone(Unit* pVictim, uint32 damage, WeaponAttackType attType, SpellInfo const* spellProto = NULL);
-        uint32 MeleeDamageBonusTaken(Unit* attacker, uint32 pdamage, WeaponAttackType attType, SpellInfo const* spellProto = NULL);
+        uint32 MeleeDamageBonusTaken(Unit* attacker, uint32 pdamage, WeaponAttackType attType, DamageEffectType damagetype, SpellInfo const* spellProto = nullptr);
 
         bool   isSpellBlocked(Unit* victim, SpellInfo const* spellProto, WeaponAttackType attackType = BASE_ATTACK);
         bool   isBlockCritical();
@@ -1924,12 +1923,6 @@ class TC_GAME_API Unit : public WorldObject
         bool CanProc() const { return !m_procDeep; }
         void SetCantProc(bool apply);
 
-        // pet auras
-        typedef std::set<PetAura const*> PetAuraSet;
-        PetAuraSet m_petAuras;
-        void AddPetAura(PetAura const* petSpell);
-        void RemovePetAura(PetAura const* petSpell);
-
         uint32 GetModelForForm(ShapeshiftForm form) const;
 
         // Redirect Threat
@@ -1992,6 +1985,9 @@ class TC_GAME_API Unit : public WorldObject
 
         ObjectGuid GetTarget() const { return GetGuidValue(UNIT_FIELD_TARGET); }
         virtual void SetTarget(ObjectGuid const& /*guid*/) = 0;
+
+        void SetInstantCast(bool set) { _instantCast = set; }
+        bool CanInstantCast() const { return _instantCast; }
 
         // Movement info
         Movement::MoveSpline * movespline;
@@ -2158,6 +2154,7 @@ class TC_GAME_API Unit : public WorldObject
 
         bool m_cleanupDone; // lock made to not add stuff after cleanup before delete
         bool m_duringRemoveFromWorld; // lock made to not add stuff after begining removing from world
+        bool _instantCast;
 
         uint32 _oldFactionId;           ///< faction before charm
         bool _isWalkingBeforeCharm;     ///< Are we walking before we were charmed?

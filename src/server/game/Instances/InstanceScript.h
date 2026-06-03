@@ -575,6 +575,9 @@ class TC_GAME_API InstanceScript : public ZoneScript
         uint8  m_ChallengeLevel;
         uint8  m_DeathCount;
 
+        // Called when a creature is killed by a player
+        virtual void OnCreatureKilled(Creature* /*p_Creature*/, Player* /*p_Player*/) {}
+
         // Check if all players are dead (except gamemasters)
         bool IsWipe() const;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -329,10 +329,11 @@ public:
     }
 };
 
-class npc_q42740 : public CreatureScript
+// 108920 Captain Angelica
+class npc_captain_angelica_108920 : public CreatureScript
 {
 public:
-    npc_q42740() : CreatureScript("npc_q42740") { }
+    npc_captain_angelica_108920() : CreatureScript("npc_captain_angelica_108920") {}
 
     bool OnGossipSelect(Player* player, Creature* creature, uint32 /*sender*/, uint32 action) override
     {
@@ -341,9 +342,6 @@ public:
         //214608
         player->KilledMonsterCredit(creature->GetEntry());
         player->CastSpell(player, 216356, false); //scene
-        player->TeleportTo(1220, -1879.096436f, 3005.628418f, 0.032851f, player->GetOrientation());
-        player->KilledMonsterCredit(90918);
-        player->KilledMonsterCredit(108920);
 
         return true;
     };
@@ -660,6 +658,10 @@ enum {
     QUEST_BLINK_OF_AN_EYE = 44663,
     QUEST_THE_CALL_OF_WAR = 39691,
     QUEST_DEMONS_AMONG_THEM = 44463,
+    QUEST_THE_MISSION = 29548,
+    QUEST_UNLEASH_HELL = 31732,
+    QUEST_TOUCHING_GROUND = 31733,
+    MAP_THE_JADE_FOREST = 870,
     SCENE_DEMONS_AMONG_THEM = 1456,
     KILL_CREDIT_WARN_ANDUIN_WRYNN = 111585,
     SPELL_PHASE_175 = 57569,
@@ -752,6 +754,47 @@ public:
     }
 };
 
+class player_the_mission_skyfire_phasing : public PlayerScript
+{
+public:
+    player_the_mission_skyfire_phasing() : PlayerScript("player_the_mission_skyfire_phasing") { }
+
+    void OnQuestStatusChange(Player* player, uint32 questId) override
+    {
+        if (!IsSkyfireIntroQuest(questId))
+            return;
+
+        RefreshSkyfireVisibility(player);
+    }
+
+    void OnMapChanged(Player* player) override
+    {
+        if (player->GetMapId() != MAP_THE_JADE_FOREST || !IsInSkyfireIntroChain(player))
+            return;
+
+        PhasingHandler::OnMapChange(player);
+        RefreshSkyfireVisibility(player);
+    }
+
+private:
+    static bool IsSkyfireIntroQuest(uint32 questId)
+    {
+        return questId == QUEST_THE_MISSION || questId == QUEST_UNLEASH_HELL || questId == QUEST_TOUCHING_GROUND;
+    }
+
+    static bool IsInSkyfireIntroChain(Player* player)
+    {
+        return player->GetQuestStatus(QUEST_THE_MISSION) != QUEST_STATUS_NONE
+            && player->GetQuestStatus(QUEST_TOUCHING_GROUND) != QUEST_STATUS_REWARDED;
+    }
+
+    static void RefreshSkyfireVisibility(Player* player)
+    {
+        PhasingHandler::OnConditionChange(player);
+        player->UpdateObjectVisibility(true);
+    }
+};
+
 // Elerion Bladedancer <Illidari>
 class npc_elerion_bladedancer_101004 : public CreatureScript
 {
@@ -823,7 +866,7 @@ void AddSC_stormwind_city()
     new gob_q42782();
 	new gob_qq42782();
 	new gob_qqq42782();
-    new npc_q42740();
+    new npc_captain_angelica_108920();
     new npc_q40518();
     new spell_bi_enter_stage1();
     new spell_q42740();
@@ -837,6 +880,7 @@ void AddSC_stormwind_city()
     new npc_anduin_wrynn();
     new scene_demons_among_them_alliance();
     new quest_demons_among_them();
+    new player_the_mission_skyfire_phasing();
     new npc_elerion_bladedancer_101004();
     new npc_khadgars_upgraded_servant_114562();
     new PlayerScript_phase_correction();

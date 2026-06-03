@@ -55,12 +55,22 @@ void BattlePet::Load(Field* fields)
     DeclinedNames[3] = fields[20].GetString();
     DeclinedNames[4] = fields[21].GetString();
 
-    for (auto& Abilitie : Abilities)
-        Abilitie = 0;
+    UpdateAbilities();
+    needSave = false;
+    needDelete = false;
+}
+
+void BattlePet::UpdateAbilities()
+{
+    for (auto& ability : Abilities)
+        ability = 0;
 
     for (auto const& speciesXAbilityInfo : sBattlePetSpeciesXAbilityStore)
     {
-        if (speciesXAbilityInfo->BattlePetSpeciesID != Species || speciesXAbilityInfo->RequiredLevel > Level || speciesXAbilityInfo->SlotEnum < 0 || speciesXAbilityInfo->SlotEnum >= MAX_PETBATTLE_ABILITIES)
+        if (speciesXAbilityInfo->BattlePetSpeciesID != Species ||
+            speciesXAbilityInfo->RequiredLevel > Level ||
+            speciesXAbilityInfo->SlotEnum < 0 ||
+            speciesXAbilityInfo->SlotEnum >= MAX_PETBATTLE_ABILITIES)
             continue;
 
         if (speciesXAbilityInfo->RequiredLevel < 5)
@@ -69,25 +79,23 @@ void BattlePet::Load(Field* fields)
         {
             switch (speciesXAbilityInfo->SlotEnum)
             {
-                case 0:
-                    if (Flags & BATTLEPET_FLAG_ABILITY_1_SECOND)
-                        Abilities[speciesXAbilityInfo->SlotEnum] = speciesXAbilityInfo->BattlePetAbilityID;
-                    break;
-                case 1:
-                    if (Flags & BATTLEPET_FLAG_ABILITY_2_SECOND)
-                        Abilities[speciesXAbilityInfo->SlotEnum] = speciesXAbilityInfo->BattlePetAbilityID;
-                    break;
-                case 2:
-                    if (Flags & BATTLEPET_FLAG_ABILITY_3_SECOND)
-                        Abilities[speciesXAbilityInfo->SlotEnum] = speciesXAbilityInfo->BattlePetAbilityID;
-                    break;
-                default:
-                    break;
+            case 0:
+                if (Flags & BATTLEPET_FLAG_ABILITY_1_SECOND)
+                    Abilities[speciesXAbilityInfo->SlotEnum] = speciesXAbilityInfo->BattlePetAbilityID;
+                break;
+            case 1:
+                if (Flags & BATTLEPET_FLAG_ABILITY_2_SECOND)
+                    Abilities[speciesXAbilityInfo->SlotEnum] = speciesXAbilityInfo->BattlePetAbilityID;
+                break;
+            case 2:
+                if (Flags & BATTLEPET_FLAG_ABILITY_3_SECOND)
+                    Abilities[speciesXAbilityInfo->SlotEnum] = speciesXAbilityInfo->BattlePetAbilityID;
+                break;
+            default:
+                break;
             }
         }
     }
-    needSave = false;
-    needDelete = false;
 }
 
 void BattlePet::CloneFrom(std::shared_ptr<BattlePet> & battlePet)
@@ -400,6 +408,8 @@ void BattlePetInstance::UpdateOriginalInstance(Player* player)
     OriginalBattlePet->InfoMaxHealth = InfoMaxHealth;
     OriginalBattlePet->InfoSpeed = InfoSpeed;
     OriginalBattlePet->InfoGender = InfoGender;
+    for (uint8 i = 0; i < MAX_PETBATTLE_ABILITIES; ++i)
+        OriginalBattlePet->Abilities[i] = Abilities[i];
     OriginalBattlePet->AccountID = AccountID;
     OriginalBattlePet->needSave = true;
 
@@ -1270,6 +1280,7 @@ void PetBattle::Finish(uint32 winnerTeamID, bool aborted, bool ignoreAbandonPena
                         currentPet->XP = currentPet->XP + xpEarn - xpToNextLevel;
                         currentPet->Level++;
                         currentPet->UpdateStats();
+                        currentPet->UpdateAbilities();
                         currentPet->Health = currentPet->InfoMaxHealth;
 
                         if (currentPet->Level == BATTLEPET_MAX_LEVEL)

@@ -255,7 +255,7 @@ public:
     void QueueForDelayedDelete(T&& any)
     {
         _delayed_delete_queue.push_back(
-            Trinity::make_unique<
+            std::make_unique<
                 DeleteableObject<typename std::decay<T>::type>
             >(std::forward<T>(any))
         );
@@ -2685,6 +2685,15 @@ void ScriptMgr::OnConversationCreate(Conversation* conversation, Unit* creator)
 
     GET_SCRIPT(ConversationScript, conversation->GetScriptId(), tmpscript);
     tmpscript->OnConversationCreate(conversation, creator);
+}
+
+void ScriptMgr::OnConversationLineStarted(Conversation* conversation, uint32 lineId, Player* sender)
+{
+    ASSERT(conversation);
+    ASSERT(sender);
+
+    GET_SCRIPT(ConversationScript, conversation->GetScriptId(), tmpscript);
+    tmpscript->OnConversationLineStarted(conversation, lineId, sender);
 }
 
 // Scene

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -190,6 +190,7 @@ struct LfgJoinResultData
     LfgJoinResult result;
     LfgRoleCheckState state;
     LfgLockPartyMap lockmap;
+    std::vector<std::string const*> playersMissingRequirement;
 };
 
 // Data needed by SMSG_LFG_UPDATE_STATUS
@@ -416,7 +417,7 @@ class TC_GAME_API LFGMgr
 
         // LFGHandler
         /// Get locked dungeons
-        LfgLockMap const GetLockedDungeons(ObjectGuid guid);
+        LfgLockMap GetLockedDungeons(ObjectGuid guid);
         /// Returns current lfg status
         LfgUpdateData GetLfgStatus(ObjectGuid guid);
         /// Checks if Seasonal dungeon is active
@@ -488,7 +489,7 @@ class TC_GAME_API LFGMgr
         void SetState(ObjectGuid guid, LfgState state);
         void SetVoteKick(ObjectGuid gguid, bool active);
         void RemovePlayerData(ObjectGuid guid);
-        void GetCompatibleDungeons(LfgDungeonSet& dungeons, GuidSet const& players, LfgLockPartyMap& lockMap, bool isContinue);
+        void GetCompatibleDungeons(LfgDungeonSet* dungeons, GuidSet const& players, LfgLockPartyMap* lockMap, std::vector<std::string const*>* playersMissingRequirement, bool isContinue);
         void _SaveToDB(ObjectGuid guid, uint32 db_guid);
 
         // Proposals

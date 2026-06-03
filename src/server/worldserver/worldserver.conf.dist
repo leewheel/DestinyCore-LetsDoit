@@ -12,6 +12,7 @@
 #    SERVER LOGGING
 #    SERVER SETTINGS
 #    UPDATE SETTINGS
+#	 DB2 / HOTFIX LOADING
 #    HOTSWAP SETTINGS
 #    WARDEN SETTINGS
 #    PLAYER INTERACTION
@@ -1286,6 +1287,42 @@ FeatureSystem.CharacterUndelete.Enabled = 0
 #        Default:     2592000 (30 days)
 
 FeatureSystem.CharacterUndelete.Cooldown = 2592000
+
+#
+###################################################################################################
+
+###################################################################################################
+#    DB2 / HOTFIX LOADING
+#
+#    The server loads DB2 files from DataDir/dbc/<locale>/ at startup.
+#    Additionally it can apply hotfix overrides from the HotfixDatabase.
+#
+#    DB2.Hotfix.LoadData
+#        Description: Enables loading hotfix records from the HotfixDatabase.
+#                     This also provides the base/enUS hotfix string fallback.
+#        Default:     1
+#
+#    DB2.Hotfix.LoadStrings
+#        Description: Enables loading localized hotfix strings from the HotfixDatabase.
+#                     The server default locale is loaded as override.
+#        Default:     1
+#
+#    DB2.Hotfix.LoadAllLocales
+#        Description: Enables loading localized hotfix strings for every available locale.
+#                     This can heavily increase startup time, especially for BroadcastText.db2.
+#                     Keep disabled unless you really serve multiple client locales from hotfix DB.
+#        Default:     0
+#
+#    DB2.Files.LoadAllLocales
+#        Description: Enables loading localized strings from client DB2 files for every available locale.
+#                     This preserves the old behavior for file-based locale data.
+#        Default:     1
+#
+
+DB2.Hotfix.LoadData = 1
+DB2.Hotfix.LoadStrings = 1
+DB2.Hotfix.LoadAllLocales = 0
+DB2.Files.LoadAllLocales = 1
 
 #
 ###################################################################################################
@@ -4186,6 +4223,22 @@ BattlePay.Enabled = 1
 #					NZD = 30
 
 BattlePay.Currency = 1
+
+#
+#     CharacterBoost.Enabled
+#        Description: Enable Character Boost delivery from the BattlePay shop.
+#        Default:     0 - Disabled
+#                     1 - Enabled
+
+CharacterBoost.Enabled = 0
+
+#
+#     ClassTrial.Enabled
+#        Description: Enable Class Trial flow at character select.
+#        Default:     0 - Disabled
+#                     1 - Enabled
+
+ClassTrial.Enabled = 1
 
 #
 ###################################################################################################

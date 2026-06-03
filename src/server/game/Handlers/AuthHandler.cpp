@@ -96,10 +96,29 @@ void WorldSession::SendSetTimeZoneInformation()
 void WorldSession::SendFeatureSystemStatusGlueScreen()
 {
     WorldPackets::System::FeatureSystemStatusGlueScreen features;
-    features.BpayStoreEnabled = sWorld->getBoolConfig(CONFIG_FEATURE_SYSTEM_BATTLE_PAY_ENABLED);
+    features.TokenPollTimeSeconds = 300;
+    features.TokenRedeemIndex = 0; // ForSubAmount30Days
     features.BpayStoreAvailable = sWorld->getBoolConfig(CONFIG_FEATURE_SYSTEM_BATTLE_PAY_AVAILABLE);
     features.BpayStoreDisabledByParentalControls = false;
     features.CharUndeleteEnabled = sWorld->getBoolConfig(CONFIG_FEATURE_SYSTEM_CHARACTER_UNDELETE_ENABLED);
+    features.BpayStoreEnabled = sWorld->getBoolConfig(CONFIG_FEATURE_SYSTEM_BATTLE_PAY_ENABLED);
+    features.CommerceSystemEnabled = true;
+    features.Unk14 = true;
+    features.WillKickFromWorld = false;
+    features.KioskModeEnabled = false;
+    features.TrialBoostEnabled = sWorld->getBoolConfig(CONFIG_CLASS_TRIAL_ENABLED);
+    features.IsExpansionPreorderInStore = false;
+    features.CompetitiveModeEnabled = false;
+    features.TokenBalanceEnabled = true;
+    features.LiveRegionCharacterListEnabled = false;
+    features.LiveRegionCharacterCopyEnabled = false;
+    features.LiveRegionAccountCopyEnabled = false;
+    features.TokenBalanceAmount = 5500000;
+    features.BpayStoreProductDeliveryDelay = 180;
+    features.UnkInt1 = 3;
+    features.UnkInt2 = 2;
+    features.UnkInt3 = 5;
+    features.UnkInt4 = 7;
 
     SendPacket(features.Write());
 }

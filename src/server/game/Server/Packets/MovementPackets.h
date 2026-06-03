@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15,8 +15,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef MovementPackets_h__
-#define MovementPackets_h__
+#ifndef MOVEMENTPACKETS_H
+#define MOVEMENTPACKETS_H
 
 #include "Packet.h"
 #include "Object.h"
@@ -492,6 +492,17 @@ namespace WorldPackets
             MoveTimeSkipped(WorldPacket&& packet) : ClientPacket(CMSG_MOVE_TIME_SKIPPED, std::move(packet)) { }
 
             void Read() override;
+
+            ObjectGuid MoverGUID;
+            uint32 TimeSkipped = 0;
+        };
+
+        class MoveSkipTime final : public ServerPacket
+        {
+        public:
+            MoveSkipTime() : ServerPacket(SMSG_MOVE_SKIP_TIME, 16 + 4) { }
+
+            WorldPacket const* Write() override;
 
             ObjectGuid MoverGUID;
             uint32 TimeSkipped = 0;

@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -26,6 +25,7 @@
 #include "CinematicMgr.h"
 #include "ClientConfigPackets.h"
 #include "Common.h"
+#include "Conversation.h"
 #include "Corpse.h"
 #include "DatabaseEnv.h"
 #include "DB2Stores.h"
@@ -815,6 +815,16 @@ void WorldSession::HandleTimeSyncResponse(WorldPackets::Misc::TimeSyncResponse& 
     _player->m_timeSyncQueue.pop();
 }
 
+void WorldSession::HandleDiscardedTimeSyncAcks(WorldPackets::Misc::DiscardedTimeSyncAcks& packet)
+{
+    Player* player = GetPlayer();
+
+    if (player->m_movementCounter != packet.MaxSequenceIndex)
+        TC_LOG_DEBUG("network", "Received CMSG_DISCARDED_TIME_SYNC_ACKS from player %s, but maxSequenceIndex %u isn't equal real server SequenceIndex %u", player->GetName().c_str(), packet.MaxSequenceIndex, player->m_movementCounter);
+
+    player->m_movementCounter = 0;
+}
+
 void WorldSession::HandleResetInstancesOpcode(WorldPackets::Instance::ResetInstances& /*packet*/)
 {
     if (Group* group = _player->GetGroup())
@@ -1200,4 +1210,10 @@ void WorldSession::HandleSelectFactionOpcode(WorldPackets::Misc::FactionSelect& 
         _player->LearnSpell(108131, false);         // Language Pandaren Horde
         _player->CastSpell(_player, 113245, true);  // Faction Choice Trigger Spell: Horde
     }
+}
+
+void WorldSession::HandleConversationLineStarted(WorldPackets::Misc::ConversationLineStarted& conversationLineStarted)
+{
+    if (Conversation* convo = ObjectAccessor::GetConversation(*_player, conversationLineStarted.ConversationGUID))
+        sScriptMgr->OnConversationLineStarted(convo, conversationLineStarted.LineID, _player);
 }

@@ -2298,6 +2298,9 @@ public:
 
     void OnUpdate(Player* player, uint32 diff) override
     {
+        if (!player)
+            return;
+
         if (sGameEventMgr->IsActiveEvent(EVENT_PVP_OFF))
         {
             if (player->GetAreaId() == 7594 || player->GetAreaId() == 7825) // pvp off
@@ -2330,8 +2333,11 @@ public:
         }
     }
 
-    void OnUpdateArea(Player* player, Area* newArea, Area* /*oldArea*/)
+    void OnUpdateArea(Player* player, Area* newArea, Area* /*oldArea*/) override
     {
+        if (!player || !newArea)
+            return;
+
         if (newArea->GetId() == 7825 && player->HasAura(NO_GUARDS) && !player->HasAura(HIRED_GUARD))
         {
             player->AddAura(FAIR_GAME, player);

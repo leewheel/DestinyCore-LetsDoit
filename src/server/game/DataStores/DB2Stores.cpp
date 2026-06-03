@@ -16,6 +16,7 @@
  */
 
 #include "DB2Stores.h"
+#include "Config.h"
 #include "Containers.h"
 #include "DatabaseEnv.h"
 #include "DB2LoadInfo.h"
@@ -78,6 +79,8 @@ DB2Storage<BattlemasterListEntry>               sBattlemasterListStore("Battlema
 DB2Storage<BroadcastTextEntry>                  sBroadcastTextStore("BroadcastText.db2", BroadcastTextLoadInfo::Instance());
 DB2Storage<Cfg_RegionsEntry>                    sCfgRegionsStore("Cfg_Regions.db2", CfgRegionsLoadInfo::Instance());
 DB2Storage<CharacterFacialHairStylesEntry>      sCharacterFacialHairStylesStore("CharacterFacialHairStyles.db2", CharacterFacialHairStylesLoadInfo::Instance());
+DB2Storage<CharacterLoadoutEntry>               sCharacterLoadoutStore("CharacterLoadout.db2", CharacterLoadoutLoadInfo::Instance());
+DB2Storage<CharacterLoadoutItemEntry>           sCharacterLoadoutItemStore("CharacterLoadoutItem.db2", CharacterLoadoutItemLoadInfo::Instance());
 DB2Storage<CharBaseSectionEntry>                sCharBaseSectionStore("CharBaseSection.db2", CharBaseSectionLoadInfo::Instance());
 DB2Storage<CharSectionsEntry>                   sCharSectionsStore("CharSections.db2", CharSectionsLoadInfo::Instance());
 DB2Storage<CharStartOutfitEntry>                sCharStartOutfitStore("CharStartOutfit.db2", CharStartOutfitLoadInfo::Instance());
@@ -353,6 +356,9 @@ typedef std::unordered_map<uint32, std::vector<ItemSetSpellEntry const*>> ItemSe
 typedef std::unordered_map<uint32, std::vector<ItemSpecOverrideEntry const*>> ItemSpecOverridesContainer;
 typedef std::unordered_map<uint32, DB2Manager::MountTypeXCapabilitySet> MountCapabilitiesByTypeContainer;
 typedef std::unordered_map<uint32, DB2Manager::MountXDisplayContainer> MountDisplaysCointainer;
+typedef std::map<uint32 /*CharacterLoadoutID*/, std::vector<uint32>> CharacterLoadoutItemContainer;
+typedef std::unordered_map<uint32, uint8> CharacterLoadoutDataContainer;
+typedef std::unordered_map<uint8 /*ClassID*/, CharacterLoadoutDataContainer> CharacterLoadoutContainer;
 typedef std::unordered_map<uint32, std::array<std::vector<NameGenEntry const*>, 2>> NameGenContainer;
 typedef std::array<std::vector<Trinity::wregex>, TOTAL_LOCALES + 1> NameValidationRegexContainer;
 typedef std::unordered_map<uint32, std::vector<uint32>> PhaseGroupContainer;
@@ -417,6 +423,8 @@ namespace
     std::unordered_map<uint32, MountEntry const*> _mountsBySpellId;
     MountCapabilitiesByTypeContainer _mountCapabilitiesByType;
     MountDisplaysCointainer _mountDisplays;
+    CharacterLoadoutItemContainer _characterLoadoutItem;
+    CharacterLoadoutContainer _characterLoadout;
     NameGenContainer _nameGenData;
     NameValidationRegexContainer _nameValidators;
     PhaseGroupContainer _phasesByGroup;
@@ -474,24 +482,47 @@ inline void LoadDB2(uint32& availableDb2Locales, DB2StoreProblemList& errlist, S
             storage->GetFileName().c_str(), loadInfo->Meta->GetRecordSize(), sizeof(T));
     }
 
+    bool loadHotfixData = sConfigMgr->GetBoolDefault("DB2.Hotfix.LoadData", true);
+    bool loadHotfixStrings = sConfigMgr->GetBoolDefault("DB2.Hotfix.LoadStrings", true);
+    bool loadHotfixAllLocales = sConfigMgr->GetBoolDefault("DB2.Hotfix.LoadAllLocales", false);
+    bool loadFileAllLocales = sConfigMgr->GetBoolDefault("DB2.Files.LoadAllLocales", true);
+
     if (storage->Load(db2Path + localeNames[defaultLocale] + '/', defaultLocale))
     {
-        storage->LoadFromDB();
-        // LoadFromDB() always loads strings into enUS locale, other locales are expected to have data in corresponding _locale tables
-        // so we need to make additional call to load that data in case said locale is set as default by worldserver.conf (and we do not want to load all this data from .db2 file again)
-        if (defaultLocale != LOCALE_enUS)
-            storage->LoadStringsFromDB(defaultLocale);
-
-        for (uint32 i = 0; i < TOTAL_LOCALES; ++i)
+        if (loadHotfixData)
         {
-            if (defaultLocale == i || i == LOCALE_none)
-                continue;
+            storage->LoadFromDB();
 
-            if (availableDb2Locales & (1 << i))
-                if (!storage->LoadStringsFrom((db2Path + localeNames[i] + '/'), i))
-                    availableDb2Locales &= ~(1 << i);             // mark as not available for speedup next checks
+            // LoadFromDB() loads hotfix strings into enUS/base locale.
+            // Load configured default locale as override while preserving enUS fallback.
+            if (loadHotfixStrings && defaultLocale != LOCALE_enUS)
+                storage->LoadStringsFromDB(defaultLocale);
+        }
 
-            storage->LoadStringsFromDB(i);
+        if (loadFileAllLocales)
+        {
+            for (uint8 i = LOCALE_enUS; i < MAX_LOCALES; ++i)
+            {
+                if (LOCALE_enUS == i || i == LOCALE_none)
+                    continue;
+
+                if (availableDb2Locales & (1 << i))
+                    if (!storage->LoadStringsFrom((db2Path + localeNames[i] + '/'), i))
+                        availableDb2Locales &= ~(1 << i);             // mark as not available for speedup next checks
+
+                if (loadHotfixData && loadHotfixStrings && loadHotfixAllLocales)
+                    storage->LoadStringsFromDB(i);
+            }
+        }
+        else if (loadHotfixData && loadHotfixStrings && loadHotfixAllLocales)
+        {
+            for (uint8 i = LOCALE_enUS; i < MAX_LOCALES; ++i)
+            {
+                if (LOCALE_enUS == i || i == LOCALE_none || defaultLocale == i)
+                    continue;
+
+                storage->LoadStringsFromDB(i);
+            }
         }
     }
     else
@@ -535,8 +566,8 @@ void DB2Manager::LoadStores(std::string const& dataPath, uint32 defaultLocale)
     LOAD_DB2(sAdventureMapPOIStore);
     LOAD_DB2(sAnimKitStore);
     LOAD_DB2(sAreaGroupMemberStore);
-    //LOAD_DB2(sAreaPOIStore);
-    //LOAD_DB2(sAreaPOIStateStore);
+    LOAD_DB2(sAreaPOIStore);
+    LOAD_DB2(sAreaPOIStateStore);
     LOAD_DB2(sAreaTableStore);
     LOAD_DB2(sAreaTriggerStore);
     LOAD_DB2(sArmorLocationStore);
@@ -572,6 +603,8 @@ void DB2Manager::LoadStores(std::string const& dataPath, uint32 defaultLocale)
     LOAD_DB2(sBroadcastTextStore);
     LOAD_DB2(sCfgRegionsStore);
     LOAD_DB2(sCharacterFacialHairStylesStore);
+    LOAD_DB2(sCharacterLoadoutStore);
+    LOAD_DB2(sCharacterLoadoutItemStore);
     LOAD_DB2(sCharBaseSectionStore);
     LOAD_DB2(sCharSectionsStore);
     LOAD_DB2(sCharStartOutfitStore);
@@ -951,6 +984,12 @@ void DB2Manager::LoadStores(std::string const& dataPath, uint32 defaultLocale)
     for (FactionEntry const* faction : sFactionStore)
         if (faction->ParentFactionID)
             _factionTeams[faction->ParentFactionID].push_back(faction->ID);
+
+    for (CharacterLoadoutItemEntry const* LoadOutItem : sCharacterLoadoutItemStore)
+        _characterLoadoutItem[LoadOutItem->CharacterLoadoutID].push_back(LoadOutItem->ItemID);
+
+    for (CharacterLoadoutEntry const* entry : sCharacterLoadoutStore)
+        _characterLoadout[entry->ChrClassID].insert(std::make_pair(entry->ID, entry->Purpose));
 
     for (GameObjectDisplayInfoEntry const* gameObjectDisplayInfo : sGameObjectDisplayInfoStore)
     {
@@ -2098,6 +2137,41 @@ MapDifficultyEntry const* DB2Manager::GetDownscaledMapDifficultyData(uint32 mapI
 
     difficulty = Difficulty(tmpDiff);
     return mapDiff;
+}
+
+std::array<std::vector<uint32>, 2> DB2Manager::GetItemLoadOutItemsByClassID(uint32 classID, uint8 type /*= 0*/)
+{
+    std::array<std::vector<uint32>, 2> _array;
+
+    auto itr = _characterLoadout.find(classID);
+    if (itr == _characterLoadout.end())
+        return _array;
+
+    for (auto const& v : itr->second)
+        if (v.second == type)
+        {
+            auto itr2 = _characterLoadoutItem.find(v.first);
+            if (itr2 != _characterLoadoutItem.end())
+                for (uint32 item : itr2->second)
+                    _array[0].emplace_back(item);
+        }
+
+    return _array;
+}
+
+std::vector<uint32> DB2Manager::GetLowestIdItemLoadOutItemsBy(uint32 classID, uint8 type)
+{
+    auto itr = _characterLoadout.find(classID);
+    if (itr == _characterLoadout.end())
+        return std::vector<uint32>();
+
+    uint32 smallest = std::numeric_limits<uint32>::max();
+    for (auto const& v : itr->second)
+        if (v.second == type)
+            if (v.first < smallest)
+                smallest = v.first;
+
+    return _characterLoadoutItem.count(smallest) ? _characterLoadoutItem[smallest] : std::vector<uint32>();
 }
 
 MountEntry const* DB2Manager::GetMount(uint32 spellId) const

@@ -15,8 +15,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef DB2STRUCTURE_H
-#define DB2STRUCTURE_H
+#ifndef DESTINYCORE_DB2STRUCTURE_H
+#define DESTINYCORE_DB2STRUCTURE_H
 
 #include "Define.h"
 #include "DBCEnums.h"
@@ -111,20 +111,19 @@ struct AreaPOIEntry
     LocalizedString* Name;
     LocalizedString* Description;
     int32       Flags;
-    float       PosX;               // f
-    int32       PosY;               // i
-    int32       PosZ;               // i
-    int32       PoiDataType;        // i
-    uint16      ContinentID;        // h
-    uint16      AreaID;             // h
-    uint16      WorldStateID;       // h
-    uint16      PortLocID;          // h
-    uint8       Importance;         // b
-    uint8       Icon;               // b
-    int32       PlayerConditionID;  // i
-    int32       UiTextureAtlasMemberID; // i
-    int32       MapFloor;           // i
-    int32       WmoGroupID;         // i
+    float       Pos[3];
+    int32       PoiDataType;
+    int32       PoiData;
+    uint16      ContinentID;
+    uint16      AreaID;
+    uint16      WorldStateID;
+    uint16      PortLocID;
+    uint8       Importance;
+    uint8       Icon;
+    int32       PlayerConditionID;
+    int32       UiTextureAtlasMemberID;
+    int32       MapFloor;
+    int32       WmoGroupID;
 };
 
 struct AreaPOIStateEntry
@@ -134,6 +133,7 @@ struct AreaPOIStateEntry
     uint8       WorldStateValue;
     uint8       IconEnumValue;
     int32       UiTextureAtlasMemberID;
+    uint32      RelationshipData;
 };
 
 struct AreaTableEntry
@@ -542,6 +542,21 @@ struct CharacterFacialHairStylesEntry
     uint8 RaceID;
     uint8 SexID;
     uint8 VariationID;
+};
+
+struct CharacterLoadoutEntry
+{
+    int32       ID;
+    int64       RaceMask;
+    uint8       ChrClassID;
+    uint8       Purpose;
+};
+
+struct CharacterLoadoutItemEntry
+{
+    int32       ID;
+    int32       ItemID;
+    uint16      CharacterLoadoutID;
 };
 
 struct CharBaseSectionEntry

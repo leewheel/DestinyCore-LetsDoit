@@ -15,8 +15,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef DB2STORES_H
-#define DB2STORES_H
+#ifndef DESTINYCORE_DB2STORES_H
+#define DESTINYCORE_DB2STORES_H
 
 #include "DB2Store.h"
 #include "DB2Structure.h"
@@ -185,6 +185,7 @@ TC_GAME_API extern DB2Storage<QuestPOIBlobEntry>                    sQuestPOIBlo
 TC_GAME_API extern DB2Storage<QuestSortEntry>                       sQuestSortStore;
 TC_GAME_API extern DB2Storage<QuestXPEntry>                         sQuestXPStore;
 TC_GAME_API extern DB2Storage<RandPropPointsEntry>                  sRandPropPointsStore;
+TC_GAME_API extern DB2Storage<RelicTalentEntry>                     sRelicTalentStore;
 TC_GAME_API extern DB2Storage<RewardPackEntry>                      sRewardPackStore;
 TC_GAME_API extern DB2Storage<ResearchBranchEntry>                  sResearchBranchStore;
 TC_GAME_API extern DB2Storage<ResearchSiteEntry>                    sResearchSiteStore;
@@ -349,6 +350,8 @@ public:
     MapDifficultyEntry const* GetDefaultMapDifficulty(uint32 mapId, Difficulty* difficulty = nullptr) const;
     MapDifficultyEntry const* GetMapDifficultyData(uint32 mapId, Difficulty difficulty) const;
     MapDifficultyEntry const* GetDownscaledMapDifficultyData(uint32 mapId, Difficulty &difficulty) const;
+    std::array<std::vector<uint32>, 2> GetItemLoadOutItemsByClassID(uint32 classID, uint8 type = 0);
+    std::vector<uint32> GetLowestIdItemLoadOutItemsBy(uint32 classID, uint8 type);
     std::string GetNameGenEntry(uint8 race, uint8 gender) const;
     MountEntry const* GetMount(uint32 spellId) const;
     MountEntry const* GetMountById(uint32 id) const;

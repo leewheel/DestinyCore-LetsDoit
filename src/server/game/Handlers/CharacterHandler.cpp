@@ -304,6 +304,7 @@ void WorldSession::HandleCharEnum(PreparedQueryResult result)
     charEnum.DisabledClassesMask = sWorld->getIntConfig(CONFIG_CHARACTER_CREATING_DISABLED_CLASSMASK);
 
     _legitCharacters.clear();
+    _classTrialLockedCharacters.clear();
 
     if (result)
     {
@@ -333,8 +334,13 @@ void WorldSession::HandleCharEnum(PreparedQueryResult result)
             }
 
             // Do not allow locked characters to login
-            if (!(charInfo.Flags & (CHARACTER_FLAG_LOCKED_FOR_TRANSFER | CHARACTER_FLAG_LOCKED_BY_BILLING)))
+            if (!(charInfo.Flags & (CHARACTER_FLAG_LOCKED_FOR_TRANSFER | CHARACTER_FLAG_LOCKED_BY_BILLING))
+                && !(charInfo.Flags3 & CHARACTER_FLAG_3_LOCKED_BY_REVOKED_CHARACTER_UPGRADE)
+                && !(charInfo.Flags4 & CHARACTER_FLAG_4_TRIAL_BOOST_LOCKED))
                 _legitCharacters.insert(charInfo.Guid);
+            else if ((charInfo.Flags3 & CHARACTER_FLAG_3_LOCKED_BY_REVOKED_CHARACTER_UPGRADE)
+                || (charInfo.Flags4 & CHARACTER_FLAG_4_TRIAL_BOOST_LOCKED))
+                _classTrialLockedCharacters.insert(charInfo.Guid);
 
             if (!sWorld->HasCharacterInfo(charInfo.Guid)) // This can happen if characters are inserted into the database manually. Core hasn't loaded name data yet.
                 sWorld->AddCharacterInfo(charInfo.Guid, GetAccountId(), charInfo.Name, charInfo.Sex, charInfo.Race, charInfo.Class, charInfo.Level, false);
@@ -837,8 +843,16 @@ void WorldSession::HandlePlayerLoginOpcode(WorldPackets::Character::PlayerLogin&
 
     if (!IsBotSession() && !IsLegitCharacterForAccount(playerLogin.Guid))
     {
-        TC_LOG_ERROR("network", "Account (%u) can't login with that character (%s).", GetAccountId(), playerLogin.Guid.ToString().c_str());
-        KickPlayer();
+        if (IsClassTrialLockedCharacter(playerLogin.Guid))
+        {
+            TC_LOG_DEBUG("network", "Account (%u) tried to login locked class trial character (%s).", GetAccountId(), playerLogin.Guid.ToString().c_str());
+            AbortLogin(WorldPackets::Character::LoginFailureReason::LockedByCharacterUpgrade);
+        }
+        else
+        {
+            TC_LOG_ERROR("network", "Account (%u) can't login with that character (%s).", GetAccountId(), playerLogin.Guid.ToString().c_str());
+            KickPlayer();
+        }
         return;
     }
 

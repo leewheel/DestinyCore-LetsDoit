@@ -126,6 +126,11 @@ void WorldPackets::Misc::TimeSyncResponse::Read()
     _worldPacket >> ClientTime;
 }
 
+void WorldPackets::Misc::DiscardedTimeSyncAcks::Read()
+{
+    _worldPacket >> MaxSequenceIndex;
+}
+
 WorldPacket const* WorldPackets::Misc::UITime::Write()
 {
     _worldPacket << Time;
@@ -486,7 +491,7 @@ void WorldPackets::Misc::SaveCUFProfiles::Read()
     CUFProfiles.resize(_worldPacket.read<uint32>());
     for (std::unique_ptr<CUFProfile>& cufProfile : CUFProfiles)
     {
-        cufProfile = Trinity::make_unique<CUFProfile>();
+        cufProfile = std::make_unique<CUFProfile>();
 
         uint8 strLen = _worldPacket.ReadBits(7);
 
@@ -794,4 +799,10 @@ void WorldPackets::Misc::ShowTradeSkill::Read()
     _worldPacket >> PlayerGUID;
     _worldPacket >> SpellID;
     _worldPacket >> SkillLineID;
+}
+
+void WorldPackets::Misc::ConversationLineStarted::Read()
+{
+    _worldPacket >> ConversationGUID;
+    _worldPacket >> LineID;
 }

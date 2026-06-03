@@ -15,8 +15,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef PLAYER_H
-#define PLAYER_H
+#ifndef DESTINYCORE_PLAYER_H
+#define DESTINYCORE_PLAYER_H
 
 #include "Arena.h"
 #include "ArenaHelper.h"
@@ -85,6 +85,7 @@ class Item;
 class LootStore;
 class OutdoorPvP;
 class Pet;
+class PetAura;
 class PlayerBotSetting;
 class PlayerAchievementMgr;
 class PlayerMenu;
@@ -583,6 +584,8 @@ enum AtLoginFlags
     AT_LOGIN_CHANGE_FACTION    = 0x040,
     AT_LOGIN_CHANGE_RACE       = 0x080,
     AT_LOGIN_RESURRECT         = 0x100,
+    AT_LOGIN_CLASS_TRIAL       = 0x200,
+    AT_LOGIN_CLASS_TRIAL_LOCKED= 0x400,
 };
 
 typedef std::map<uint32, QuestStatusData> QuestStatusMap;
@@ -1300,6 +1303,11 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
         Pet* GetPet() const;
         Pet* SummonPet(uint32 entry, float x, float y, float z, float ang, PetType petType, uint32 despwtime);
         void RemovePet(Pet* pet, PetSaveMode mode, bool returnreagent = false);
+
+        // pet auras
+        std::unordered_set<PetAura const*> m_petAuras;
+        void AddPetAura(PetAura const* petSpell);
+        void RemovePetAura(PetAura const* petSpell);
 
         /// Handles said message in regular chat based on declared language and in config pre-defined Range.
         void Say(std::string const& text, Language language, WorldObject const* = nullptr) override;

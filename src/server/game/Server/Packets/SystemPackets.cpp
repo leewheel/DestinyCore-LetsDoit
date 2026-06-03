@@ -142,6 +142,10 @@ WorldPacket const* WorldPackets::System::FeatureSystemStatusGlueScreen::Write()
     _worldPacket << int32(TokenRedeemIndex);
     _worldPacket << int64(TokenBalanceAmount);
     _worldPacket << uint32(BpayStoreProductDeliveryDelay);
+    _worldPacket << uint32(UnkInt1);
+    _worldPacket << uint32(UnkInt2);
+    _worldPacket << uint32(UnkInt3);
+    _worldPacket << uint32(UnkInt4);
 
     return &_worldPacket;
 }

@@ -1604,6 +1604,7 @@ bool Aura::CanStackWith(Aura const* existingAura) const
             {
                 // DOT or HOT from different casters will stack
                 case SPELL_AURA_PERIODIC_DAMAGE:
+                case SPELL_AURA_PERIODIC_WEAPON_PERCENT_DAMAGE:
                 case SPELL_AURA_PERIODIC_DUMMY:
                 case SPELL_AURA_PERIODIC_HEAL:
                 case SPELL_AURA_PERIODIC_TRIGGER_SPELL:

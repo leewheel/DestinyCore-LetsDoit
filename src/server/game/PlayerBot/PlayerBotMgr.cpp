@@ -118,7 +118,7 @@ uint32 PlayerBotBaseInfo::GetCharIDByNoArenaType(bool faction, uint32 prof, uint
 PlayerBotMgr::PlayerBotMgr() :
     m_BotAccountAmount(90),
     m_LastBotAccountIndex(0),
-    m_MaxOnlineBot(10),
+    m_MaxOnlineBot(180),
     m_BotOnlineCount(0),
     m_LFGSearchTick(0),
     m_ArenaSearchTick(0)
@@ -683,21 +683,27 @@ WorldPacket PlayerBotMgr::BuildCreatePlayerData(bool group, uint8 prof)
         name = "Bot" + std::to_string(irand(1000, 9999));
     }
 
+    // WoW character names: max 12 chars
+    if (name.length() > 12)
+        name.resize(12);
+
     uint8 race = RandomRace(group, prof);
     uint8 gender = irand(0, 1);
-    uint8 skinColor = RandomSkinColor(race, gender, prof);
-    uint8 faceID = RandomFace(race, gender, skinColor, prof);
-    uint8 hairID = RandomHair(race, gender, prof);
-    uint8 hairColor = RandomHairColor(race, gender, hairID, prof);
-    uint8 facialHair = RandomFacialHair(race, gender, hairColor, prof);
+
+    // Safe defaults, damit Player::Create nicht wegen ungültiger Appearance ablehnt
+    uint8 skinColor = 0;
+    uint8 faceID = 0;
+    uint8 hairID = 0;
+    uint8 hairColor = 0;
+    uint8 facialHair = 0;
 
     TC_LOG_INFO("server.loading", ">> Building bot data: %s - Race: %u, Class: %u, Gender: %u",
         name.c_str(), race, prof, gender);
 
     WorldPacket data(CMSG_CREATE_CHARACTER);
 
-    data.WriteBits(name.length(), 6);  // Name length (6 bits)
-    data.WriteBit(false);              // hasTemplateSet = false
+    data.WriteBits(name.length(), 6);
+    data.WriteBit(false);
     data.FlushBits();
 
     data << uint8(race);
@@ -808,6 +814,76 @@ void PlayerBotMgr::CreateOncePlayerBot()
     }
 
     TC_LOG_INFO("server.loading", ">> CreateOncePlayerBot END");
+}
+
+bool PlayerBotMgr::CreateQueuedPlayerBotForSession(PlayerBotBaseInfo* pInfo, WorldSession* pSession)
+{
+    if (!pInfo)
+        return false;
+
+    if (!pSession)
+    {
+        TC_LOG_ERROR("server.loading", ">> CreateQueuedPlayerBotForSession failed: no session");
+        return false;
+    }
+
+    if (pInfo->needCreateBots.empty())
+        return false;
+
+    WorldPacket packet = pInfo->needCreateBots.front();
+    pInfo->needCreateBots.pop();
+
+    packet.rpos(0);
+
+    auto createInfo = std::make_shared<WorldPackets::Character::CharacterCreateInfo>();
+
+    uint32 nameLength = packet.ReadBits(6);
+    bool hasTemplateSet = packet.ReadBit();
+    packet.FlushBits();
+
+    packet >> createInfo->Race;
+    packet >> createInfo->Class;
+    packet >> createInfo->Sex;
+    packet >> createInfo->Skin;
+    packet >> createInfo->Face;
+    packet >> createInfo->HairStyle;
+    packet >> createInfo->HairColor;
+    packet >> createInfo->FacialHairStyle;
+    packet >> createInfo->OutfitId;
+
+    packet.read(createInfo->CustomDisplay.data(), createInfo->CustomDisplay.size());
+    createInfo->Name = packet.ReadString(nameLength);
+
+    if (hasTemplateSet)
+        createInfo->TemplateSet = packet.read<int32>();
+
+    TC_LOG_INFO("server.loading", ">> Creating startup bot: %s, Race: %u, Class: %u, Account: %u",
+        createInfo->Name.c_str(), createInfo->Race, createInfo->Class, pSession->GetAccountId());
+
+    Player newChar(pSession);
+    newChar.GetMotionMaster()->Initialize();
+
+    if (!newChar.Create(sObjectMgr->GetGenerator<HighGuid::Player>().Generate(), createInfo.get()))
+    {
+        TC_LOG_ERROR("server.loading", ">> Startup Player::Create failed for account %u", pSession->GetAccountId());
+        newChar.CleanupsBeforeDelete();
+        return false;
+    }
+
+    newChar.setCinematic(2);
+    newChar.SetAtLoginFlag(AT_LOGIN_FIRST);
+    newChar.SaveToDB(true);
+
+    sWorld->AddCharacterInfo(newChar.GetGUID(), pSession->GetAccountId(),
+        newChar.GetName(), newChar.GetByteValue(PLAYER_BYTES_3, PLAYER_BYTES_3_OFFSET_GENDER),
+        newChar.getRace(), newChar.getClass(), newChar.getLevel(), false);
+
+    sPlayerBotMgr->OnPlayerBotCreate(newChar.GetGUID(), pSession->GetAccountId(),
+        newChar.GetName(), newChar.GetByteValue(PLAYER_BYTES_3, PLAYER_BYTES_3_OFFSET_GENDER),
+        newChar.getRace(), newChar.getClass(), newChar.getLevel());
+
+    newChar.CleanupsBeforeDelete();
+    return true;
 }
 
 void PlayerBotMgr::ClearBaseInfo()
@@ -1445,6 +1521,56 @@ void PlayerBotMgr::SupplementPlayerBot()
 
     TC_LOG_INFO("server.loading", ">> Calling CreateOncePlayerBot()");
     CreateOncePlayerBot();
+}
+
+void PlayerBotMgr::SupplementOneRandomPlayerBotPerAccount()
+{
+    TC_LOG_INFO("server.loading", ">> SupplementOneRandomPlayerBotPerAccount START");
+
+    // Valid classes for this core/expansion. Death Knight (6) is intentionally skipped,
+    // same as SupplementPlayerBot(), because these are normal starter bots.
+    static uint8 const botClasses[] = { 1, 2, 3, 4, 5, 7, 8, 9, 11 };
+
+    uint32 queuedCreateCount = 0;
+
+    for (std::map<uint32, PlayerBotBaseInfo*>::iterator itInfo = m_idPlayerBotBase.begin();
+        itInfo != m_idPlayerBotBase.end(); ++itInfo)
+    {
+        PlayerBotBaseInfo* pInfo = itInfo->second;
+        if (!pInfo)
+            continue;
+
+        // Idempotent: if this bot account already owns a character,
+        // do not create another one on the next restart.
+        if (!pInfo->characters.empty())
+            continue;
+
+        // Character creation uses the existing Player::Create path and needs a WorldSession.
+        // Startup calls this after UpAllPlayerBotSession(), but keep the fallback so the
+        // function is also safe when called manually.
+        WorldSession* pSession = sWorld->FindSession(pInfo->id);
+        if (!pSession)
+            pSession = UpPlayerBotSessionByBaseInfo(pInfo, false);
+
+        if (!pSession)
+        {
+            TC_LOG_ERROR("server.loading", ">> Could not create startup bot for account %u: no session", pInfo->id);
+            continue;
+        }
+
+        uint8 playerClass = botClasses[urand(0, (sizeof(botClasses) / sizeof(uint8)) - 1)];
+        bool alliance = urand(0, 1) == 0;
+
+        pInfo->needCreateBots.push(BuildCreatePlayerData(alliance, playerClass));
+
+        if (CreateQueuedPlayerBotForSession(pInfo, pSession))
+        {
+            ++queuedCreateCount;
+            TC_LOG_INFO("server.loading", ">> Created one random startup bot for account %u", pInfo->id);
+        }
+    }
+
+    TC_LOG_INFO("server.loading", ">> SupplementOneRandomPlayerBotPerAccount END - created %u bots", queuedCreateCount);
 }
 
 void PlayerBotMgr::OnRealPlayerJoinBattlegroundQueue(uint32 bgTypeId, uint32 level)

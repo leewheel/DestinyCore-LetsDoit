@@ -54,13 +54,13 @@ void HotfixDatabaseConnection::DoPrepareStatements()
 
     // AreaPOI.db2
     PrepareStatement(HOTFIX_SEL_AREA_POI, "SELECT ID, Name, Description, Flags, Pos1, Pos2, Pos3, PoiDataType, PoiData, ContinentID, AreaID, "
-        "WorldStateID, Importance, Icon, PlayerConditionID, PortLocID, UiTextureAtlasMemberID, MapFloor, WmoGroupID FROM area_p_o_i ORDER BY ID DESC", CONNECTION_SYNCH);
-    PREPARE_LOCALE_STMT(HOTFIX_SEL_AREA_POI, "SELECT ID, Name_lang, Description_lang FROM area_p_o_i_locale WHERE locale = ?", CONNECTION_SYNCH);
+        "WorldStateID, PortLocID, Importance, Icon, PlayerConditionID, UiTextureAtlasMemberID, MapFloor, WmoGroupID FROM area_poi", CONNECTION_SYNCH);
+    PREPARE_LOCALE_STMT(HOTFIX_SEL_AREA_POI, "SELECT ID, Name_lang, Description_lang FROM area_poi_locale WHERE locale = ?", CONNECTION_SYNCH);
 
     // AreaPOIState.db2
-    PrepareStatement(HOTFIX_SEL_AREA_POI_STATE, "SELECT ID, Description, WorldStateValue, IconEnumValue, UiTextureAtlasMemberID"
-        " FROM area_p_o_i_state ORDER BY ID DESC", CONNECTION_SYNCH);
-    PREPARE_LOCALE_STMT(HOTFIX_SEL_AREA_POI_STATE, "SELECT ID, Description_lang FROM area_p_o_i_state_locale WHERE locale = ?", CONNECTION_SYNCH);
+    PrepareStatement(HOTFIX_SEL_AREA_POI_STATE, "SELECT ID, Description, WorldStateValue, IconEnumValue, UiTextureAtlasMemberID, RelationshipData"
+        " FROM area_poi_state ORDER BY ID DESC", CONNECTION_SYNCH);
+    PREPARE_LOCALE_STMT(HOTFIX_SEL_AREA_POI_STATE, "SELECT ID, Description_lang FROM area_poi_state_locale WHERE locale = ?", CONNECTION_SYNCH);
 
     // AreaTable.db2
     PrepareStatement(HOTFIX_SEL_AREA_TABLE, "SELECT ID, ZoneName, AreaName, Flags1, Flags2, AmbientMultiplier, ContinentID, ParentAreaID, AreaBit, "
@@ -217,6 +217,12 @@ void HotfixDatabaseConnection::DoPrepareStatements()
     // CharacterFacialHairStyles.db2
     PrepareStatement(HOTFIX_SEL_CHARACTER_FACIAL_HAIR_STYLES, "SELECT ID, Geoset1, Geoset2, Geoset3, Geoset4, Geoset5, RaceID, SexID, VariationID"
         " FROM character_facial_hair_styles ORDER BY ID DESC", CONNECTION_SYNCH);
+
+    // CharacterLoadout.db2
+    PrepareStatement(HOTFIX_SEL_CHARACTER_LOADOUT, "SELECT ID, RaceMask, ChrClassID, Purpose FROM character_loadout ORDER BY ID DESC", CONNECTION_SYNCH);
+
+    // CharacterLoadoutItem.db2
+    PrepareStatement(HOTFIX_SEL_CHARACTER_LOADOUT_ITEM, "SELECT ID, ItemID, CharacterLoadoutID FROM character_loadout_item ORDER BY ID DESC", CONNECTION_SYNCH);
 
     // CharBaseSection.db2
     PrepareStatement(HOTFIX_SEL_CHAR_BASE_SECTION, "SELECT ID, VariationEnum, ResolutionVariationEnum, LayoutResType FROM char_base_section"

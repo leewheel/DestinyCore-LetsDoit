@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,8 +15,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef TRINITYCORE_PET_H
-#define TRINITYCORE_PET_H
+#ifndef DESTINYCORE_PET_H
+#define DESTINYCORE_PET_H
 
 #include "PetDefines.h"
 #include "TemporarySummon.h"
@@ -79,6 +78,7 @@ typedef std::unordered_map<uint32, PetSpell> PetSpellMap;
 typedef std::vector<uint32> AutoSpellList;
 
 class Player;
+class PetAura;
 
 class TC_GAME_API Pet : public Guardian
 {

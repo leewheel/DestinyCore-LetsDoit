@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2008-2018 TrinityCore <https://www.trinitycore.org/>
- * Copyright (C) 2005-2009 MaNGOS <http://getmangos.com/>
+ * This file is part of the DestinyCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -16,8 +15,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef TRINITYCORE_ITEM_H
-#define TRINITYCORE_ITEM_H
+#ifndef ITEM_H
+#define ITEM_H
 
 #include "Object.h"
 #include "Common.h"
@@ -167,6 +166,33 @@ struct ItemDynamicFieldGems
     uint8 Context;
     uint8 Padding[3];
 };
+
+struct SocketTier
+{
+    uint16 FirstSpell = 0;
+    uint16 SecondSpell = 0;
+};
+
+inline SocketTier MakeSocketTier(uint32 value)
+{
+    return SocketTier
+    {
+        uint16(value & 0xFFFF),
+        uint16(value >> 16)
+    };
+}
+
+struct ItemSocketInfo
+{
+    uint32 unk1 = 0;
+    uint32 socketIndex = 0;
+    uint32 firstTier = 0;
+    uint32 secondTier = 0;
+    uint32 thirdTier = 0;
+    uint32 additionalThirdTier = 0;
+
+};
+
 #pragma pack(pop)
 
 class TC_GAME_API Item : public Object
@@ -273,6 +299,8 @@ class TC_GAME_API Item : public Object
         DynamicFieldStructuredView<ItemDynamicFieldGems> GetGems() const;
         ItemDynamicFieldGems const* GetGem(uint16 slot) const;
         void SetGem(uint16 slot, ItemDynamicFieldGems const* gem, uint32 gemScalingLevel);
+        std::map<uint8, ItemSocketInfo> GetArtifactSockets() const;
+        void AddOrRemoveSocketTalent(uint8 talentIndex, bool add, uint8 socketIndex);
 
         static void GenerateItemBonus(uint32 itemId, uint32 bonusTreeMod, std::vector<int32>& itemBonus, bool onlyHeroicOrMithic = false, uint8 Difficulty = 0, uint32 ChallengeLevel = 0, bool IsOplote = false);
         static int32 GenerateForgedBonus(uint32& itemLevel, std::vector<int32>& bonusLists, bool t19 = false);
@@ -387,6 +415,9 @@ class TC_GAME_API Item : public Object
 
         void GiveArtifactXp(uint64 amount, Item* sourceItem, uint32 artifactCategoryId);
         void ActivateFishArtifact(uint8 artifactId);
+
+        bool GetModsApplied() const { return m_modsApplied; }
+
     protected:
         BonusData _bonusData;
 
@@ -406,5 +437,6 @@ class TC_GAME_API Item : public Object
         ObjectGuid m_childItem;
         std::unordered_map<uint32, uint16> m_artifactPowerIdToIndex;
         std::array<uint32, MAX_ITEM_PROTO_SOCKETS> m_gemScalingLevels;
+        bool m_modsApplied = false;
 };
 #endif
