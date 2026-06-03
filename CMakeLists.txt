@@ -15,7 +15,7 @@ set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
 # Set projectname (must be done AFTER setting configurationtypes)
-project(DestinyCore)
+project(LWCoreLegion)
 
 if(POLICY CMP0144)
   cmake_policy(SET CMP0144 NEW) # find_package() uses upper-case <PACKAGENAME>_ROOT variables
@@ -47,6 +47,13 @@ include(CheckCXXSourceRuns)
 include(CheckIncludeFiles)
 include(ConfigureScripts)
 include(ConfigureModules)
+
+# 支持简体中文代码注释和文本 (UTF-8)
+if(MSVC)
+  add_compile_options(/utf-8)
+else()
+  add_compile_options(-finput-charset=UTF-8 -fexec-charset=UTF-8)
+endif()
 
 # set default buildoptions and print them
 include(cmake/options.cmake)
