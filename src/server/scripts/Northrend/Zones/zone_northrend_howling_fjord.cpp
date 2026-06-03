@@ -314,8 +314,8 @@ public:
 ## npc_razael_and_lyana
 ######*/
 
-#define GOSSIP_RAZAEL_REPORT "High Executor Anselm wants a report on the situation."
-#define GOSSIP_LYANA_REPORT "High Executor Anselm requests your report."
+#define GOSSIP_RAZAEL_REPORT "高级执行官安塞姆想要一份情况报告。"
+#define GOSSIP_LYANA_REPORT "高级执行官安塞姆要求你提交报告。"
 
 enum Razael
 {

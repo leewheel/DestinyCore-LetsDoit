@@ -151,7 +151,7 @@ public:
 ## npc_cooshcoosh
 ######*/
 
-#define GOSSIP_COOSH            "You owe Sim'salabim money. Hand them over or die!"
+#define GOSSIP_COOSH            "你欠西姆萨拉比姆钱。交出来，否则就去死吧！"
 
 enum Cooshhooosh
 {

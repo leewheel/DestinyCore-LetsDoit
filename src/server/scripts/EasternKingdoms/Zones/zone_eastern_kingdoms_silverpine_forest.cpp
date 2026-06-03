@@ -736,8 +736,8 @@ public:
 };
 
 // npc 44825 for the quest 26998 'Iterating upon success'
-#define GOSSIP_TAXI_TEXT "Show me where I can fly."
-#define GOSSIP_OPTION_TEXT "I need to take a bat to the Dawning Isles."
+#define GOSSIP_TAXI_TEXT "显示可飞行的地点。"
+#define GOSSIP_OPTION_TEXT "我需要乘坐蝙蝠前往黎明群岛。"
 class npc_bat_handler_maggotbreath : public CreatureScript
 {
 public:

@@ -75,7 +75,7 @@ enum HelOaf_Events
     EVENT_FINISH             = 9,
 };
 
-#define CHEST_BOMB "Helix attaches a bomb to $N's chest."
+#define CHEST_BOMB "赫利克斯在$N的胸口装了一个炸弹。"
 
 class boss_helix_gearbreaker : public CreatureScript
 {

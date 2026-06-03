@@ -1658,10 +1658,10 @@ private:
     ObjectGuid   m_playerGUID;
 };
 
-#define GOSSIP_HELLO_ALTURAS1 "There's no time to explain. Let us inside the hold, warden."
-#define GOSSIP_HELLO_ALTURAS2 "Let us inside or I'll show you the difference."
-#define GOSSIP_HELLO_ALTURAS3 "Do you want to find out?"
-#define GOSSIP_HELLO_ALTURAS4 "What do you have to lose either way?"
+#define GOSSIP_HELLO_ALTURAS1 "没时间解释了。让我们进去，典狱官。"
+#define GOSSIP_HELLO_ALTURAS2 "让我们进去，否则我让你见识见识。"
+#define GOSSIP_HELLO_ALTURAS3 "你想试试吗？"
+#define GOSSIP_HELLO_ALTURAS4 "反正你也没什么可失去的。"
 class npc_warden_alturas : public CreatureScript
 {
 public:

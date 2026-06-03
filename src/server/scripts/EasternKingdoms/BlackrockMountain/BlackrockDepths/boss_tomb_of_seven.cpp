@@ -115,8 +115,8 @@ enum DoomrelEvents
     EVENT_SUMMON_VOIDWALKERS                               = 5
 };
 
-#define GOSSIP_ITEM_CHALLENGE   "Your bondage is at an end, Doom'rel. I challenge you!"
-#define GOSSIP_SELECT_DOOMREL   "[PH] Continue..."
+#define GOSSIP_ITEM_CHALLENGE   "你的束缚到此为止了，杜姆雷尔。我要挑战你！"
+#define GOSSIP_SELECT_DOOMREL   "[PH] 继续……"
 
 class boss_doomrel : public CreatureScript
 {

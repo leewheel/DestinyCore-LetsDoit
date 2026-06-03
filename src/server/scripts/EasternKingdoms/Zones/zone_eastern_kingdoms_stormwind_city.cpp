@@ -45,7 +45,7 @@
 #include "PhasingHandler.h"
 #include "DBCEnums.h"
 
-#define GOSSIP_SHOW_DEMONS "This cannot wait. There are demons among your ranks. Let me show you."
+#define GOSSIP_SHOW_DEMONS "此事刻不容缓。你们的队伍中有恶魔潜伏。让我展示给你看。"
 #define GOSSIP_ACCEPT_DUEL      "Let''s duel"
 #define EVENT_SPECIAL 20
 

@@ -2276,8 +2276,8 @@ public:
     }
 };
 
-#define REGZAR_TEXT_NEED " supplies are needed for the next upgrade!"
-#define REGZAR_TEXT_MAX "You're already at 1500 supplies!"
+#define REGZAR_TEXT_NEED " 份补给才能进行下次升级！"
+#define REGZAR_TEXT_MAX "你的补给已经达到1500份的上限了！"
 
 class npc_regzar : public CreatureScript
 {

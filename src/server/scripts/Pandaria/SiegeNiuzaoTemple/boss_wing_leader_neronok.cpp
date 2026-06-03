@@ -35,7 +35,7 @@ enum Yells
     SAY_DEATH                     // The...bridge...
 };
 
-#define ANN_GUSTING_WINDS "Wing Leader Ner'onok lifts off and flies to the other end of the bridge!"
+#define ANN_GUSTING_WINDS "翼卫尼朗诺克起飞并飞向桥的另一端！"
 
 enum Spells
 {

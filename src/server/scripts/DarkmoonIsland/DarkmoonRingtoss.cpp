@@ -44,8 +44,8 @@ public:
         switch (LocaleConstant currentlocale = player->GetSession()->GetSessionDbcLocale())
         {
             default:
-                GOSSIP_BUTTON_1         = "How do I play the Ring Toss?";
-                GOSSIP_BUTTON_2         = "Ready to play! |cFF0000FF(Darkmoon Game Token)|r";
+                GOSSIP_BUTTON_1         = "套圈圈怎么玩？";
+                GOSSIP_BUTTON_2         = "我准备好开玩了！|cFF0000FF（暗月游戏代币）|r";
                 break;
         };
 
@@ -67,9 +67,9 @@ public:
         switch (LocaleConstant currentlocale = player->GetSession()->GetSessionDbcLocale())
         {
             default:
-                GOSSIP_BUTTON_1         = "How do I play the Ring Toss?";
-                GOSSIP_BUTTON_2         = "Ready to play! |cFF0000FF(Darkmoon Game Token)|r";
-                GOSSIP_BUTTON_3         = "Alright.";
+                GOSSIP_BUTTON_1         = "套圈圈怎么玩？";
+                GOSSIP_BUTTON_2         = "我准备好开玩了！|cFF0000FF（暗月游戏代币）|r";
+                GOSSIP_BUTTON_3         = "明白了。";
                 break;
         };
 

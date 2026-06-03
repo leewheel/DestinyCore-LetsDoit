@@ -31,10 +31,10 @@
 #include "Vehicle.h"
 #include "WorldSession.h"
 
-#define GOSSIP_HELLO_DEMO1  "Build catapult."
-#define GOSSIP_HELLO_DEMO2  "Build demolisher."
-#define GOSSIP_HELLO_DEMO3  "Build siege engine."
-#define GOSSIP_HELLO_DEMO4  "I cannot build more!"
+#define GOSSIP_HELLO_DEMO1  "建造投石车。"
+#define GOSSIP_HELLO_DEMO2  "建造攻城车。"
+#define GOSSIP_HELLO_DEMO3  "建造攻城机。"
+#define GOSSIP_HELLO_DEMO4  "我不能再造更多了！"
 
 enum WGqueuenpctext
 {

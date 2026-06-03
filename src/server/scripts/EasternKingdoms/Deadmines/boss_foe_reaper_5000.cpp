@@ -84,8 +84,8 @@ enum eSays
     SAY_EVENT_SRO = 6,
 };
 
-#define MONSTER_START "A stray jolt from the Foe Reaper has distrupted the foundry controls!"
-#define MONSTER_SLAG "The monster slag begins to bubble furiously!"
+#define MONSTER_START "收割者的电流紊乱了熔炉的控制系统！"
+#define MONSTER_SLAG "熔渣开始剧烈沸腾！"
 
 
 Position const HarvestSpawn[] =

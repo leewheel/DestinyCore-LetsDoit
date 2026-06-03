@@ -1237,7 +1237,7 @@ class npc_dragon_soul_teleport : public CreatureScript
         }
 };
 
-#define GOSSIP_OPTION_1 "Begin charging."
+#define GOSSIP_OPTION_1 "开始充能。"
 
 class npc_dragon_soul_thrall : public CreatureScript
 {

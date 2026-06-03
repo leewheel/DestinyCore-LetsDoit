@@ -21,10 +21,10 @@
 #include "SpellAuras.h"
 #include "bastion_of_twilight.h"
 
-#define YELL_AGGRO  "We were fools to entrust an imbecile like Cho'gall with such a sacred duty. I will deal with you intruders myself!"
-#define YELL_KILL_0 "My brood will feed on your bones!"
-#define YELL_KILL_1 "Powerless..."
-#define YELL_SUMMON "Feed, children! Take your fill from their meaty husks!"
+#define YELL_AGGRO  "我们竟然愚蠢到将如此神圣的职责交托给丘加利这样的蠢货。我要亲自收拾你们这些入侵者！"
+#define YELL_KILL_0 "我的子嗣将以你们的骸骨为食！"
+#define YELL_KILL_1 "弱小……"
+#define YELL_SUMMON "享用吧，孩子们！尽情享用他们丰腴的躯壳！"
 
 enum spells
 {

@@ -672,8 +672,8 @@ class spell_mogu_petrification : public SpellScriptLoader
         }
 };
 
-#define GOSSIP_CHOICE_1 "What are you waiting for ? Let's go investigate !"
-#define GOSSIP_CHOICE_2 "Go ahead and turn this thing on."
+#define GOSSIP_CHOICE_1 "还在等什么？我们去调查吧！"
+#define GOSSIP_CHOICE_2 "把这个东西启动吧。"
 
 enum eChoTexts
 {

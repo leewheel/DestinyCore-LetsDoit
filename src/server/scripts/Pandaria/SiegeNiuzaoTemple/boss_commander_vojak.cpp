@@ -124,15 +124,15 @@ enum Yells
     SAY_DEATH                     // It was... a trap...
 };
 
-#define ANN_SWARMERS "A wave of |cFF28CC00Sik'thik Swarmers|r joins the battle." // Green name.
-#define ANN_DEMOLISHERS "A wave of |cFF800080Sik'thik Demolishers|r joins the battle." // Purple name.
-#define ANN_SWARMERS_WARRIOR "A wave of |cFF28CC00Sik'thik Swarmers|r and a |cFF8B7325Sik'thik Warrior|r join the battle." // Green / brown name.
-#define ANN_DEMOLISHERS_WARRIOR "A wave of |cFF800080Sik'thik Demolishers|r and a |cFF8B7325Sik'thik Warrior|r join the battle." // Purple / brown name.
-#define ANN_AMBERWING "The |cFFF4C224Sik'thik Amberwing|r moves into position to |cFFFF0000|Hspell:120559|h[Bombard]|h|r the platform!" // Orange name, red spell.
+#define ANN_SWARMERS "一波|cFF28CC00瑟克提克蜂群|r加入了战斗！"
+#define ANN_DEMOLISHERS "一波|cFF800080瑟克提克破坏者|r加入了战斗！"
+#define ANN_SWARMERS_WARRIOR "一波|cFF28CC00瑟克提克蜂群|r和一名|cFF8B7325瑟克提克战士|r加入了战斗！"
+#define ANN_DEMOLISHERS_WARRIOR "一波|cFF800080瑟克提克破坏者|r和一名|cFF8B7325瑟克提克战士|r加入了战斗！"
+#define ANN_AMBERWING "|cFFF4C224瑟克提克琥珀翼|r移动到位准备|cFFFF0000|Hspell:120559|h[轰炸]|h|r平台！"
 
-#define ANN_AMBERWING_AMMUNITION "Sik'thik Amberwing runs out of ammunition and flies away!"
-#define ANN_PHASE_2 "Commander Vo'jak begins to approach the platform!"
-#define ANN_CAUSTIC_SHAKE "Commander Vo'jak shakes off the |cFFFF0000|Hspell:120778|h[Caustic Tar]|h|r!"
+#define ANN_AMBERWING_AMMUNITION "瑟克提克琥珀翼弹药用尽，飞走了！"
+#define ANN_PHASE_2 "指挥官沃贾克开始靠近平台！"
+#define ANN_CAUSTIC_SHAKE "指挥官沃贾克挣脱了|cFFFF0000|Hspell:120778|h[腐蚀焦油]|h|r！"
 
 enum Spells
 {

@@ -33,12 +33,12 @@ public:
         {
             case LOCALE_esES:
             case LOCALE_esMX:
-                GOSSIP_BUTTON         = "Ll�vame a la zona de escala de la feria.";
-                BOX_TEXT              = "Viajar a la zona de escala de la feria te costar�:";
+                GOSSIP_BUTTON         = "Ll関ame a la zona de escala de la feria.";
+                BOX_TEXT              = "Viajar a la zona de escala de la feria te costar?";
                 break;
             default:
-                GOSSIP_BUTTON         = "Take me to the faire staging area.";
-                BOX_TEXT              = "Travel to the faire staging area will cost:";
+                GOSSIP_BUTTON         = "带我前往马戏团集结地。";
+                BOX_TEXT              = "前往马戏团集结地需要花费：";
                 break;
         };
 
@@ -142,18 +142,18 @@ public:
         {
             case LOCALE_esES:
             case LOCALE_esMX:
-                GOSSIP_BUTTON_1         = "�Gu�a del aventurero de la Luna Negra?";
-                GOSSIP_BUTTON_2         = "�Qu� puedo comprar?";
-                GOSSIP_BUTTON_3         = "�Vales para la Feria de la Luna Negra?";
-                GOSSIP_BUTTON_4         = "�Cartas de la Luna Negra?";
-                GOSSIP_BUTTON_5         = "�Atracciones?";
+                GOSSIP_BUTTON_1         = "縂u韆 del aventurero de la Luna Negra?";
+                GOSSIP_BUTTON_2         = "縌u?puedo comprar?";
+                GOSSIP_BUTTON_3         = "縑ales para la Feria de la Luna Negra?";
+                GOSSIP_BUTTON_4         = "緾artas de la Luna Negra?";
+                GOSSIP_BUTTON_5         = "緼tracciones?";
                 break;
             default:
-                GOSSIP_BUTTON_1         = "Darkmoon Adventurer's Guide?";
-                GOSSIP_BUTTON_2         = "What can I purchase?";
-                GOSSIP_BUTTON_3         = "Darkmoon Faire Prize Tickets?";
-                GOSSIP_BUTTON_4         = "Darkmoon Cards?";
-                GOSSIP_BUTTON_5         = "Attractions?";
+                GOSSIP_BUTTON_1         = "暗月冒险者指南？";
+                GOSSIP_BUTTON_2         = "我可以买什么？";
+                GOSSIP_BUTTON_3         = "暗月马戏团奖券？";
+                GOSSIP_BUTTON_4         = "暗月卡片？";
+                GOSSIP_BUTTON_5         = "娱乐项目？";
                 break;
         };
 
@@ -187,34 +187,34 @@ public:
         {
             case LOCALE_esES:
             case LOCALE_esMX:
-                GOSSIP_BUTTON_1         = "�Gu�a del aventurero de la Luna Negra?";
-                GOSSIP_BUTTON_2         = "�Qu� puedo comprar?";
-                GOSSIP_BUTTON_3         = "�Vales para la Feria de la Luna Negra?";
-                GOSSIP_BUTTON_4         = "�Cartas de la Luna Negra?";
-                GOSSIP_BUTTON_5         = "�Atracciones?";
-                GOSSIP_BUTTON_6         = "�Me puedes dar una gu�a del aventurero de la Luna Negra?";
-                GOSSIP_BUTTON_7         = "Cu�ntame m�s.";
-                GOSSIP_BUTTON_8         = "�Tonques?";
-                GOSSIP_BUTTON_9         = "�Ca��n?";
-                GOSSIP_BUTTON_10        = "�Golpear al gnoll?";
-                GOSSIP_BUTTON_11        = "�Lanzamiento de anillos?";
-                GOSSIP_BUTTON_12        = "�Galer�a de tiro?";
-                GOSSIP_BUTTON_13        = "�Clarividente?";
+                GOSSIP_BUTTON_1         = "縂u韆 del aventurero de la Luna Negra?";
+                GOSSIP_BUTTON_2         = "縌u?puedo comprar?";
+                GOSSIP_BUTTON_3         = "縑ales para la Feria de la Luna Negra?";
+                GOSSIP_BUTTON_4         = "緾artas de la Luna Negra?";
+                GOSSIP_BUTTON_5         = "緼tracciones?";
+                GOSSIP_BUTTON_6         = "縈e puedes dar una gu韆 del aventurero de la Luna Negra?";
+                GOSSIP_BUTTON_7         = "Cu閚tame m醩.";
+                GOSSIP_BUTTON_8         = "縏onques?";
+                GOSSIP_BUTTON_9         = "緾a耋n?";
+                GOSSIP_BUTTON_10        = "縂olpear al gnoll?";
+                GOSSIP_BUTTON_11        = "縇anzamiento de anillos?";
+                GOSSIP_BUTTON_12        = "縂aler韆 de tiro?";
+                GOSSIP_BUTTON_13        = "緾larividente?";
                 break;
             default:
-                GOSSIP_BUTTON_1         = "Darkmoon Adventurer's Guide?";
-                GOSSIP_BUTTON_2         = "What can I purchase?";
-                GOSSIP_BUTTON_3         = "Darkmoon Faire Prize Tickets?";
-                GOSSIP_BUTTON_4         = "Darkmoon Cards?";
-                GOSSIP_BUTTON_5         = "Attractions?";
-                GOSSIP_BUTTON_6         = "May I have another Darkmoon Adventurer's Guide?";
-                GOSSIP_BUTTON_7         = "Tell me more.";
-                GOSSIP_BUTTON_8         = "Tonk Challenge?";
-                GOSSIP_BUTTON_9         = "Cannon?";
-                GOSSIP_BUTTON_10        = "Whack-a-gnoll?";
-                GOSSIP_BUTTON_11        = "Ring Toss?";
-                GOSSIP_BUTTON_12        = "Shooting Gallery?";
-				GOSSIP_BUTTON_13		= "Farseer?";
+                GOSSIP_BUTTON_1         = "暗月冒险者指南？";
+                GOSSIP_BUTTON_2         = "我可以买什么？";
+                GOSSIP_BUTTON_3         = "暗月马戏团奖券？";
+                GOSSIP_BUTTON_4         = "暗月卡片？";
+                GOSSIP_BUTTON_5         = "娱乐项目？";
+                GOSSIP_BUTTON_6         = "可以再给我一本暗月冒险者指南吗？";
+                GOSSIP_BUTTON_7         = "详细说说。";
+                GOSSIP_BUTTON_8         = "坦克大战？";
+                GOSSIP_BUTTON_9         = "人间大炮？";
+                GOSSIP_BUTTON_10        = "痛扁豺狼人？";
+                GOSSIP_BUTTON_11        = "套圈圈？";
+                GOSSIP_BUTTON_12        = "射击场？";
+				GOSSIP_BUTTON_13		= "先知塞格？";
                 break;
         };
 
@@ -544,12 +544,12 @@ public:
         {
             case LOCALE_esES:
             case LOCALE_esMX:
-                GOSSIP_BUTTON_1         = "�C�mo puedo jugar a Golpea al gnoll?";
-                GOSSIP_BUTTON_2         = "�Listo para aporrear! |cFF0000FF(Ficha de juego de la Luna Negra)|r";
+                GOSSIP_BUTTON_1         = "緾髆o puedo jugar a Golpea al gnoll?";
+                GOSSIP_BUTTON_2         = "isto para aporrear! |cFF0000FF(Ficha de juego de la Luna Negra)|r";
                 break;
             default:
-                GOSSIP_BUTTON_1         = "How do I play Whack-a-gnoll?";
-                GOSSIP_BUTTON_2         = "Ready to whack! |cFF0000FF(Darkmoon Game Token)|r";
+                GOSSIP_BUTTON_1         = "痛扁豺狼人怎么玩？";
+                GOSSIP_BUTTON_2         = "我准备好开打了！|cFF0000FF（暗月游戏代币）|r";
                 break;
         };
 
@@ -572,14 +572,14 @@ public:
         {
             case LOCALE_esES:
             case LOCALE_esMX:
-                GOSSIP_BUTTON_1         = "�C�mo puedo jugar a Golpea al gnoll?";
-                GOSSIP_BUTTON_2         = "�Listo para aporrear! |cFF0000FF(Ficha de juego de la Luna Negra)|r";
+                GOSSIP_BUTTON_1         = "緾髆o puedo jugar a Golpea al gnoll?";
+                GOSSIP_BUTTON_2         = "isto para aporrear! |cFF0000FF(Ficha de juego de la Luna Negra)|r";
                 GOSSIP_BUTTON_3         = "Comprendo.";
                 break;
             default:
-                GOSSIP_BUTTON_1         = "How do I play Whack-a-gnoll?";
-                GOSSIP_BUTTON_2         = "Ready to whack! |cFF0000FF(Darkmoon Game Token)|r";
-                GOSSIP_BUTTON_3         = "Alright.";
+                GOSSIP_BUTTON_1         = "痛扁豺狼人怎么玩？";
+                GOSSIP_BUTTON_2         = "我准备好开打了！|cFF0000FF（暗月游戏代币）|r";
+                GOSSIP_BUTTON_3         = "明白了。";
                 break;
         };
 
@@ -707,12 +707,12 @@ public:
         {
             case LOCALE_esES:
             case LOCALE_esMX:
-                GOSSIP_BUTTON_1         = "�C�mo se usa el ca��n?";
-                GOSSIP_BUTTON_2         = "�L�nzame! |cFF0000FF(Ficha de juego de la Luna Negra)|r";
+                GOSSIP_BUTTON_1         = "緾髆o se usa el ca耋n?";
+                GOSSIP_BUTTON_2         = "醤zame! |cFF0000FF(Ficha de juego de la Luna Negra)|r";
                 break;
             default:
-                GOSSIP_BUTTON_1         = "How do I use the cannon?";
-                GOSSIP_BUTTON_2         = "Launch me! |cFF0000FF(Darkmoon Game Token)|r";
+                GOSSIP_BUTTON_1         = "人间大炮怎么用？";
+                GOSSIP_BUTTON_2         = "把我发射出去！|cFF0000FF（暗月游戏代币）|r";
                 break;
         };
 
@@ -735,14 +735,14 @@ public:
         {
             case LOCALE_esES:
             case LOCALE_esMX:
-                GOSSIP_BUTTON_1         = "�C�mo uso el ca��n?";
-                GOSSIP_BUTTON_2         = "�L�nzame! |cFF0000FF(Ficha de juego de la Luna Negra)|r";
+                GOSSIP_BUTTON_1         = "緾髆o uso el ca耋n?";
+                GOSSIP_BUTTON_2         = "醤zame! |cFF0000FF(Ficha de juego de la Luna Negra)|r";
                 GOSSIP_BUTTON_3         = "Comprendo.";
                 break;
             default:
-                GOSSIP_BUTTON_1         = "�How do I use the cannon?";
-                GOSSIP_BUTTON_2         = "Launch me! |cFF0000FF(Darkmoon Game Token)|r";
-                GOSSIP_BUTTON_3         = "Alright.";
+                GOSSIP_BUTTON_1         = "人间大炮怎么用？";
+                GOSSIP_BUTTON_2         = "把我发射出去！|cFF0000FF（暗月游戏代币）|r";
+                GOSSIP_BUTTON_3         = "明白了。";
                 break;
         };
 
@@ -889,12 +889,12 @@ public:
         {
             case LOCALE_esES:
             case LOCALE_esMX:
-                GOSSIP_BUTTON         = "Teletransp�rtame al ca��n.";
-                BOX_TEXT              = "El teletransporte al ca��n te costar�:";
+                GOSSIP_BUTTON         = "Teletransp髍tame al ca耋n.";
+                BOX_TEXT              = "El teletransporte al ca耋n te costar?";
                 break;
             default:
-                GOSSIP_BUTTON         = "Teleport me to the cannon.";
-                BOX_TEXT              = "Teleportation to the cannon will cost:";
+                GOSSIP_BUTTON         = "传送到人间大炮那里。";
+                BOX_TEXT              = "传送到人间大炮需要花费：";
                 break;
         };
 
@@ -1169,12 +1169,12 @@ public:
         {
             case LOCALE_esES:
             case LOCALE_esMX:
-                GOSSIP_BUTTON_1         = "�C�mo puedo jugar a la batalla de tonques?";
-                GOSSIP_BUTTON_2         = "�Estoy listo para jugar! |cFF0000FF(Ficha de juego de la Luna Negra)|r";
+                GOSSIP_BUTTON_1         = "緾髆o puedo jugar a la batalla de tonques?";
+                GOSSIP_BUTTON_2         = "stoy listo para jugar! |cFF0000FF(Ficha de juego de la Luna Negra)|r";
                 break;
             default:
-                GOSSIP_BUTTON_1         = "How do I play the Tonk Challenge?";
-                GOSSIP_BUTTON_2         = "Ready to play! |cFF0000FF(Darkmoon Game Token)|r";
+                GOSSIP_BUTTON_1         = "坦克大战怎么玩？";
+                GOSSIP_BUTTON_2         = "我准备好开战了！|cFF0000FF（暗月游戏代币）|r";
                 break;
         };
 
@@ -1197,14 +1197,14 @@ public:
         {
             case LOCALE_esES:
             case LOCALE_esMX:
-                GOSSIP_BUTTON_1         = "�C�mo puedo jugar a la batalla de tonques?";
-                GOSSIP_BUTTON_2         = "�Estoy listo para jugar! |cFF0000FF(Ficha de juego de la Luna Negra)|r";
+                GOSSIP_BUTTON_1         = "緾髆o puedo jugar a la batalla de tonques?";
+                GOSSIP_BUTTON_2         = "stoy listo para jugar! |cFF0000FF(Ficha de juego de la Luna Negra)|r";
                 GOSSIP_BUTTON_3         = "Comprendo.";
                 break;
             default:
-                GOSSIP_BUTTON_1         = "How do I play the Tonk Challenge?";
-                GOSSIP_BUTTON_2         = "Ready to play! |cFF0000FF(Darkmoon Game Token)|r";
-                GOSSIP_BUTTON_3         = "Alright.";
+                GOSSIP_BUTTON_1         = "坦克大战怎么玩？";
+                GOSSIP_BUTTON_2         = "我准备好开战了！|cFF0000FF（暗月游戏代币）|r";
+                GOSSIP_BUTTON_3         = "明白了。";
                 break;
         };
 
@@ -1274,12 +1274,12 @@ public:
         {
             case LOCALE_esES:
             case LOCALE_esMX:
-                GOSSIP_BUTTON_1         = "�C�mo puedo jugar al lanzamiento de anillo?";
-                GOSSIP_BUTTON_2         = "�Estoy listo para jugar! |cFF0000FF(Ficha de juego de la Luna Negra)|r";
+                GOSSIP_BUTTON_1         = "緾髆o puedo jugar al lanzamiento de anillo?";
+                GOSSIP_BUTTON_2         = "stoy listo para jugar! |cFF0000FF(Ficha de juego de la Luna Negra)|r";
                 break;
             default:
-                GOSSIP_BUTTON_1         = "How do I play the Ring Toss?";
-                GOSSIP_BUTTON_2         = "Ready to play! |cFF0000FF(Darkmoon Game Token)|r";
+                GOSSIP_BUTTON_1         = "套圈圈怎么玩？";
+                GOSSIP_BUTTON_2         = "我准备好开玩了！|cFF0000FF（暗月游戏代币）|r";
                 break;
         };
 
@@ -1302,14 +1302,14 @@ public:
         {
             case LOCALE_esES:
             case LOCALE_esMX:
-                GOSSIP_BUTTON_1         = "�C�mo puedo jugar al lanzamiento de anillo?";
-                GOSSIP_BUTTON_2         = "�Estoy listo para jugar! |cFF0000FF(Ficha de juego de la Luna Negra)|r";
+                GOSSIP_BUTTON_1         = "緾髆o puedo jugar al lanzamiento de anillo?";
+                GOSSIP_BUTTON_2         = "stoy listo para jugar! |cFF0000FF(Ficha de juego de la Luna Negra)|r";
                 GOSSIP_BUTTON_3         = "Comprendo.";
                 break;
             default:
-                GOSSIP_BUTTON_1         = "How do I play the Ring Toss?";
-                GOSSIP_BUTTON_2         = "Ready to play! |cFF0000FF(Darkmoon Game Token)|r";
-                GOSSIP_BUTTON_3         = "Alright.";
+                GOSSIP_BUTTON_1         = "套圈圈怎么玩？";
+                GOSSIP_BUTTON_2         = "我准备好开玩了！|cFF0000FF（暗月游戏代币）|r";
+                GOSSIP_BUTTON_3         = "明白了。";
                 break;
         };
 
@@ -1454,12 +1454,12 @@ public:
         {
             case LOCALE_esES:
             case LOCALE_esMX:
-                GOSSIP_BUTTON_1         = "�C�mo funciona la galer�a de tiro?";
-                GOSSIP_BUTTON_2         = "�Estoy listo para disparar! |cFF0000FF(Ficha de juego de la Luna Negra)|r";
+                GOSSIP_BUTTON_1         = "緾髆o funciona la galer韆 de tiro?";
+                GOSSIP_BUTTON_2         = "stoy listo para disparar! |cFF0000FF(Ficha de juego de la Luna Negra)|r";
                 break;
             default:
-                GOSSIP_BUTTON_1         = "How does the Shooting Gallery work?";
-                GOSSIP_BUTTON_2         = "Let's shoot! |cFF0000FF(Darkmoon Game Token)|r";
+                GOSSIP_BUTTON_1         = "射击场怎么玩？";
+                GOSSIP_BUTTON_2         = "开始射击吧！|cFF0000FF（暗月游戏代币）|r";
                 break;
         };
 
@@ -1482,14 +1482,14 @@ public:
         {
             case LOCALE_esES:
             case LOCALE_esMX:
-                GOSSIP_BUTTON_1         = "�C�mo funciona la galer�a de tiro?";
-                GOSSIP_BUTTON_2         = "�Estoy listo para disparar! |cFF0000FF(Ficha de juego de la Luna Negra)|r";
+                GOSSIP_BUTTON_1         = "緾髆o funciona la galer韆 de tiro?";
+                GOSSIP_BUTTON_2         = "stoy listo para disparar! |cFF0000FF(Ficha de juego de la Luna Negra)|r";
                 GOSSIP_BUTTON_3         = "Comprendo.";
                 break;
             default:
-                GOSSIP_BUTTON_1         = "How does the Shooting Gallery work?";
-                GOSSIP_BUTTON_2         = "Let's shoot! |cFF0000FF(Darkmoon Game Token)|r";
-                GOSSIP_BUTTON_3         = "Alright.";
+                GOSSIP_BUTTON_1         = "射击场怎么玩？";
+                GOSSIP_BUTTON_2         = "开始射击吧！|cFF0000FF（暗月游戏代币）|r";
+                GOSSIP_BUTTON_3         = "明白了。";
                 break;
         };
 
@@ -1975,7 +1975,7 @@ class spell_ring_toss : public SpellScriptLoader
 };
 
 //
-// BRUTAL HACK - Puesto hasta que se arregle el achievementcriteria, que me he peleado con �l y no consigo arreglarlo.
+// BRUTAL HACK - Puesto hasta que se arregle el achievementcriteria, que me he peleado con 閘 y no consigo arreglarlo.
 //
 
 class item_darkmoon_faire_fireworks : public ItemScript

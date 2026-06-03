@@ -419,7 +419,7 @@ enum DalaranCrystal
     QUEST_TELE_CRYSTAL_FLAG     = 12845
 };
 
-#define GO_TELE_TO_DALARAN_CRYSTAL_FAILED   "This teleport crystal cannot be used until the teleport crystal in Dalaran has been used at least once."
+#define GO_TELE_TO_DALARAN_CRYSTAL_FAILED   "在达拉然的传送水晶被使用过至少一次之前，此水晶无法使用。"
 
 class go_tele_to_dalaran_crystal : public GameObjectScript
 {
@@ -461,9 +461,9 @@ public:
 
 #define GOSSIP_FEL_CRYSTALFORGE_TEXT 31000
 #define GOSSIP_FEL_CRYSTALFORGE_ITEM_TEXT_RETURN 31001
-#define GOSSIP_FEL_CRYSTALFORGE_ITEM_1 "Purchase 1 Unstable Flask of the Beast for the cost of 10 Apexis Shards"
-#define GOSSIP_FEL_CRYSTALFORGE_ITEM_5 "Purchase 5 Unstable Flask of the Beast for the cost of 50 Apexis Shards"
-#define GOSSIP_FEL_CRYSTALFORGE_ITEM_RETURN "Use the fel crystalforge to make another purchase."
+#define GOSSIP_FEL_CRYSTALFORGE_ITEM_1 "花费10个埃匹希斯碎片购买1个不稳定的野兽合剂"
+#define GOSSIP_FEL_CRYSTALFORGE_ITEM_5 "花费50个埃匹希斯碎片购买5个不稳定的野兽合剂"
+#define GOSSIP_FEL_CRYSTALFORGE_ITEM_RETURN "使用魔能水晶熔炉进行其他购买。"
 
 enum FelCrystalforge
 {
@@ -520,9 +520,9 @@ public:
 
 #define GOSSIP_BASHIR_CRYSTALFORGE_TEXT 31100
 #define GOSSIP_BASHIR_CRYSTALFORGE_ITEM_TEXT_RETURN 31101
-#define GOSSIP_BASHIR_CRYSTALFORGE_ITEM_1 "Purchase 1 Unstable Flask of the Sorcerer for the cost of 10 Apexis Shards"
-#define GOSSIP_BASHIR_CRYSTALFORGE_ITEM_5 "Purchase 5 Unstable Flask of the Sorcerer for the cost of 50 Apexis Shards"
-#define GOSSIP_BASHIR_CRYSTALFORGE_ITEM_RETURN "Use the bashir crystalforge to make another purchase."
+#define GOSSIP_BASHIR_CRYSTALFORGE_ITEM_1 "花费10个埃匹希斯碎片购买1个不稳定的巫师合剂"
+#define GOSSIP_BASHIR_CRYSTALFORGE_ITEM_5 "花费50个埃匹希斯碎片购买5个不稳定的巫师合剂"
+#define GOSSIP_BASHIR_CRYSTALFORGE_ITEM_RETURN "使用巴什伊尔水晶熔炉进行其他购买。"
 
 enum BashirCrystalforge
 {
@@ -943,8 +943,8 @@ public:
 ## go_amberpine_outhouse
 ######*/
 
-#define GOSSIP_USE_OUTHOUSE "Use the outhouse."
-#define GO_ANDERHOLS_SLIDER_CIDER_NOT_FOUND "Quest item Anderhol's Slider Cider not found."
+#define GOSSIP_USE_OUTHOUSE "使用厕所。"
+#define GO_ANDERHOLS_SLIDER_CIDER_NOT_FOUND "未找到任务物品：安德霍尔的滑板苹果酒。"
 
 enum AmberpineOuthouse
 {

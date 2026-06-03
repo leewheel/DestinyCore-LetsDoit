@@ -410,9 +410,9 @@ public:
     }
 };
 
-#define GOSSIP_BOSS_1 "Press the button labeled 'Wood and Lumber.'"
-#define GOSSIP_BOSS_2 "Press the button labeled 'Metal and Scraps.'"
-#define GOSSIP_BOSS_3 "Press the button labeled 'Ship Parts.'"
+#define GOSSIP_BOSS_1 "按下标有\"木材与原木\"的按钮。"
+#define GOSSIP_BOSS_2 "按下标有\"金属与废料\"的按钮。"
+#define GOSSIP_BOSS_3 "按下标有\"船体零件\"的按钮。"
 
 class go_deadmines_tp : public GameObjectScript
 {

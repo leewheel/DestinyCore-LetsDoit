@@ -46,8 +46,8 @@ enum Erozion
     QUEST_ENTRY_RETURN      = 10285,
     ITEM_ENTRY_BOMBS        = 25853
 };
-#define GOSSIP_HELLO_EROZION1   "I need a pack of Incendiary Bombs."
-#define GOSSIP_HELLO_EROZION2   "[PH] Teleport please, i'm tired."
+#define GOSSIP_HELLO_EROZION1   "我需要一包燃烧弹。"
+#define GOSSIP_HELLO_EROZION2   "[PH] 请传送我，我累了。"
 
 /*######
 ## npc_erozion

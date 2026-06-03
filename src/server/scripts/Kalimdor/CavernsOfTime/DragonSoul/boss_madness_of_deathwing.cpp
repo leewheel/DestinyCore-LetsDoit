@@ -458,7 +458,7 @@ const Position jumpPos[6] =
     {-12118.2f, 12084.9f, 2.39029f, 0.0f}   // from 4 to 3
 };
 
-#define GOSSIP_OPTION_1 "Is this end?"
+#define GOSSIP_OPTION_1 "这就是终结吗？"
 
 uint32 healthValueNew;
 uint32 healthValue;

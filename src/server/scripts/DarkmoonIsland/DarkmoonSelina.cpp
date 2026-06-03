@@ -103,11 +103,11 @@ public:
         switch (LocaleConstant currentlocale = player->GetSession()->GetSessionDbcLocale())
         {
             default:
-                GOSSIP_BUTTON_1         = "Darkmoon adventurer guide?";
-                GOSSIP_BUTTON_2         = "What can I buy?";
-                GOSSIP_BUTTON_3         = "Do you qualify for the Darkmoon Faire?";
-                GOSSIP_BUTTON_4         = "Letters from the Darkmoon?";
-                GOSSIP_BUTTON_5         = "Attractions?";
+                GOSSIP_BUTTON_1         = "暗月冒险者指南？";
+                GOSSIP_BUTTON_2         = "我可以买什么？";
+                GOSSIP_BUTTON_3         = "暗月马戏团奖券？";
+                GOSSIP_BUTTON_4         = "暗月卡片？";
+                GOSSIP_BUTTON_5         = "娱乐项目？";
                 break;
         };
 
@@ -140,19 +140,19 @@ public:
         switch (LocaleConstant currentlocale = player->GetSession()->GetSessionDbcLocale())
         {
             default:
-                GOSSIP_BUTTON_1         = "Darkmoon adventurer guide?";
-                GOSSIP_BUTTON_2         = "What can I buy?";
-                GOSSIP_BUTTON_3         = "Do you qualify for the Darkmoon Faire?";
-                GOSSIP_BUTTON_4         = "Letters from the Darkmoon?";
-                GOSSIP_BUTTON_5         = "Attractions?";
-                GOSSIP_BUTTON_6         = "Can you give me a guide to the Darkmoon adventurer?";
-                GOSSIP_BUTTON_7         = "Tell me more.";
-                GOSSIP_BUTTON_8         = "Tonk Battle?";
-                GOSSIP_BUTTON_9         = "Canon?";
-                GOSSIP_BUTTON_10         = "Whack-A-Gnoll?";
-                GOSSIP_BUTTON_11         = "Toss Rings?";
-                GOSSIP_BUTTON_12         = "Shooting gallery?";
-                GOSSIP_BUTTON_13         = "Clairvoyant?";
+                GOSSIP_BUTTON_1         = "暗月冒险者指南？";
+                GOSSIP_BUTTON_2         = "我可以买什么？";
+                GOSSIP_BUTTON_3         = "暗月马戏团奖券？";
+                GOSSIP_BUTTON_4         = "暗月卡片？";
+                GOSSIP_BUTTON_5         = "娱乐项目？";
+                GOSSIP_BUTTON_6         = "可以给我一本暗月冒险者指南吗？";
+                GOSSIP_BUTTON_7         = "详细说说。";
+                GOSSIP_BUTTON_8         = "坦克大战？";
+                GOSSIP_BUTTON_9         = "人间大炮？";
+                GOSSIP_BUTTON_10         = "痛扁豺狼人？";
+                GOSSIP_BUTTON_11         = "套圈圈？";
+                GOSSIP_BUTTON_12         = "射击场？";
+                GOSSIP_BUTTON_13         = "先知？";
                 break;
         };
 

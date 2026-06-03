@@ -577,8 +577,8 @@ enum edrifter
 };
 
 #define GOSSIP_COST 2
-#define GOSSIP_HELLO_DRIFTER1 "Did you see who killed the Furlbrows?"
-#define GOSSIP_HELLO_DRIFTER2 "Maybe a couple copper will loosen your tongue. Now tell me, did you see who killed the Furlbrows?"
+#define GOSSIP_HELLO_DRIFTER1 "你看到是谁杀了弗尔布罗一家吗？"
+#define GOSSIP_HELLO_DRIFTER2 "也许几个铜币能让你开口。告诉我，你看到是谁杀了弗尔布罗一家吗？"
 
 class npc_westplains_drifter : public CreatureScript
 {

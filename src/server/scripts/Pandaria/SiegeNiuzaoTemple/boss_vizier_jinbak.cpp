@@ -38,8 +38,8 @@ enum Yells
     SAY_DEATH               = 4  // But... I was... who will...!?
 };
 
-#define ANN_GLOBULES "Sap Globules begin to sprout from the tree!"
-#define ANN_DETONATE "Vizier Jin'bak begins to cast |cFFFF0000|Hspell:120001|h[Detonate]|h|r!"
+#define ANN_GLOBULES "树液球开始从树上冒出！"
+#define ANN_DETONATE "宰相金巴克开始施放|cFFFF0000|Hspell:120001|h[引爆]|h|r！"
 
 enum Spells
 {

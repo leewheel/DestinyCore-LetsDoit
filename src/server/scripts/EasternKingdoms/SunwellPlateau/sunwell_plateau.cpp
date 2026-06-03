@@ -57,9 +57,9 @@ enum LiadrinnSpeeches
 ## npc_captain_selana
 ######*/
 
-#define CS_GOSSIP1 "Give me a situation report, Captain."
-#define CS_GOSSIP2 "What went wrong?"
-#define CS_GOSSIP3 "Why did they stop?"
-#define CS_GOSSIP4 "Your insight is appreciated."
+#define CS_GOSSIP1 "报告情况，队长。"
+#define CS_GOSSIP2 "出了什么问题？"
+#define CS_GOSSIP3 "他们为什么停下了？"
+#define CS_GOSSIP4 "感谢你的见解。"
 
 void AddSC_sunwell_plateau() { }

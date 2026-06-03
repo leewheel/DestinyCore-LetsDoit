@@ -112,7 +112,7 @@ Position const SummonPositions[8] =
     { 2929.72f, 1967.43f, 189.693f, 1.61005f },
 };
 
-#define GOSSIP_GLAIDALIS_INTRO "Intro pls biatch !"
+#define GOSSIP_GLAIDALIS_INTRO "开始吧！"
 
 class boss_archdruid_glaidalis : public CreatureScript
 {

@@ -70,7 +70,7 @@ enum Talks
     SAY_MALFURION_OUTRO   = 0
 };
 
-#define GOSSIP_MALFURION_OUTRO "Teleport me to Dalaran!"
+#define GOSSIP_MALFURION_OUTRO "传送到达拉然！"
 
 // Vile Mushroom
 // NPC ID - 100960

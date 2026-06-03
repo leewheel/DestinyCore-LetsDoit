@@ -54,7 +54,7 @@
 
 
 
-#define GOSSIP_ACCEPT_DUEL      "Let''s duel"
+#define GOSSIP_ACCEPT_DUEL      "我要决斗"
 #define EVENT_SPECIAL 20
 
 class scene_azsuna_runes : public SceneScript

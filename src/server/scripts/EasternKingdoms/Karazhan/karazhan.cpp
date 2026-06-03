@@ -70,9 +70,9 @@ enum Creatures
 
 #define SAY_READY           "Splendid, I'm going to get the audience ready. Break a leg!"
 #define SAY_OZ_INTRO1       "Finally, everything is in place. Are you ready for your big stage debut?"
-#define OZ_GOSSIP1          "I'm not an actor."
-#define SAY_OZ_INTRO2       "Don't worry, you'll be fine. You look like a natural!"
-#define OZ_GOSSIP2          "Ok, I'll give it a try, then."
+#define OZ_GOSSIP1          "我不是演员。"
+#define SAY_OZ_INTRO2       "别担心，你会没事的。你看起来很有天赋！"
+#define OZ_GOSSIP2          "好吧，那我试试。"
 
 #define SAY_RAJ_INTRO1      "The romantic plays are really tough, but you'll do better this time. You have TALENT. Ready?"
 #define RAJ_GOSSIP1         "I've never been more ready."

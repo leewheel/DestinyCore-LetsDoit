@@ -61,7 +61,7 @@ enum blySpells
     SPELL_REVENGE              = 12170
 };
 
-#define GOSSIP_BLY                  "[PH] In that case, I will take my reward!"
+#define GOSSIP_BLY                  "[PH] 既然如此，我就要拿我的奖励了！"
 
 class npc_sergeant_bly : public CreatureScript
 {
@@ -262,7 +262,7 @@ enum weegliSays
     SAY_WEEGLI_OK_I_GO          = 1
 };
 
-#define GOSSIP_WEEGLI               "[PH] Please blow up the door."
+#define GOSSIP_WEEGLI               "[PH] 请把门炸开。"
 
 class npc_weegli_blastfuse : public CreatureScript
 {

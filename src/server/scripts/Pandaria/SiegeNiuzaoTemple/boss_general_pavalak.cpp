@@ -35,7 +35,7 @@ enum Yells
     SAY_DEATH                    // I have failed you, empress...
 };
 
-#define ANN_REINFORCEMENTS "General Pa'valak calls for reinforcements!"
+#define ANN_REINFORCEMENTS "帕瓦拉克将军呼叫增援！"
 
 enum Spells
 {

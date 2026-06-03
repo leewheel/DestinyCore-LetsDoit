@@ -1163,8 +1163,8 @@ public:
 #define QUEST_RESET_CRACK "You are $ gpret, ready to force their leader to get $ gmy friend: my friend; ?"
 
 //Quand on se rend syur place
-#define CRACK_PROVOC "Come on, Chief naga, come out of your hiding and surrendered for $ N and Bilgewater Cartel!"
-#define CRACK_EVADE "Hula treasure, it smells bad. I am size!"
+#define CRACK_PROVOC "出来吧，纳迦首领，从你的藏身处滚出来，向$N和污水企业投降！"
+#define CRACK_EVADE "呼啦宝藏，味道真难闻。我有份量！"
 
 #define NPC_CRACK 39198
 

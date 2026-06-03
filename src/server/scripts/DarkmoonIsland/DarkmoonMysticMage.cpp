@@ -42,8 +42,8 @@ public:
         switch (LocaleConstant currentlocale = player->GetSession()->GetSessionDbcLocale())
         {
             default:
-                GOSSIP_BUTTON         = "Take me to the faire staging area.";
-                BOX_TEXT              = "Traveling to the faire staging area will cost you: ";
+                GOSSIP_BUTTON         = "带我前往马戏团集结地。";
+                BOX_TEXT              = "前往马戏团集结地需要花费：";
                 break;
         };
 
@@ -90,8 +90,8 @@ public:
         switch (LocaleConstant currentlocale = player->GetSession()->GetSessionDbcLocale())
         {
             default:
-                GOSSIP_BUTTON         = "Take me to the faire staging area.";
-                BOX_TEXT              = "Traveling to the faire staging area will cost you: ";
+                GOSSIP_BUTTON         = "带我前往马戏团集结地。";
+                BOX_TEXT              = "前往马戏团集结地需要花费：";
                 break;
         };
 
@@ -140,8 +140,8 @@ public:
         switch (LocaleConstant currentlocale = player->GetSession()->GetSessionDbcLocale())
         {
             default:
-                GOSSIP_BUTTON         = "Teleport me to the canon.";
-                BOX_TEXT              = "The teleportation to the canon will cost you: ";
+                GOSSIP_BUTTON         = "传送到人间大炮那里。";
+                BOX_TEXT              = "传送到人间大炮需要花费：";
                 break;
         };
 

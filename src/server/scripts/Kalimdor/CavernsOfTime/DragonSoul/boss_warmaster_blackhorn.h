@@ -16,8 +16,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define GOSSIP_OPTION_1 "Let's go!"
-#define GOSSIP_OPTION_2 "Bring us closer."
+#define GOSSIP_OPTION_1 "出发吧！"
+#define GOSSIP_OPTION_2 "靠近一些。"
 #define DATA_WAVE 1
 #define POINT_LAND 1
 

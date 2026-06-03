@@ -20,7 +20,7 @@
 #include "ScriptedCreature.h"
 #include "ScriptedGossip.h"
 
-#define GOSSIP_READY "We are ready!"
+#define GOSSIP_READY "我们准备好了！"
 #define SAY_1 "As I purify these waters, the servants of filth will surely be stirred. Beware!"
 #define SAY_2 "Patience guests. The waters are nearly cleansed."
 #define SAY_3 "The beast has returned! It must not pollute my waters!"

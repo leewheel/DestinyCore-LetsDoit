@@ -27,8 +27,8 @@
 
 #define REPUTATION_ORDER_OF_THE_CLOUD_SERPENT 1271
 #define GOSSIP_TEXT_I 12585
-#define GOSSIP_CHOICE_2 "Let's see which one of us is the better student. I challenge you to a duel !"
-#define GOSSIP_CHOICE_1 "Challenge the Patriarch."
+#define GOSSIP_CHOICE_2 "来看看我们谁是更好的学生。我向你发起决斗！"
+#define GOSSIP_CHOICE_1 "挑战族长。"
 
 // Shadow of Doubt - 57389
 class mob_shadow_of_doubt : public CreatureScript

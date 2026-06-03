@@ -24,8 +24,8 @@
 #include "SpellScript.h"
 
 #define CHECK_STATUS(a) (player->GetQuestStatus(a) == QUEST_STATUS_INCOMPLETE)
-#define GOSSIP_CHOICE_1 "Let's fight !"
-#define GOSSIP_CHOICE "<Reach out to touch Chi-Ji.>"
+#define GOSSIP_CHOICE_1 "来战吧！"
+#define GOSSIP_CHOICE "<伸出手触碰赤吉。>"
 
 // Arness the Scale - 50787
 class mob_arness_the_scale : public CreatureScript

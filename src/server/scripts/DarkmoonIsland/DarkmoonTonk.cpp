@@ -289,8 +289,8 @@ public:
         switch (LocaleConstant currentlocale = player->GetSession()->GetSessionDbcLocale())
         {
             default:
-                GOSSIP_BUTTON_1         = "How do I play the Tonk Challenge?";
-                GOSSIP_BUTTON_2         = "Ready to play! |cFF0000FF(Darkmoon Game Token)|r";
+                GOSSIP_BUTTON_1         = "坦克大战怎么玩？";
+                GOSSIP_BUTTON_2         = "我准备好开战了！|cFF0000FF（暗月游戏代币）|r";
                 break;
         };
 
@@ -312,9 +312,9 @@ public:
         switch (LocaleConstant currentlocale = player->GetSession()->GetSessionDbcLocale())
         {
             default:
-                GOSSIP_BUTTON_1         = "How do I play the Tonk Challenge?";
-                GOSSIP_BUTTON_2         = "Ready to play! |cFF0000FF(Darkmoon Game Token)|r";
-                GOSSIP_BUTTON_3         = "Alright.";
+                GOSSIP_BUTTON_1         = "坦克大战怎么玩？";
+                GOSSIP_BUTTON_2         = "我准备好开战了！|cFF0000FF（暗月游戏代币）|r";
+                GOSSIP_BUTTON_3         = "明白了。";
                 break;
         };
 

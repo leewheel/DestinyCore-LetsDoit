@@ -136,7 +136,7 @@ public:
     }
 };
 
-#define GOSSIP_MASTER_MATHIAS_SHAW "Tell me about the lion's sleep."
+#define GOSSIP_MASTER_MATHIAS_SHAW "告诉我关于雄狮之眠的事。"
 
 struct npc_master_mathias_shaw_132255 : public ScriptedAI
 {
@@ -255,8 +255,8 @@ enum Zidormi
     SPELL_BLACK                                               = 129809
 };
 
-#define GOSSIP_ZIDORMI_1 "Can you show me what it's like to be helissus before the trauma of the world?"
-#define GOSSIP_ZIDORMI_2 "Can you take me back now?"
+#define GOSSIP_ZIDORMI_1 "能让我看看在世界遭受创伤之前的希利苏斯是什么样子吗？"
+#define GOSSIP_ZIDORMI_2 "现在能带我回去了吗？"
 
 struct npc_zidormi_128607 : public ScriptedAI
 {
@@ -658,7 +658,7 @@ struct npc_archmage_khadgar_130033 : public ScriptedAI
     }
 };
 
-#define GOSSIP_NATHANOS_BLIGHTCALLER "Tell me what happened at the party."
+#define GOSSIP_NATHANOS_BLIGHTCALLER "告诉我宴会上发生了什么。"
 
 struct npc_nathanos_blightcaller_132254 : public ScriptedAI
 {

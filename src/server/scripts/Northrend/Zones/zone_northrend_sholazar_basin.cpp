@@ -46,8 +46,8 @@ EndContentData */
 ## npc_vekjik
 ######*/
 
-#define GOSSIP_VEKJIK_ITEM1 "Shaman Vekjik, I have spoken with the big-tongues and they desire peace. I have brought this offering on their behalf."
-#define GOSSIP_VEKJIK_ITEM2 "No no... I had no intentions of betraying your people. I was only defending myself. it was all a misunderstanding."
+#define GOSSIP_VEKJIK_ITEM1 "萨满维克吉克，我已经与长舌族谈过了，他们渴望和平。我代表他们带来了这份贡品。"
+#define GOSSIP_VEKJIK_ITEM2 "不不……我没有背叛你们的意思。我只是在自卫。这都是误会。"
 
 enum Vekjik
 {
@@ -534,9 +534,9 @@ public:
 ## npc_adventurous_dwarf
 ######*/
 
-#define GOSSIP_OPTION_ORANGE    "Can you spare an orange?"
-#define GOSSIP_OPTION_BANANAS   "Have a spare bunch of bananas?"
-#define GOSSIP_OPTION_PAPAYA    "I could really use a papaya."
+#define GOSSIP_OPTION_ORANGE    "能给我一个橙子吗？"
+#define GOSSIP_OPTION_BANANAS   "有香蕉可以给我吗？"
+#define GOSSIP_OPTION_PAPAYA    "我真的需要木瓜。"
 
 enum AdventurousDwarf
 {

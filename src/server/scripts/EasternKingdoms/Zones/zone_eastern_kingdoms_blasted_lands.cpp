@@ -104,7 +104,7 @@ public:
     }
 };
 
-// PNJ Permettant un passage entre nouveau/anciennes terres foudroy�es
+// PNJ Permettant un passage entre nouveau/anciennes terres foudroy�es
 class npc_zidormi : public CreatureScript
 {
 public:
@@ -117,11 +117,11 @@ public:
 
         if (player->GetMapId() == 1190)
         {
-            AddGossipItemFor(player, GOSSIP_ICON_CHAT, "I would like to visit the past", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 0);
+            AddGossipItemFor(player, GOSSIP_ICON_CHAT, "我想回到过去看看。", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 0);
         }
         else if (player->GetMapId() == 0)
         {
-            AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Return to the present", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
+            AddGossipItemFor(player, GOSSIP_ICON_CHAT, "回到现在。", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
         }
 
         SendGossipMenuFor(player, player->GetGossipTextId(creature), creature->GetGUID());
